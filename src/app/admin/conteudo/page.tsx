@@ -101,41 +101,41 @@ export default function ConteudoPage() {
     <div className="flex flex-col gap-6 py-4 animate-in fade-in duration-300">
       
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 mb-1">
+        <h1 className="font-display text-[26px] font-extrabold uppercase tracking-tight text-nks-black mb-1">
           Gestão de Conteúdo
         </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-xs font-semibold text-nks-gray-700">
           Gerencie as categorias, tags e a ordenação dos filtros de exibição do catálogo.
         </p>
       </div>
 
-      <div className="flex border-b border-slate-200 dark:border-slate-800 gap-4 mb-2">
+      <div className="flex border-b border-nks-gray-200 gap-6 mb-2">
         <button
           onClick={() => setActiveTab('categories')}
-          className={`pb-3 text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 px-1 cursor-pointer ${
+          className={`pb-3 text-xs font-display font-extrabold uppercase tracking-wider border-b-2 transition-all flex items-center gap-1.5 px-1 cursor-pointer ${
             activeTab === 'categories'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-slate-400 hover:text-slate-650'
+              ? 'border-nks-red text-nks-red'
+              : 'border-transparent text-nks-gray-400 hover:text-nks-black'
           }`}
         >
           <FolderPlus className="h-4 w-4" /> Categorias
         </button>
         <button
           onClick={() => setActiveTab('tags')}
-          className={`pb-3 text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 px-1 cursor-pointer ${
+          className={`pb-3 text-xs font-display font-extrabold uppercase tracking-wider border-b-2 transition-all flex items-center gap-1.5 px-1 cursor-pointer ${
             activeTab === 'tags'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-slate-400 hover:text-slate-650'
+              ? 'border-nks-red text-nks-red'
+              : 'border-transparent text-nks-gray-400 hover:text-nks-black'
           }`}
         >
           <TagIcon className="h-4 w-4" /> Tags
         </button>
         <button
           onClick={() => setActiveTab('filters')}
-          className={`pb-3 text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 px-1 cursor-pointer ${
+          className={`pb-3 text-xs font-display font-extrabold uppercase tracking-wider border-b-2 transition-all flex items-center gap-1.5 px-1 cursor-pointer ${
             activeTab === 'filters'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-slate-400 hover:text-slate-650'
+              ? 'border-nks-red text-nks-red'
+              : 'border-transparent text-nks-gray-400 hover:text-nks-black'
           }`}
         >
           <Settings className="h-4 w-4" /> Ordenação de Filtros
@@ -143,7 +143,7 @@ export default function ConteudoPage() {
       </div>
 
       {(error || actionError) && (
-        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/60 p-4 rounded-xl flex items-center gap-3 text-sm text-red-800 dark:text-red-400">
+        <div className="bg-nks-red-subtle border border-nks-red p-4 rounded-sm flex items-center gap-3 text-xs font-semibold text-nks-red-dark">
           <AlertCircle className="h-5 w-5 shrink-0" />
           <span>{actionError || error}</span>
         </div>
@@ -151,19 +151,19 @@ export default function ConteudoPage() {
 
       {loading && categories.length === 0 ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-slate-450" />
+          <Loader2 className="h-8 w-8 animate-spin text-nks-red" />
         </div>
       ) : (
         <>
           {activeTab === 'categories' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm flex flex-col gap-4">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-[18px] items-start">
+              <div className="lg:col-span-5 bg-white border border-nks-gray-200 p-6 rounded-sm shadow-nks-sm flex flex-col gap-4.5">
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-nks-gray-400 flex items-center gap-1">
                   Nova Categoria
                 </span>
                 <form onSubmit={handleAddCategory} className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-xs text-slate-500 font-semibold">Nome da Categoria</label>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] uppercase font-bold text-nks-black tracking-wider">Nome da Categoria</label>
                     <Input
                       type="text"
                       placeholder="Ex: Estampas"
@@ -172,68 +172,70 @@ export default function ConteudoPage() {
                         setCatName(e.target.value)
                         setCatSlug(e.target.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-'))
                       }}
+                      className="rounded-sm text-nks-black"
                       required
                     />
                   </div>
 
-                  <div className="flex flex-col gap-1">
-                    <label className="text-xs text-slate-500 font-semibold">Slug da URL</label>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] uppercase font-bold text-nks-black tracking-wider">Slug da URL</label>
                     <Input
                       type="text"
                       placeholder="estampas"
                       value={catSlug}
                       onChange={(e) => setCatSlug(e.target.value)}
+                      className="rounded-sm text-nks-black"
                       required
                       disabled
                     />
                   </div>
 
-                  <div className="flex flex-col gap-1">
-                    <label className="text-xs text-slate-500 font-semibold">Cor de Badge</label>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] uppercase font-bold text-nks-black tracking-wider">Cor de Badge</label>
                     <div className="flex items-center gap-3">
                       <input
                         type="color"
                         value={catColor}
                         onChange={(e) => setCatColor(e.target.value)}
-                        className="h-10 w-16 border rounded cursor-pointer"
+                        className="h-10 w-16 border border-nks-gray-200 rounded-sm cursor-pointer bg-white p-0.5"
                       />
-                      <span className="text-xs text-slate-450 font-mono font-bold uppercase">{catColor}</span>
+                      <span className="text-xs text-nks-gray-450 font-mono font-bold uppercase">{catColor}</span>
                     </div>
                   </div>
 
-                  <Button type="submit" disabled={actionLoading} className="w-full mt-2 font-bold text-xs h-10 rounded-xl cursor-pointer">
-                    {actionLoading && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
+                  <Button type="submit" disabled={actionLoading} className="w-full mt-2 font-display font-extrabold uppercase tracking-wider text-xs h-11 rounded-sm bg-nks-red hover:bg-nks-red-dark text-white cursor-pointer transition-all active:scale-[0.99] border-none shadow-nks-sm">
+                    {actionLoading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
                     Criar Categoria
                   </Button>
                 </form>
               </div>
 
-              <div className="lg:col-span-7 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
+              <div className="lg:col-span-7 border border-nks-gray-200 rounded-sm overflow-hidden bg-white shadow-nks-sm">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 dark:bg-slate-950/40 text-slate-500 border-b border-slate-200 dark:border-slate-800 font-semibold text-xs uppercase tracking-wider">
-                        <th className="py-3 px-4">Cor</th>
-                        <th className="py-3 px-4">Nome</th>
-                        <th className="py-3 px-4">Slug</th>
-                        <th className="py-3 px-4 text-right">Ação</th>
+                      <tr className="bg-nks-black text-white border-b border-nks-gray-200 font-display font-extrabold text-[11px] uppercase tracking-[0.08em]">
+                        <th className="py-3.5 px-4">Cor</th>
+                        <th className="py-3.5 px-4">Nome</th>
+                        <th className="py-3.5 px-4">Slug</th>
+                        <th className="py-3.5 px-4 text-right">Ação</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    <tbody className="divide-y divide-nks-gray-200">
                       {categories.map((c) => (
-                        <tr key={c.id} className="hover:bg-slate-50/30 transition-colors">
-                          <td className="py-3 px-4">
-                            <div className="h-5 w-5 rounded-full border border-slate-250 shadow-xs" style={{ backgroundColor: c.color || '#ccc' }} />
+                        <tr key={c.id} className="hover:bg-nks-gray-100/30 transition-colors">
+                          <td className="py-3.5 px-4">
+                            <div className="h-5 w-5 rounded-sm border border-nks-gray-200 shadow-xs" style={{ backgroundColor: c.color || '#ccc' }} />
                           </td>
-                          <td className="py-3 px-4 font-bold text-slate-800 dark:text-slate-200">{c.name}</td>
-                          <td className="py-3 px-4 font-mono text-xs text-slate-400">{c.slug}</td>
-                          <td className="py-3 px-4 text-right">
+                          <td className="py-3.5 px-4 font-bold text-nks-black">{c.name}</td>
+                          <td className="py-3.5 px-4 font-mono text-xs text-nks-gray-400">{c.slug}</td>
+                          <td className="py-3.5 px-4 text-right">
                             <Button 
                               onClick={() => handleDeleteCategory(c.id)} 
                               variant="ghost" 
                               size="icon" 
                               disabled={actionLoading}
-                              className="h-8 w-8 text-red-500 rounded-lg hover:bg-red-50 cursor-pointer"
+                              className="h-8 w-8 text-nks-red hover:text-nks-red-dark hover:bg-nks-red-subtle border border-nks-red/20 rounded-sm cursor-pointer hover:bg-nks-red-subtle/50 disabled:opacity-30"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -242,7 +244,7 @@ export default function ConteudoPage() {
                       ))}
                       {categories.length === 0 && (
                         <tr>
-                          <td colSpan={4} className="py-8 text-center text-slate-400">Nenhuma categoria cadastrada.</td>
+                          <td colSpan={4} className="py-8 text-center text-nks-gray-400 font-semibold text-xs">Nenhuma categoria cadastrada.</td>
                         </tr>
                       )}
                     </tbody>
@@ -253,52 +255,53 @@ export default function ConteudoPage() {
           )}
 
           {activeTab === 'tags' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm flex flex-col gap-4">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-[18px] items-start">
+              <div className="lg:col-span-5 bg-white border border-nks-gray-200 p-6 rounded-sm shadow-nks-sm flex flex-col gap-4.5">
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-nks-gray-400 flex items-center gap-1">
                   Nova Tag
                 </span>
                 <form onSubmit={handleAddTag} className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-xs text-slate-500 font-semibold">Nome da Tag</label>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] uppercase font-bold text-nks-black tracking-wider">Nome da Tag</label>
                     <Input
                       type="text"
                       placeholder="Ex: sublimacao"
                       value={tagName}
                       onChange={(e) => setTagName(e.target.value)}
+                      className="rounded-sm text-nks-black"
                       required
                     />
                   </div>
 
-                  <Button type="submit" disabled={actionLoading} className="w-full mt-2 font-bold text-xs h-10 rounded-xl cursor-pointer">
-                    {actionLoading && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
+                  <Button type="submit" disabled={actionLoading} className="w-full mt-2 font-display font-extrabold uppercase tracking-wider text-xs h-11 rounded-sm bg-nks-red hover:bg-nks-red-dark text-white cursor-pointer transition-all active:scale-[0.99] border-none shadow-nks-sm">
+                    {actionLoading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
                     Criar Tag
                   </Button>
                 </form>
               </div>
 
-              <div className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm flex flex-col gap-4">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <div className="lg:col-span-7 bg-white border border-nks-gray-200 p-6 rounded-sm shadow-nks-sm flex flex-col gap-4.5">
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-nks-gray-400">
                   Tags Cadastradas
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {tags.map((t) => (
                     <span 
                       key={t.id}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 border border-slate-100 dark:bg-slate-950 dark:border-slate-800 text-xs rounded-lg text-slate-700 dark:text-slate-350 font-sans font-medium"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-nks-gray-100 border border-nks-gray-200 text-xs rounded-sm text-nks-gray-705 font-mono font-bold"
                     >
                       #{t.name}
                       <button 
                         onClick={() => handleDeleteTag(t.id)} 
                         disabled={actionLoading}
-                        className="text-red-500 hover:text-red-700 font-bold ml-1 cursor-pointer disabled:opacity-50"
+                        className="text-nks-red hover:text-nks-red-dark font-black ml-1.5 cursor-pointer disabled:opacity-50 text-sm leading-none"
                       >
                         &times;
                       </button>
                     </span>
                   ))}
                   {tags.length === 0 && (
-                    <span className="text-sm text-slate-400 py-4">Nenhuma tag cadastrada.</span>
+                    <span className="text-xs text-nks-gray-400 font-semibold py-4">Nenhuma tag cadastrada.</span>
                   )}
                 </div>
               </div>
@@ -306,10 +309,10 @@ export default function ConteudoPage() {
           )}
 
           {activeTab === 'filters' && (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm flex flex-col gap-6 max-w-2xl">
+            <div className="bg-white border border-nks-gray-200 p-6 rounded-sm shadow-nks-sm flex flex-col gap-6 max-w-2xl">
               <div>
-                <h3 className="font-bold text-slate-800 dark:text-slate-200 text-base mb-1">Configurações de Exibição</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <h3 className="font-display font-extrabold uppercase tracking-tight text-nks-black text-[16px] mb-1">Configurações de Exibição</h3>
+                <p className="text-xs font-semibold text-nks-gray-750">
                   Escolha quais categorias devem aparecer no filtro da loja e ative ou desative-as sem excluí-las.
                 </p>
               </div>
@@ -318,21 +321,21 @@ export default function ConteudoPage() {
                 {categories.map((c) => (
                   <div 
                     key={c.id} 
-                    className="flex items-center justify-between p-3.5 border border-slate-100 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-950/20"
+                    className="flex items-center justify-between p-3.5 border border-nks-gray-200 rounded-sm bg-nks-gray-100/40 hover:bg-nks-gray-100/80 transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="h-4.5 w-4.5 rounded-full border border-slate-200 shadow-sm" style={{ backgroundColor: c.color || '#ccc' }} />
-                      <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{c.name}</span>
+                      <div className="h-4.5 w-4.5 rounded-sm border border-nks-gray-200 shadow-sm" style={{ backgroundColor: c.color || '#ccc' }} />
+                      <span className="text-sm font-bold text-nks-black">{c.name}</span>
                     </div>
 
                     <div className="flex items-center gap-4">
-                      <label className="flex items-center gap-2 text-xs font-semibold text-slate-505 cursor-pointer">
+                      <label className="flex items-center gap-2 text-xs font-bold text-nks-gray-700 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={c.showInFilter}
                           disabled={actionLoading}
                           onChange={() => handleToggleFilter(c)}
-                          className="rounded text-indigo-650 focus:ring-indigo-500 h-4 w-4 cursor-pointer"
+                          className="rounded-sm text-nks-red focus:ring-nks-red h-4 w-4 cursor-pointer"
                         />
                         Aparece no filtro da Loja
                       </label>

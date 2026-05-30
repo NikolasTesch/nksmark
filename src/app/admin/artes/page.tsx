@@ -80,62 +80,62 @@ export default function ArtesAdminPage() {
       
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 mb-1">
+          <h1 className="font-display text-[26px] font-extrabold uppercase tracking-tight text-nks-black mb-1">
             Gerenciar Catálogo de Artes
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-xs font-semibold text-nks-gray-700">
             Cadastre, edite e acompanhe todas as artes e arquivos originais disponíveis na plataforma.
           </p>
         </div>
 
         <Link href="/admin/artes/nova">
-          <Button className="rounded-xl font-bold gap-1.5 h-10 px-5 shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
+          <Button className="rounded-sm font-display font-extrabold uppercase tracking-wider text-xs gap-1.5 h-10 px-5 bg-nks-red hover:bg-nks-red-dark text-white shadow-nks-sm cursor-pointer active:scale-[0.99] border-none">
             <Plus className="h-4.5 w-4.5" /> Cadastrar Arte
           </Button>
         </Link>
       </div>
 
       {(error || actionError) && (
-        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/60 p-4 rounded-xl flex items-center gap-3 text-sm text-red-800 dark:text-red-400">
+        <div className="bg-nks-red-subtle border border-nks-red p-4 rounded-sm flex items-center gap-3 text-xs font-semibold text-nks-red-dark">
           <AlertCircle className="h-5 w-5 shrink-0" />
           <span>{actionError || error}</span>
         </div>
       )}
 
       {/* Filter and Search controls */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm flex items-center gap-3">
+      <div className="bg-white border border-nks-gray-200 p-4 rounded-sm shadow-nks-sm flex items-center gap-3">
         <input
           type="text"
           placeholder="Buscar arte por título ou descrição..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-grow rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20 px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 placeholder:text-slate-400"
+          className="flex-grow rounded-sm border border-nks-gray-200 bg-nks-gray-100/50 px-3.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-nks-red focus:border-nks-red placeholder:text-nks-gray-400 font-medium text-nks-black"
         />
       </div>
 
-      <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
+      <div className="border border-nks-gray-200 rounded-sm overflow-hidden bg-white shadow-nks-sm">
         {loading && dbArtworks.length === 0 ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+            <Loader2 className="h-8 w-8 animate-spin text-nks-red" />
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-950/40 text-slate-500 border-b border-slate-200 dark:border-slate-800 font-semibold text-xs uppercase tracking-wider">
-                  <th className="py-3 px-4">Preview</th>
-                  <th className="py-3 px-4">Título</th>
-                  <th className="py-3 px-4">Categoria</th>
-                  <th className="py-3 px-4">Formatos</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Ações</th>
+                <tr className="bg-nks-black text-white border-b border-nks-gray-200 font-display font-extrabold text-[11px] uppercase tracking-[0.08em]">
+                  <th className="py-3.5 px-4">Preview</th>
+                  <th className="py-3.5 px-4">Título</th>
+                  <th className="py-3.5 px-4">Categoria</th>
+                  <th className="py-3.5 px-4">Formatos</th>
+                  <th className="py-3.5 px-4">Status</th>
+                  <th className="py-3.5 px-4 text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-nks-gray-200">
                 {artworks.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/30 transition-colors">
-                    <td className="py-3 px-4">
-                      <div className="relative h-10 w-14 rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800 bg-slate-50">
+                  <tr key={item.id} className="hover:bg-nks-gray-100/30 transition-colors">
+                    <td className="py-3.5 px-4">
+                      <div className="relative h-10 w-14 rounded-sm overflow-hidden border border-nks-gray-200 bg-nks-gray-100 shrink-0">
                         <Image
                           src={item.previewUrl || '/placeholder.jpg'}
                           alt={item.title}
@@ -145,57 +145,57 @@ export default function ArtesAdminPage() {
                       </div>
                     </td>
                     
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4">
                       <div className="flex flex-col">
-                        <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                        <span className="font-bold text-nks-black flex items-center gap-1.5">
                           {item.title}
                           {item.isFree && (
-                            <span className="inline-flex items-center gap-0.5 bg-emerald-500 text-white text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full">
+                            <span className="inline-flex items-center gap-0.5 bg-nks-red text-white text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-sm font-display tracking-wider">
                               <Sparkles className="h-2 w-2" /> Grátis
                             </span>
                           )}
                         </span>
-                        <span className="text-[10px] text-slate-400 mt-0.5">Criada em {formatDate(item.createdAt)}</span>
+                        <span className="text-[10px] text-nks-gray-400 font-semibold mt-0.5">Criada em {formatDate(item.createdAt)}</span>
                       </div>
                     </td>
 
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4">
                       <CategoryBadge name={item.category.name} color={item.category.color} />
                     </td>
 
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4">
                       <div className="flex flex-wrap gap-1">
                         {item.files.map((file) => (
                           <FormatBadge key={file.id} format={file.format} />
                         ))}
                         {item.files.length === 0 && (
-                          <span className="text-xs text-slate-400 italic">Nenhum</span>
+                          <span className="text-[11px] text-nks-gray-400 italic font-medium">Nenhum</span>
                         )}
                       </div>
                     </td>
 
-                    <td className="py-3 px-4">
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
+                    <td className="py-3.5 px-4">
+                      <span className={`inline-flex px-2 py-0.5 rounded-sm text-[9px] font-extrabold uppercase border font-display tracking-wider ${
                         item.status === 'PUBLISHED'
-                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200/20'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                           : item.status === 'DRAFT'
-                            ? 'bg-slate-50 text-slate-700 dark:bg-slate-800 dark:text-slate-350 border border-slate-200/20'
-                            : 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400 border border-red-200/20'
+                            ? 'bg-nks-gray-100 text-nks-gray-700 border-nks-gray-200'
+                            : 'bg-red-50 text-nks-red border-red-200'
                       }`}>
                         {item.status === 'PUBLISHED' ? 'Publicado' : item.status === 'DRAFT' ? 'Rascunho' : 'Arquivado'}
                       </span>
                     </td>
 
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <Link href={`/loja/${item.slug}`} target="_blank">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 rounded-lg cursor-pointer" title="Ver no site">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-nks-gray-700 hover:text-nks-black hover:bg-nks-gray-100 border border-nks-gray-200 rounded-sm cursor-pointer" title="Ver no site">
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
                         
                         <Link href={`/admin/artes/${item.id}`}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-500 rounded-lg cursor-pointer" title="Editar">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-nks-red hover:text-nks-red-dark hover:bg-nks-red-subtle border border-nks-red/20 rounded-sm cursor-pointer" title="Editar">
                             <Edit3 className="h-4 w-4" />
                           </Button>
                         </Link>
@@ -205,7 +205,7 @@ export default function ArtesAdminPage() {
                           variant="ghost" 
                           size="icon" 
                           disabled={actionLoading}
-                          className="h-8 w-8 text-red-500 rounded-lg cursor-pointer hover:bg-red-50"
+                          className="h-8 w-8 text-nks-red hover:text-nks-red-dark hover:bg-nks-red-subtle border border-nks-red/20 rounded-sm cursor-pointer hover:bg-nks-red-subtle/50"
                           title="Excluir"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -216,7 +216,7 @@ export default function ArtesAdminPage() {
                 ))}
                 {artworks.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400">Nenhuma arte encontrada no catálogo.</td>
+                    <td colSpan={6} className="py-8 text-center text-nks-gray-400 font-semibold text-xs">Nenhuma arte encontrada no catálogo.</td>
                   </tr>
                 )}
               </tbody>

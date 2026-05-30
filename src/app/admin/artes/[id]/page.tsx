@@ -17,6 +17,7 @@ export default function EditarArtePage() {
   const { id } = useParams()
   const router = useRouter()
   const [categories, setCategories] = React.useState<Category[]>([])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [artworkData, setArtworkData] = React.useState<any>(null)
   const [loading, setLoading] = React.useState(true)
 
@@ -69,7 +70,8 @@ export default function EditarArtePage() {
     }
   }, [artworkData])
 
-  const handleSubmit = async (formData: Record<string, unknown>, files: File[]) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleSubmit = async (formData: Record<string, unknown>, _files: File[]) => {
     try {
       const res = await fetch(`/api/artworks/${id}`, {
         method: 'PATCH',
@@ -93,13 +95,13 @@ export default function EditarArtePage() {
   return (
     <div className="flex flex-col gap-6 py-4 animate-in fade-in duration-300">
       <div>
-        <Link href="/admin/artes" className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-primary transition-colors mb-2">
+        <Link href="/admin/artes" className="inline-flex items-center gap-1 text-[11px] font-bold text-nks-gray-400 hover:text-nks-red uppercase tracking-wider mb-2 transition-colors">
           <ChevronLeft className="h-4 w-4" /> Voltar para Listagem
         </Link>
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 mb-1.5">
+        <h1 className="font-display text-[26px] font-extrabold uppercase tracking-tight text-nks-black mb-1.5">
           Editar Arte Existente
         </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-xs font-semibold text-nks-gray-700">
           Modifique as informações gerais da arte ou gerencie seus arquivos de download.
         </p>
       </div>
@@ -107,7 +109,7 @@ export default function EditarArtePage() {
       <div className="mt-4">
         {loading ? (
           <div className="flex items-center py-12 justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+            <Loader2 className="h-8 w-8 animate-spin text-nks-red" />
           </div>
         ) : (
           <ArtworkForm
