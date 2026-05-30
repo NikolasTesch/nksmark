@@ -20,7 +20,10 @@ export async function GET() {
       return authStatus.response
     }
 
+    // Página de gestão de equipe: lista apenas membros com acesso (FASE/ADMIN).
+    // Usuários rebaixados para VISITOR (acesso revogado) não aparecem aqui.
     const users = await prisma.user.findMany({
+      where: { role: { in: [Role.FASE, Role.ADMIN] } },
       select: publicUserSelect,
       orderBy: { createdAt: 'desc' },
     })

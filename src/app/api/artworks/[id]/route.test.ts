@@ -5,7 +5,7 @@ import { Status } from '@prisma/client'
 // precisam vir de vi.hoisted() para já existirem nesse momento.
 const { prismaMock, protectAdminRoute } = vi.hoisted(() => ({
   prismaMock: {
-    artwork: { update: vi.fn(), delete: vi.fn() },
+    artwork: { update: vi.fn(), delete: vi.fn(), findUnique: vi.fn() },
     file: { deleteMany: vi.fn() },
   },
   protectAdminRoute: vi.fn(),
@@ -14,7 +14,7 @@ const { prismaMock, protectAdminRoute } = vi.hoisted(() => ({
 vi.mock('@/lib/prisma', () => ({ default: prismaMock }))
 vi.mock('@/lib/auth/middleware', () => ({ protectAdminRoute: () => protectAdminRoute() }))
 
-import { DELETE } from './route'
+import { DELETE, GET } from './route'
 
 const params = Promise.resolve({ id: 'art-1' })
 
@@ -49,5 +49,18 @@ describe('DELETE /api/artworks/[id]', () => {
     const res = await DELETE(new Request('http://localhost/api/artworks/art-1', { method: 'DELETE' }), { params })
     expect(res.status).toBe(403)
     expect(prismaMock.artwork.update).not.toHaveBeenCalled()
+  })
+})
+
+describe('GET /api/artworks/[id]', () => {
+  it('exige admin — não expõe a url do R2 para visitantes', async () => {
+    protectAdminRoute.mockResolvedValue({
+      authorized: false,
+      response: new Response(JSON.stringify({ success: false }), { status: 401 }),
+    })
+    const res = await GET(new Request('http://localhost/api/artworks/art-1'), { params })
+    expect(res.status).toBe(401)
+    // Nunca deve consultar o banco (logo, nunca retorna files.url) sem autorização.
+    expect(prismaMock.artwork.findUnique).not.toHaveBeenCalled()
   })
 })

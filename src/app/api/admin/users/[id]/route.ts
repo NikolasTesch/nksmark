@@ -71,13 +71,19 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       return NextResponse.json({ success: false, error: 'Não é possível excluir a conta master do administrador.' }, { status: 400 })
     }
 
-    const deletedUser = await prisma.user.delete({
-      where: { id }
+    // Soft delete por role: nunca apagamos fisicamente o usuário (preserva o
+    // histórico de downloads, que tem FK obrigatória sem cascade). Rebaixar para
+    // VISITOR revoga todo o acesso de equipe (FASE/ADMIN) — o GET de equipe não
+    // lista mais VISITOR, então ele sai da tela como se tivesse sido removido.
+    const revokedUser = await prisma.user.update({
+      where: { id },
+      data: { role: Role.VISITOR },
+      select: publicUserSelect,
     })
 
-    return NextResponse.json({ success: true, data: deletedUser })
+    return NextResponse.json({ success: true, data: revokedUser })
   } catch (error) {
-    console.error('Error deleting user:', error)
-    return NextResponse.json({ success: false, error: 'Erro ao excluir usuário.' }, { status: 500 })
+    console.error('Error revoking user access:', error)
+    return NextResponse.json({ success: false, error: 'Erro ao revogar acesso do usuário.' }, { status: 500 })
   }
 }

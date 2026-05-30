@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { Status } from '@prisma/client'
+import { Role, Status } from '@prisma/client'
 import { downloadRequestSchema } from '@/lib/validations/download'
 import { protectFaseRoute } from '@/lib/auth/middleware'
 import prisma from '@/lib/prisma'
@@ -44,6 +44,22 @@ export async function POST(req: Request) {
         { success: false, error: 'Esta arte não está disponível para download.' },
         { status: 403 }
       )
+    }
+
+    // O admin master vem do .env (id fixo 'admin') e não possui linha em User.
+    // Como Download.userId é FK obrigatória, garantimos a linha antes de registrar
+    // o download — caso contrário a criação violaria a constraint (erro 500).
+    if (userId === 'admin') {
+      await prisma.user.upsert({
+        where: { id: 'admin' },
+        update: {},
+        create: {
+          id: 'admin',
+          email: (process.env.ADMIN_EMAIL || 'admin@nksart.com.br').toLowerCase(),
+          name: 'NKS Admin',
+          role: Role.ADMIN,
+        },
+      })
     }
 
     await prisma.download.create({

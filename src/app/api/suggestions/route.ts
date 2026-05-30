@@ -20,12 +20,31 @@ export async function POST(req: Request) {
       const file = formData.get('image') as File | null
 
       if (file && file.size > 0) {
+        // Endpoint público: só aceitamos imagens reais e com tamanho limitado,
+        // para não permitir hospedar conteúdo arbitrário (HTML/SVG/scripts) sob
+        // o domínio público do R2 — evita phishing / XSS armazenado no domínio.
+        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+        const MAX_BYTES = 5 * 1024 * 1024 // 5 MB
+
+        if (!ALLOWED_TYPES.includes(file.type)) {
+          return NextResponse.json(
+            { success: false, error: 'Formato de imagem inválido. Use JPG, PNG, WEBP ou GIF.' },
+            { status: 400 }
+          )
+        }
+        if (file.size > MAX_BYTES) {
+          return NextResponse.json(
+            { success: false, error: 'A imagem deve ter no máximo 5 MB.' },
+            { status: 400 }
+          )
+        }
+
         const arrayBuffer = await file.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
         const uploadResult = await uploadFileToR2(
           buffer,
           file.name,
-          file.type || 'application/octet-stream',
+          file.type,
           'previews'
         )
         imageUrl = uploadResult.url

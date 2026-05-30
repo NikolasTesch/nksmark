@@ -7,6 +7,14 @@ import { generateSlug } from '@/lib/utils/slug'
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    // Esta rota retorna `files` com a `url`/chave do R2 (campo sensível) e artes
+    // em qualquer status (DRAFT/ARCHIVED). É consumida apenas pelo painel admin,
+    // portanto exige ADMIN. O catálogo público usa GET /api/artworks (sem `url`).
+    const authStatus = await protectAdminRoute()
+    if (!authStatus.authorized) {
+      return authStatus.response
+    }
+
     const { id } = await params
     const artwork = await prisma.artwork.findUnique({
       where: { id },
