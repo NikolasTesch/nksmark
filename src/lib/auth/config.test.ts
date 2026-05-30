@@ -11,9 +11,15 @@ vi.mock('@/lib/prisma', () => ({
 import { authConfig } from './config'
 
 // Extrai a função authorize do Credentials provider.
+// O NextAuth v5 embrulha `provider.authorize` num wrapper que exige um Request
+// real e retorna null quando chamado direto; a lógica original (admin/FASE)
+// fica preservada em `provider.options.authorize`. É essa que testamos.
 type AuthorizeFn = (c: Record<string, unknown> | undefined) => Promise<unknown>
-const provider = authConfig.providers[0] as unknown as { authorize: AuthorizeFn }
-const authorize = provider.authorize
+const provider = authConfig.providers[0] as unknown as {
+  authorize: AuthorizeFn
+  options?: { authorize?: AuthorizeFn }
+}
+const authorize = provider.options?.authorize ?? provider.authorize
 
 beforeEach(() => {
   findUnique.mockReset()

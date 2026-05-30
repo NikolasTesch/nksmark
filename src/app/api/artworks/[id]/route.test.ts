@@ -1,11 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { Status } from '@prisma/client'
 
-const prismaMock = {
-  artwork: { update: vi.fn(), delete: vi.fn() },
-  file: { deleteMany: vi.fn() },
-}
-const protectAdminRoute = vi.fn()
+// vi.mock é içado para o topo do arquivo; as variáveis que ele referencia
+// precisam vir de vi.hoisted() para já existirem nesse momento.
+const { prismaMock, protectAdminRoute } = vi.hoisted(() => ({
+  prismaMock: {
+    artwork: { update: vi.fn(), delete: vi.fn() },
+    file: { deleteMany: vi.fn() },
+  },
+  protectAdminRoute: vi.fn(),
+}))
 
 vi.mock('@/lib/prisma', () => ({ default: prismaMock }))
 vi.mock('@/lib/auth/middleware', () => ({ protectAdminRoute: () => protectAdminRoute() }))

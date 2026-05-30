@@ -1,12 +1,16 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { Status } from '@prisma/client'
 
-const prismaMock = {
-  file: { findUnique: vi.fn(), findMany: vi.fn() },
-  download: { create: vi.fn(), findMany: vi.fn() },
-}
-const protectFaseRoute = vi.fn()
-const getSignedDownloadUrl = vi.fn()
+// vi.mock é içado para o topo do arquivo; as variáveis que ele referencia
+// precisam vir de vi.hoisted() para já existirem nesse momento.
+const { prismaMock, protectFaseRoute, getSignedDownloadUrl } = vi.hoisted(() => ({
+  prismaMock: {
+    file: { findUnique: vi.fn(), findMany: vi.fn() },
+    download: { create: vi.fn(), findMany: vi.fn() },
+  },
+  protectFaseRoute: vi.fn(),
+  getSignedDownloadUrl: vi.fn(),
+}))
 
 vi.mock('@/lib/prisma', () => ({ default: prismaMock }))
 vi.mock('@/lib/auth/middleware', () => ({ protectFaseRoute: () => protectFaseRoute() }))
