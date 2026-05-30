@@ -76,8 +76,8 @@ export default function ArtworkDetailsPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 animate-pulse">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
-        <span className="text-sm text-slate-500 font-semibold">Carregando detalhes da arte...</span>
+        <Loader2 className="h-8 w-8 animate-spin text-nks-gray-400" />
+        <span className="text-sm text-nks-gray-700 font-semibold">Carregando detalhes da arte...</span>
       </div>
     )
   }
@@ -85,7 +85,7 @@ export default function ArtworkDetailsPage() {
   if (!artwork) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4">
-        <span className="text-base text-slate-500 font-semibold">Arte não localizada no catálogo.</span>
+        <span className="text-base text-nks-gray-700 font-semibold">Arte não localizada no catálogo.</span>
         <Link href="/loja">
           <Button className="rounded-xl">Voltar para o catálogo</Button>
         </Link>
@@ -97,8 +97,8 @@ export default function ArtworkDetailsPage() {
     <div className="flex flex-col gap-8 py-4 animate-in fade-in duration-300">
       
       <div>
-        <Link href="/loja" className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-primary transition-colors">
-          <ChevronLeft className="h-4 w-4" /> Voltar para o Catálogo
+        <Link href="/loja" className="inline-flex items-center gap-1 text-sm font-semibold text-nks-gray-400 hover:text-nks-red transition-colors">
+          <ChevronLeft className="h-4 w-4" /> Voltar para o catálogo
         </Link>
       </div>
 
@@ -108,42 +108,42 @@ export default function ArtworkDetailsPage() {
           <ArtworkPreview url={artwork.previewUrl} title={artwork.title} />
         </div>
 
-        <div className="lg:col-span-5 flex flex-col gap-6 p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm h-fit">
+        <div className="lg:col-span-5 flex flex-col gap-6 p-6 bg-white border border-nks-gray-200 rounded-lg shadow-nks-sm h-fit">
           
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <CategoryBadge name={artwork.category.name} color={artwork.category.color} />
               {artwork.isFree && (
-                <span className="inline-flex items-center gap-1 bg-emerald-500 text-white text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 bg-nks-red text-white text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-sm">
                   <Sparkles className="h-3 w-3" /> Grátis
                 </span>
               )}
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-50 leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-display font-bold uppercase tracking-[-0.015em] text-nks-black leading-tight mt-1">
               {artwork.title}
             </h1>
-            <div className="flex items-center gap-4 text-xs text-slate-400 mt-1 font-semibold">
+            <div className="flex items-center gap-4 text-xs text-nks-gray-400 mt-1 font-semibold">
               <span className="flex items-center gap-1">
                 <Calendar className="h-3.5 w-3.5" /> {formatDate(artwork.createdAt)}
               </span>
               <span className="flex items-center gap-1">
-                <FileType className="h-3.5 w-3.5" /> {artwork.files.length} {artwork.files.length === 1 ? 'Formato' : 'Formatos'}
+                <FileType className="h-3.5 w-3.5" /> {artwork.files.length} {artwork.files.length === 1 ? 'formato' : 'formatos'}
               </span>
             </div>
           </div>
 
           {artwork.description && (
-            <div className="flex flex-col gap-2 border-t border-slate-100 dark:border-slate-800 pt-4">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Sobre esta arte</span>
-              <p className="text-sm text-slate-650 dark:text-slate-350 leading-relaxed">
+            <div className="flex flex-col gap-2 border-t border-nks-gray-200 pt-4">
+              <span className="text-xs font-bold text-nks-gray-400 uppercase tracking-wider">Sobre esta arte</span>
+              <p className="text-sm text-nks-gray-700 leading-relaxed">
                 {artwork.description}
               </p>
             </div>
           )}
 
-          <div className="flex flex-col gap-2 border-t border-slate-100 dark:border-slate-800 pt-4">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Disponível para Download em:
+          <div className="flex flex-col gap-2 border-t border-nks-gray-200 pt-4">
+            <span className="text-xs font-bold text-nks-gray-400 uppercase tracking-wider">
+              Disponível para download em:
             </span>
             <div className="flex flex-wrap gap-1.5 mt-1">
               {artwork.files.map((file) => (
@@ -153,8 +153,8 @@ export default function ArtworkDetailsPage() {
           </div>
 
           {artwork.tags.length > 0 && (
-            <div className="flex flex-col gap-2 border-t border-slate-100 dark:border-slate-800 pt-4">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tags</span>
+            <div className="flex flex-col gap-2 border-t border-nks-gray-200 pt-4">
+              <span className="text-xs font-bold text-nks-gray-400 uppercase tracking-wider">Tags</span>
               <div className="flex flex-wrap gap-1.5">
                 {artwork.tags.map((tag) => (
                   <TagBadge key={tag.id} name={tag.name} />
@@ -163,30 +163,27 @@ export default function ArtworkDetailsPage() {
             </div>
           )}
 
-          <div className="border-t border-slate-100 dark:border-slate-800 pt-6 mt-2">
+          <div className="border-t border-nks-gray-200 pt-6 mt-2">
             <Button
               onClick={handleDownloadClick}
               size="lg"
-              className={`w-full rounded-xl gap-2 font-bold h-12 shadow-md transition-all active:scale-[0.98] ${
-                isFaseOrAdmin 
-                  ? 'bg-gradient-to-r from-violet-650 to-indigo-600 text-white' 
-                  : 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-50 dark:text-slate-900'
-              }`}
+              className="w-full gap-2 font-bold h-12"
+              variant={isFaseOrAdmin ? 'default' : 'secondary'}
             >
               {isFaseOrAdmin ? (
                 <>
                   <Download className="h-5 w-5 animate-pulse" />
-                  Liberar Downloads
+                  Liberar downloads
                 </>
               ) : (
                 <>
                   <Lock className="h-5 w-5" />
-                  Entrar como Equipe para Baixar
+                  Entrar como equipe para baixar
                 </>
               )}
             </Button>
             
-            <p className="text-[10px] text-slate-400 text-center leading-normal mt-2.5 max-w-xs mx-auto">
+            <p className="text-[10px] text-nks-gray-400 text-center leading-normal mt-2.5 max-w-xs mx-auto">
               {isFaseOrAdmin 
                 ? 'Downloads diretos a partir do nosso Cloudflare R2 privado.' 
                 : 'Arquivos protegidos por direitos autorais. Acesso restrito a designers homologados.'}

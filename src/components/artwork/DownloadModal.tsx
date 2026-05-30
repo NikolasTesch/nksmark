@@ -77,11 +77,11 @@ export function DownloadModal({
         </DialogHeader>
 
         {!isFaseOrAdmin && (
-          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 p-3.5 rounded-lg flex items-start gap-3 my-2 animate-in fade-in duration-300">
-            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
+          <div className="bg-nks-red-subtle border border-nks-red/20 p-3.5 rounded flex items-start gap-3 my-2 animate-in fade-in duration-300">
+            <AlertTriangle className="h-5 w-5 text-nks-red shrink-0 mt-0.5" />
             <div>
-              <span className="text-xs font-bold text-amber-800 dark:text-amber-400 block">Download Bloqueado</span>
-              <span className="text-xs text-amber-700 dark:text-amber-500 leading-normal">
+              <span className="text-xs font-bold text-nks-red-dark block">Download Bloqueado</span>
+              <span className="text-xs text-nks-red-dark/80 leading-normal">
                 Você está logado como visitante. Downloads são permitidos apenas para a equipe interna (role FASE).
               </span>
             </div>
@@ -90,7 +90,7 @@ export function DownloadModal({
 
         {isFaseOrAdmin && (
           <div className="flex flex-col gap-1.5 my-2">
-            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+            <label className="text-xs font-bold text-nks-gray-700 flex items-center gap-1.5">
               <Mail className="h-3.5 w-3.5" /> Confirmar Email de Registro (Opcional)
             </label>
             <Input
@@ -98,16 +98,16 @@ export function DownloadModal({
               placeholder="seu-email@equipe.com.br"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="rounded-lg h-9 border-slate-200 dark:border-slate-800"
+              className="rounded h-9 border-nks-gray-200"
             />
-            <span className="text-[10px] text-slate-400 leading-none">
+            <span className="text-[10px] text-nks-gray-400 leading-none">
               {"Isso ajuda a catalogar seu histórico na aba \"Meus Downloads\"."}
             </span>
           </div>
         )}
 
         <div className="flex flex-col gap-2 my-2">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+          <span className="text-xs font-bold text-nks-gray-400 uppercase tracking-wider block">
             Formatos Disponíveis
           </span>
           <div className="grid grid-cols-1 gap-2.5">
@@ -116,11 +116,11 @@ export function DownloadModal({
               return (
                 <div 
                   key={file.id} 
-                  className="flex items-center justify-between p-3 border border-slate-100 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-950 transition-colors bg-white dark:bg-slate-900"
+                  className="flex items-center justify-between p-3 border border-nks-gray-200 rounded hover:bg-nks-gray-100 transition-colors bg-white"
                 >
                   <div className="flex items-center gap-3">
                     <FormatBadge format={file.format} />
-                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                    <span className="text-xs font-bold text-nks-gray-700">
                       Tamanho: {formatBytes(file.size)}
                     </span>
                   </div>
@@ -129,7 +129,7 @@ export function DownloadModal({
                     onClick={() => handleDownload(file)}
                     disabled={!isFaseOrAdmin || loadingFileId !== null}
                     size="sm"
-                    className="gap-1.5 font-semibold text-xs px-3.5 h-8 rounded-lg"
+                    className="gap-1.5 font-semibold text-xs px-3.5 h-8 rounded"
                   >
                     {isLoading ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -145,21 +145,21 @@ export function DownloadModal({
         </div>
 
         {successMessage && (
-          <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60 p-3.5 rounded-lg flex items-center gap-2.5 text-xs text-emerald-800 dark:text-emerald-400 animate-in fade-in duration-300">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+          <div className="bg-nks-gray-100 border border-nks-gray-200 p-3.5 rounded flex items-center gap-2.5 text-xs text-nks-black animate-in fade-in duration-300">
+            <CheckCircle2 className="h-4 w-4 text-nks-black shrink-0" />
             <span>{successMessage}</span>
           </div>
         )}
 
         {errorMessage && (
-          <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/60 p-3.5 rounded-lg flex items-center gap-2.5 text-xs text-red-800 dark:text-red-400 animate-in fade-in duration-300">
-            <AlertTriangle className="h-4 w-4 text-red-600 shrink-0" />
+          <div className="bg-nks-red-subtle border border-nks-red/20 p-3.5 rounded flex items-center gap-2.5 text-xs text-nks-red-dark animate-in fade-in duration-300">
+            <AlertTriangle className="h-4 w-4 text-nks-red shrink-0" />
             <span>{errorMessage}</span>
           </div>
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-lg h-9">
+          <Button variant="ghost" onClick={() => onOpenChange(false)} className="rounded h-9">
             Fechar
           </Button>
         </DialogFooter>

@@ -34,7 +34,7 @@ export function ArtworkFilters({
   onReset,
 }: ArtworkFiltersProps) {
   return (
-    <div className="flex flex-col gap-6 p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm mb-8 animate-in fade-in duration-300">
+    <div className="flex flex-col gap-6 p-6 bg-white border border-nks-gray-200 rounded-lg shadow-nks-sm mb-8 animate-in fade-in duration-300">
       
       {/* Top Search & Reset Row */}
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
@@ -44,14 +44,14 @@ export function ArtworkFilters({
           <Button 
             onClick={() => onIsFreeSelect(isFree ? undefined : true)}
             variant={isFree ? 'default' : 'outline'}
-            className="rounded-full gap-2 text-xs font-semibold px-4 h-9"
+            className="rounded gap-2 text-xs font-semibold px-4 h-9"
           >
             <Sparkles className="h-4 w-4" />
             Só Gratuitas
           </Button>
           
           {(selectedCategory || selectedTag || search || isFree !== undefined) && (
-            <Button onClick={onReset} variant="ghost" className="text-xs text-slate-500 hover:text-slate-900 rounded-full h-9">
+            <Button onClick={onReset} variant="ghost" className="text-xs text-nks-gray-700 hover:text-nks-black rounded h-9">
               Limpar Filtros
             </Button>
           )}
@@ -60,14 +60,14 @@ export function ArtworkFilters({
 
       {/* Categories Row */}
       <div className="flex flex-col gap-2.5">
-        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+        <span className="text-xs font-bold text-nks-gray-400 uppercase tracking-wider flex items-center gap-2">
           <Grid className="h-3.5 w-3.5" /> Categorias
         </span>
         <div className="flex flex-wrap gap-2">
           <Button
             onClick={() => onCategorySelect(undefined)}
             variant={!selectedCategory ? 'default' : 'outline'}
-            className="rounded-full text-xs px-4 h-8"
+            className="rounded text-xs px-4 h-8"
           >
             Todas
           </Button>
@@ -76,7 +76,7 @@ export function ArtworkFilters({
               key={cat.id}
               onClick={() => onCategorySelect(cat.id)}
               variant={selectedCategory === cat.id ? 'default' : 'outline'}
-              className="rounded-full text-xs px-4 h-8 transition-all"
+              className="rounded text-xs px-4 h-8 transition-all"
               style={
                 selectedCategory === cat.id && cat.color
                   ? { backgroundColor: cat.color, borderColor: 'transparent', color: '#fff' }
@@ -91,8 +91,8 @@ export function ArtworkFilters({
 
       {/* Tags Row */}
       {tags.length > 0 && (
-        <div className="flex flex-col gap-2.5 border-t border-slate-100 dark:border-slate-800 pt-4">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+        <div className="flex flex-col gap-2.5 border-t border-nks-gray-200 pt-4">
+          <span className="text-xs font-bold text-nks-gray-400 uppercase tracking-wider">
             Tags populares
           </span>
           <div className="flex flex-wrap gap-1.5">
@@ -100,10 +100,10 @@ export function ArtworkFilters({
               <button
                 key={tag.id}
                 onClick={() => onTagSelect(selectedTag === tag.id ? undefined : tag.id)}
-                className={`text-xs px-2.5 py-1 rounded-md border transition-all ${
+                className={`font-mono text-xs px-2.5 py-1 rounded border transition-all ${
                   selectedTag === tag.id
-                    ? 'bg-primary border-primary text-white font-medium'
-                    : 'bg-slate-50 border-slate-100 hover:bg-slate-100 text-slate-600 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800'
+                    ? 'bg-nks-red border-nks-red text-white font-medium'
+                    : 'bg-nks-gray-100 border-nks-gray-200 hover:bg-nks-gray-200 text-nks-gray-700'
                 }`}
               >
                 #{tag.name}

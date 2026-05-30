@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { ArtworkCard } from '@/components/artwork/ArtworkCard'
-import { DownloadCloud, Layers, Lock, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { ArtworkWithRelations } from '@/types/artwork'
 import { Status } from '@prisma/client'
 import prisma from '@/lib/prisma'
@@ -133,45 +133,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Fundamentos — branco liso, ícones pretos, bordas retas */}
-      <section className="py-16 md:py-20 bg-white border-b border-nks-gray-200">
-        <div className="container mx-auto px-4 md:px-8">
-          <div className="max-w-2xl mb-12">
-            <span className="nks-eyebrow">Por que NKS Art</span>
-            <h2 className="font-display font-bold uppercase tracking-[-0.015em] text-2xl md:text-3xl text-nks-black mt-2">
-              Catálogo de ateliê, feito para quem produz
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {[
-              {
-                icon: Layers,
-                title: 'Curvas editáveis',
-                body: 'Vetores desenhados com precisão, sem sobreposições falhas — prontos para corte em plotter e serigrafia.',
-              },
-              {
-                icon: DownloadCloud,
-                title: 'Formatos de trabalho',
-                body: 'O mesmo arquivo em CDR, AI, PDF e OTF. Abra direto no Corel, no Illustrator ou instale a fonte.',
-              },
-              {
-                icon: Lock,
-                title: 'Acesso da equipe',
-                body: 'Navegação aberta a todos; downloads liberados para a equipe interna, com login simples e seguro.',
-              },
-            ].map(({ icon: Icon, title, body }) => (
-              <div key={title} className="flex flex-col gap-3 p-6 bg-nks-gray-100 border border-nks-gray-200 rounded-lg">
-                <div className="flex h-10 w-10 items-center justify-center rounded bg-nks-black text-white">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <h3 className="font-semibold text-[17px] text-nks-black">{title}</h3>
-                <p className="text-sm text-nks-gray-700 leading-relaxed">{body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Destaques do catálogo */}
       <section className="py-16 md:py-20 bg-white">

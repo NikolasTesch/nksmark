@@ -16,7 +16,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
         className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
         onClick={() => onOpenChange?.(false)} 
       />
-      <div className="relative z-10 w-full max-w-lg p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-lg animate-in fade-in zoom-in duration-200">
+      <div className="relative z-10 w-full max-w-lg p-6 bg-white border border-nks-gray-200 rounded shadow-nks-lg animate-in fade-in zoom-in duration-200">
         {children}
       </div>
     </div>
@@ -32,11 +32,11 @@ export function DialogHeader({ children, className }: { children: React.ReactNod
 }
 
 export function DialogTitle({ children, className }: { children: React.ReactNode, className?: string }) {
-  return <h3 className={cn("text-lg font-semibold leading-none tracking-tight text-slate-950 dark:text-slate-50", className)}>{children}</h3>
+  return <h3 className={cn("text-lg font-display font-bold uppercase tracking-[-0.015em] text-nks-black", className)}>{children}</h3>
 }
 
 export function DialogDescription({ children, className }: { children: React.ReactNode, className?: string }) {
-  return <p className={cn("text-sm text-slate-500 dark:text-slate-400", className)}>{children}</p>
+  return <p className={cn("text-sm text-nks-gray-700", className)}>{children}</p>
 }
 
 export function DialogFooter({ children, className }: { children: React.ReactNode, className?: string }) {
@@ -47,7 +47,7 @@ export function DialogClose({ onClick, className }: { onClick?: () => void, clas
   return (
     <button 
       onClick={onClick} 
-      className={cn("absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-slate-50", className)}
+      className={cn("absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none text-nks-gray-400 hover:text-nks-black", className)}
     >
       <X className="h-4 w-4" />
       <span className="sr-only">Fechar</span>

@@ -41,13 +41,11 @@ export default function FAQPage() {
   return (
     <div className="flex flex-col gap-6 py-4 max-w-2xl mx-auto animate-in fade-in duration-300">
       <div className="text-center">
-        <div className="p-3 bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 rounded-full w-fit mx-auto mb-4">
-          <HelpCircle className="h-7 w-7" />
-        </div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 mb-2">
-          Perguntas Frequentes (FAQ)
+        <span className="nks-eyebrow">Dúvidas Frequentes</span>
+        <h1 className="font-display font-extrabold uppercase tracking-[-0.03em] leading-[1.02] text-3xl sm:text-4xl mt-3 mb-4 text-nks-black">
+          FAQ
         </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-lg mx-auto">
+        <p className="text-sm text-nks-gray-700 max-w-lg mx-auto">
           Tire suas dúvidas rápidas sobre permissões de acesso, compatibilidade de formatos e como gerenciar seus downloads.
         </p>
       </div>
@@ -58,24 +56,24 @@ export default function FAQPage() {
           return (
             <div 
               key={idx}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs transition-all"
+              className="bg-white border border-nks-gray-200 rounded overflow-hidden transition-all"
             >
               <button
                 onClick={() => toggleAccordion(idx)}
-                className="w-full flex items-center justify-between p-4 text-left font-bold text-sm sm:text-base text-slate-800 dark:text-slate-200 hover:bg-slate-50/50 dark:hover:bg-slate-950/30 transition-colors"
+                className="w-full flex items-center justify-between p-4 text-left font-semibold text-sm sm:text-base text-nks-black hover:bg-nks-gray-100 transition-colors"
               >
                 <span>{item.question}</span>
-                <ChevronDown className={`h-4.5 w-4.5 text-slate-400 transition-transform duration-300 shrink-0 ml-2 ${
-                  isOpen ? 'rotate-180 text-primary' : 'rotate-0'
+                <ChevronDown className={`h-4.5 w-4.5 text-nks-gray-400 transition-transform duration-300 shrink-0 ml-2 ${
+                  isOpen ? 'rotate-180 text-nks-red' : 'rotate-0'
                 }`} />
               </button>
 
               <div 
                 className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                  isOpen ? 'max-h-[300px] opacity-100 border-t border-slate-100 dark:border-slate-800' : 'max-h-0 opacity-0'
+                  isOpen ? 'max-h-[300px] opacity-100 border-t border-nks-gray-200' : 'max-h-0 opacity-0'
                 }`}
               >
-                <div className="p-4 text-xs sm:text-sm text-slate-555 dark:text-slate-400 leading-relaxed bg-slate-50/30 dark:bg-slate-950/10">
+                <div className="p-4 text-xs sm:text-sm text-nks-gray-700 leading-relaxed bg-nks-gray-100/50">
                   {item.answer}
                 </div>
               </div>

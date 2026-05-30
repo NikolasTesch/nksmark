@@ -7,16 +7,16 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 
 function Badge({ className, variant = "default", ...props }: BadgeProps) {
   const variantStyles = {
-    default: "border-transparent bg-slate-900 text-slate-50 hover:bg-slate-900/80 dark:bg-slate-50 dark:text-slate-900 dark:hover:bg-slate-50/80",
-    secondary: "border-transparent bg-slate-100 text-slate-900 hover:bg-slate-100/80 dark:bg-slate-800 dark:text-slate-50 dark:hover:bg-slate-800/80",
-    destructive: "border-transparent bg-red-500 text-slate-50 hover:bg-red-500/80 dark:bg-red-900 dark:text-slate-50 dark:hover:bg-red-900/80",
-    outline: "text-slate-950 border border-slate-200 dark:text-slate-50 dark:border-slate-800",
+    default: "border-transparent bg-nks-black text-white hover:bg-nks-black/90",
+    secondary: "border-transparent bg-nks-gray-100 text-nks-black hover:bg-nks-gray-200",
+    destructive: "border-transparent bg-nks-red text-white hover:bg-nks-red-dark",
+    outline: "border border-nks-gray-200 bg-transparent text-nks-gray-700 hover:bg-nks-gray-100",
   }
 
   return (
     <div
       className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-slate-950",
+        "inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-nks-red-subtle",
         variantStyles[variant],
         className
       )}

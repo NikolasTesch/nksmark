@@ -44,23 +44,20 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-white relative overflow-hidden">
+    <div className="min-h-screen bg-nks-black flex flex-col items-center justify-center p-4 text-white relative overflow-hidden">
       
-      <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-violet-500/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl" />
-
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl relative z-10 flex flex-col gap-6 animate-in fade-in zoom-in duration-300">
+      <div className="w-full max-w-md bg-nks-gray-900 border border-white/10 p-8 rounded shadow-nks-lg relative z-10 flex flex-col gap-6 animate-in fade-in zoom-in duration-300">
         
         <div className="text-center flex flex-col items-center gap-1.5">
-          <Link href="/" className="font-extrabold text-2xl tracking-tight bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent font-sans">
+          <Link href="/" className="font-display font-extrabold uppercase tracking-[-0.03em] leading-none text-2xl text-white">
             NKS Art
           </Link>
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Acesso de Equipe</span>
+          <span className="text-[10px] font-bold text-nks-gray-400 uppercase tracking-[0.12em] block mt-1">Acesso de equipe</span>
         </div>
 
         {error && (
-          <div className="bg-red-950/30 border border-red-900/60 p-3.5 rounded-lg flex items-start gap-2.5 text-xs text-red-400 font-semibold leading-normal font-sans">
-            <AlertTriangle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
+          <div className="bg-nks-red-subtle border border-nks-red/20 p-3.5 rounded flex items-start gap-2.5 text-xs text-nks-red-dark font-semibold leading-normal">
+            <AlertTriangle className="h-4.5 w-4.5 shrink-0 mt-0.5 text-nks-red" />
             <span>{error}</span>
           </div>
         )}
@@ -68,8 +65,8 @@ function LoginContent() {
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
-              <Mail className="h-3.5 w-3.5 text-slate-500" /> Email Corporativo
+            <label className="text-xs font-bold text-nks-gray-400 flex items-center gap-1.5">
+              <Mail className="h-3.5 w-3.5 text-nks-gray-400" /> Email corporativo
             </label>
             <Input
               type="email"
@@ -77,13 +74,13 @@ function LoginContent() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="bg-slate-950/40 border-slate-800 text-white rounded-lg h-10 placeholder:text-slate-500 focus-visible:ring-indigo-550"
+              className="bg-nks-black border-white/10 text-white rounded h-10 placeholder:text-nks-gray-400 focus-visible:ring-nks-red focus-visible:border-nks-red"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
-              <Lock className="h-3.5 w-3.5 text-slate-500" /> Senha de Equipe
+            <label className="text-xs font-bold text-nks-gray-400 flex items-center gap-1.5">
+              <Lock className="h-3.5 w-3.5 text-nks-gray-400" /> Senha de equipe
             </label>
             <Input
               type="password"
@@ -91,29 +88,29 @@ function LoginContent() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="bg-slate-950/40 border-slate-800 text-white rounded-lg h-10 placeholder:text-slate-500 focus-visible:ring-indigo-550"
+              className="bg-nks-black border-white/10 text-white rounded h-10 placeholder:text-nks-gray-400 focus-visible:ring-nks-red focus-visible:border-nks-red"
             />
           </div>
 
           <Button 
             type="submit" 
             disabled={loading}
-            className="w-full rounded-xl font-bold h-11 bg-gradient-to-r from-violet-600 to-indigo-650 text-white shadow-lg gap-2 mt-2"
+            className="w-full h-11 gap-2 mt-2"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              'Autenticar Acesso'
+              'Autenticar acesso'
             )}
           </Button>
         </form>
 
-        <div className="text-center border-t border-slate-800/80 pt-4 mt-1">
-          <span className="text-[10px] text-slate-550 flex items-center justify-center gap-1">
-            <Sparkles className="h-3 w-3 text-emerald-500" /> Acesso restrito para equipe homologada FASE.
+        <div className="text-center border-t border-white/10 pt-4 mt-1">
+          <span className="text-[10px] text-nks-gray-400 flex items-center justify-center gap-1">
+            <Sparkles className="h-3 w-3 text-nks-red" /> Acesso restrito para equipe homologada FASE.
           </span>
-          <Link href="/" className="text-xs text-indigo-400 hover:underline mt-2 block font-semibold">
-            ← Voltar para o Site Público
+          <Link href="/" className="text-xs text-nks-red hover:underline mt-2 block font-semibold hover:text-nks-red-light">
+            ← Voltar para o site público
           </Link>
         </div>
       </div>
@@ -124,8 +121,8 @@ function LoginContent() {
 export default function LoginPage() {
   return (
     <React.Suspense fallback={
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-white">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-500 animate-pulse" />
+      <div className="min-h-screen bg-nks-black flex flex-col items-center justify-center p-4 text-white">
+        <Loader2 className="h-8 w-8 animate-spin text-nks-gray-400 animate-pulse" />
       </div>
     }>
       <LoginContent />

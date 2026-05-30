@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { Badge } from '@/components/ui/badge'
 
 interface TagBadgeProps {
   name: string
@@ -8,12 +7,13 @@ interface TagBadgeProps {
 
 export function TagBadge({ name, onClick }: TagBadgeProps) {
   return (
-    <Badge
-      variant="outline"
-      className={`font-normal text-xs px-2 py-0.5 rounded-md cursor-pointer transition-all hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-50 ${onClick ? 'active:scale-95' : ''}`}
+    <span
       onClick={onClick}
+      className={`inline-flex items-center font-mono text-xs px-[7px] py-0.5 rounded border border-nks-gray-200 text-nks-gray-700 bg-white hover:border-nks-black hover:text-nks-black transition-colors ${
+        onClick ? 'cursor-pointer active:scale-95' : ''
+      }`}
     >
       #{name}
-    </Badge>
+    </span>
   )
 }

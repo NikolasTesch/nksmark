@@ -16,10 +16,11 @@ export default function MeusDownloadsPage() {
     <div className="flex flex-col gap-6 py-4 animate-in fade-in duration-300">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 mb-2">
+          <span className="nks-eyebrow">Histórico do Navegador</span>
+          <h1 className="font-display font-extrabold uppercase tracking-[-0.03em] leading-[1.02] text-2xl md:text-3xl text-nks-black mt-2 mb-2">
             Meus Downloads
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-nks-gray-700">
             Histórico das artes baixadas recentemente neste navegador.
           </p>
         </div>
@@ -29,47 +30,47 @@ export default function MeusDownloadsPage() {
             onClick={clearHistory} 
             variant="outline" 
             size="sm" 
-            className="text-red-500 hover:text-red-700 hover:bg-red-50/50 gap-1.5 h-9 rounded-lg"
+            className="gap-1.5"
           >
             <Trash2 className="h-4 w-4" />
-            Limpar Histórico
+            Limpar histórico
           </Button>
         )}
       </div>
 
       {history.length === 0 ? (
-        <div className="flex flex-col items-center justify-center text-center p-16 border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20 rounded-2xl max-w-lg mx-auto my-8">
-          <div className="p-4 bg-white dark:bg-slate-950 rounded-full shadow-sm mb-4">
-            <History className="h-8 w-8 text-slate-400" />
+        <div className="flex flex-col items-center justify-center text-center p-12 border border-nks-gray-200 bg-nks-gray-100 rounded max-w-lg mx-auto my-8">
+          <div className="flex h-12 w-12 items-center justify-center rounded bg-nks-black text-white mb-4">
+            <History className="h-6 w-6" />
           </div>
-          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-50 mb-1.5">Sem downloads recentes</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-xs leading-normal">
+          <h3 className="font-semibold text-lg text-nks-black mb-1.5">Sem downloads recentes</h3>
+          <p className="text-sm text-nks-gray-700 mb-6 max-w-xs leading-normal">
             Você ainda não realizou downloads de arquivos editáveis na plataforma. Explore nosso acervo!
           </p>
           <Link href="/loja">
-            <Button className="rounded-full font-semibold gap-1 px-5 h-9">
-              Ir para a Loja <ArrowRight className="h-4 w-4" />
+            <Button className="gap-1 px-5 h-9">
+              Ir para a loja <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
         </div>
       ) : (
-        <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm bg-white dark:bg-slate-900">
+        <div className="border border-nks-gray-200 rounded overflow-hidden bg-white shadow-nks-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-sm">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-950/40 text-slate-500 border-b border-slate-200 dark:border-slate-800 font-semibold text-xs uppercase tracking-wider">
+                <tr className="bg-nks-black text-white border-b border-nks-gray-200 font-semibold text-[11px] uppercase tracking-wider">
                   <th className="py-3.5 px-4">Visual</th>
                   <th className="py-3.5 px-4">Arte / Título</th>
                   <th className="py-3.5 px-4">Formato</th>
-                  <th className="py-3.5 px-4">Data do Download</th>
+                  <th className="py-3.5 px-4">Data do download</th>
                   <th className="py-3.5 px-4 text-right">Ação</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-nks-gray-200">
                 {history.map((item, idx) => (
-                  <tr key={`${item.id}-${idx}`} className="hover:bg-slate-50/40 dark:hover:bg-slate-950/20 transition-colors">
+                  <tr key={`${item.id}-${idx}`} className="hover:bg-nks-gray-100 transition-colors">
                     <td className="py-3.5 px-4">
-                      <div className="relative h-10 w-14 rounded-md overflow-hidden border border-slate-100 dark:border-slate-800 bg-slate-50">
+                      <div className="relative h-10 w-14 rounded overflow-hidden border border-nks-gray-200 bg-nks-gray-100">
                         <Image
                           src={item.previewUrl || '/placeholder.jpg'}
                           alt={item.artworkTitle}
@@ -78,21 +79,21 @@ export default function MeusDownloadsPage() {
                         />
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 font-semibold text-slate-800 dark:text-slate-200">
+                    <td className="py-3.5 px-4 font-semibold text-nks-black">
                       {item.artworkTitle}
                     </td>
                     <td className="py-3.5 px-4">
                       <FormatBadge format={item.format} />
                     </td>
-                    <td className="py-3.5 px-4 text-xs text-slate-500">
+                    <td className="py-3.5 px-4 text-xs text-nks-gray-400">
                       {formatDate(item.downloadedAt)}
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <Link 
                         href={`/loja/${item.artworkId}`} 
-                        className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-nks-red hover:underline hover:text-nks-red-dark"
                       >
-                        Ver Arte <ExternalLink className="h-3 w-3" />
+                        Ver arte <ExternalLink className="h-3 w-3" />
                       </Link>
                     </td>
                   </tr>

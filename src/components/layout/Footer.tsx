@@ -12,13 +12,15 @@ export function Footer() {
 
         {/* Column 1 - Brand & Tagline */}
         <div className="flex flex-col gap-3 md:col-span-2">
-          <Image
-            src="/brand/nks-logo-mark-white.png"
-            alt="NKS Art"
-            width={120}
-            height={30}
-            className="h-[30px] w-auto"
-          />
+          <Link href="/" className="w-fit block">
+            <Image
+              src="/brand/nks-logo-mark-white.png"
+              alt="NKS Art"
+              width={120}
+              height={30}
+              className="h-[30px] w-auto"
+            />
+          </Link>
           <p className="text-sm text-white/55 max-w-sm leading-relaxed mt-1">
             Catálogo curado de artes para sublimação — estampas, frases e vetores prontos.
             Baixe em CDR, AI, PDF e OTF. Acesso de download liberado para a equipe interna.

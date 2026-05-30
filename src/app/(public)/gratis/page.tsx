@@ -53,13 +53,11 @@ export default function GratisPage() {
   return (
     <div className="flex flex-col gap-6 py-4 animate-in fade-in duration-300">
       <div>
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
-          <Sparkles className="h-3.5 w-3.5" /> Acesso Aberto Equipe
-        </div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 mb-2">
+        <span className="nks-eyebrow">Acesso Aberto Equipe</span>
+        <h1 className="font-display font-extrabold uppercase tracking-[-0.03em] leading-[1.02] text-2xl md:text-3xl text-nks-black mt-2 mb-2">
           Artes Gratuitas
         </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-nks-gray-700">
           Esta seção cataloga exclusivamente os arquivos da plataforma liberados inteiramente de forma gratuita para a equipe.
         </p>
       </div>
