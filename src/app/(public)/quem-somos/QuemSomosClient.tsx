@@ -78,7 +78,7 @@ export function QuemSomosClient() {
     visible: { 
       opacity: 1, 
       y: 0,
-      transition: { type: 'spring', stiffness: 220, damping: 20 }
+      transition: { type: 'spring' as const, stiffness: 220, damping: 20 }
     }
   }
 
@@ -307,7 +307,7 @@ export function QuemSomosClient() {
                     <motion.div 
                       initial={{ scale: 0 }}
                       animate={isTimelineInView ? { scale: 1 } : { scale: 0 }}
-                      transition={{ delay: 0.15 * idx, type: 'spring' }}
+                      transition={{ delay: 0.15 * idx, type: 'spring' as const }}
                       className={`h-9 w-9 rounded-full ${milestone.color} text-white flex items-center justify-center border-4 border-white shadow-nks`}
                     >
                       <MilestoneIcon className="h-4 w-4" />

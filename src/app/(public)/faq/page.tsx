@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { ChevronDown } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, Variants } from 'framer-motion'
 
 interface FAQItem {
   question: string
@@ -51,12 +51,12 @@ export default function FAQPage() {
     }
   }
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 15 },
     show: { 
       opacity: 1, 
       y: 0, 
-      transition: { type: 'spring' as const as const, stiffness: 260, damping: 25 } 
+      transition: { type: 'spring', stiffness: 260, damping: 25 } 
     }
   }
 
