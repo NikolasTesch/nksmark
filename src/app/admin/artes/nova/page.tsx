@@ -6,13 +6,6 @@ import { Category, Status } from '@prisma/client'
 import { ChevronLeft, Loader2, Upload, Check, X, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 
-const mockCategories: Category[] = [
-  { id: 'c1', name: 'Estampas', slug: 'estampas', color: '#10b981', showInFilter: true, filterOrder: 1 },
-  { id: 'c2', name: 'Fontes', slug: 'fontes', color: '#ec4899', showInFilter: true, filterOrder: 2 },
-  { id: 'c3', name: 'Vetores', slug: 'vetores', color: '#3b82f6', showInFilter: true, filterOrder: 3 },
-  { id: 'c4', name: 'Logos', slug: 'logos', color: '#f59e0b', showInFilter: true, filterOrder: 4 },
-]
-
 export default function NovaArtePage() {
   const router = useRouter()
   const [categories, setCategories] = React.useState<Category[]>([])
@@ -39,13 +32,11 @@ export default function NovaArtePage() {
     fetch('/api/categories')
       .then((r) => r.json())
       .then((res) => {
-        if (res.success && res.data.length > 0) {
+        if (res.success) {
           setCategories(res.data)
-        } else {
-          setCategories(mockCategories)
         }
       })
-      .catch(() => setCategories(mockCategories))
+      .catch((err) => console.error('Erro ao buscar categorias:', err))
       .finally(() => setLoading(false))
   }, [])
 

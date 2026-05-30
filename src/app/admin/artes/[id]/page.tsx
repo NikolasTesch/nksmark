@@ -7,12 +7,6 @@ import { Category, Status } from '@prisma/client'
 import { ChevronLeft, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
-const mockCategories: Category[] = [
-  { id: 'c1', name: 'Estampas', slug: 'estampas', color: '#10b981', showInFilter: true, filterOrder: 1 },
-  { id: 'c2', name: 'Fontes', slug: 'fontes', color: '#ec4899', showInFilter: true, filterOrder: 2 },
-  { id: 'c3', name: 'Vetores', slug: 'vetores', color: '#3b82f6', showInFilter: true, filterOrder: 3 },
-]
-
 export default function EditarArtePage() {
   const { id } = useParams()
   const router = useRouter()
@@ -33,10 +27,8 @@ export default function EditarArtePage() {
         const cats = await catRes.json()
         const art = await artRes.json()
 
-        if (cats.success && cats.data.length > 0) {
+        if (cats.success) {
           setCategories(cats.data)
-        } else {
-          setCategories(mockCategories)
         }
 
         if (art.success) {
@@ -47,7 +39,6 @@ export default function EditarArtePage() {
         }
       } catch (err) {
         console.error(err)
-        setCategories(mockCategories)
       } finally {
         setLoading(false)
       }

@@ -58,8 +58,7 @@ prisma/          # schema.prisma + seed.ts
 
 - Gestão de conteúdo: o spec define `/admin/conteudo` com abas (categorias/tags/filtros); o build
   tem `/admin/categorias`. Não existe ainda `/admin/usuarios` nem `/admin/artes/[id]` de tags.
-- Login admin é **mock**: aceita `admin123` em `src/lib/auth/config.ts`. Substituir por hash bcrypt
-  real antes de produção (a var `ADMIN_PASSWORD_HASH` existe no `.env` mas ainda não é verificada).
+- Login admin: utiliza verificação estrita via algoritmo seguro scrypt contra a variável ADMIN_PASSWORD_HASH definida no arquivo .env (sem fallbacks em texto puro).
 
 ## Convenções (seguir o que já existe no código)
 

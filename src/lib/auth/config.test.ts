@@ -24,25 +24,25 @@ const authorize = provider.options?.authorize ?? provider.authorize
 beforeEach(() => {
   findUnique.mockReset()
   process.env.ADMIN_EMAIL = 'admin@nksart.com.br'
-  delete process.env.ADMIN_PASSWORD_HASH
 })
 
 describe('authorize — admin master', () => {
-  it('aceita o fallback de dev (admin123)', async () => {
-    const result = await authorize({ email: 'admin@nksart.com.br', password: 'admin123' })
-    expect(result).toMatchObject({ id: 'admin', role: Role.ADMIN })
-    expect(findUnique).not.toHaveBeenCalled()
+  it('rejeita se ADMIN_PASSWORD_HASH não estiver configurado', async () => {
+    delete process.env.ADMIN_PASSWORD_HASH
+    const result = await authorize({ email: 'admin@nksart.com.br', password: 'qualquer-coisa' })
+    expect(result).toBeNull()
   })
 
-  it('rejeita senha de admin incorreta', async () => {
+  it('rejeita senha de admin incorreta contra o hash', async () => {
+    process.env.ADMIN_PASSWORD_HASH = await hashPassword('super-secreta')
     const result = await authorize({ email: 'admin@nksart.com.br', password: 'errada' })
     expect(result).toBeNull()
   })
 
-  it('verifica ADMIN_PASSWORD_HASH quando configurado (scrypt)', async () => {
+  it('verifica ADMIN_PASSWORD_HASH corretamente (scrypt)', async () => {
     process.env.ADMIN_PASSWORD_HASH = await hashPassword('super-secreta')
     expect(await authorize({ email: 'admin@nksart.com.br', password: 'super-secreta' })).toMatchObject({ role: Role.ADMIN })
-    expect(await authorize({ email: 'admin@nksart.com.br', password: 'admin123' })).toBeNull()
+    expect(await authorize({ email: 'admin@nksart.com.br', password: 'outra-coisa' })).toBeNull()
   })
 })
 

@@ -23,16 +23,12 @@ export const authConfig: NextAuthConfig = {
 
         const { verifyPassword, isHashed } = await import('./password')
 
-        // Admin master (env). Aceita ADMIN_PASSWORD_HASH (scrypt) ou,
-        // apenas em dev, senha em texto puro para facilitar o setup local.
+        // Admin master (env). Exige verificação estrita contra ADMIN_PASSWORD_HASH (scrypt).
         if (process.env.ADMIN_EMAIL && email === process.env.ADMIN_EMAIL.toLowerCase()) {
           const configured = process.env.ADMIN_PASSWORD_HASH
           let ok = false
           if (configured && isHashed(configured)) {
             ok = await verifyPassword(password, configured)
-          } else {
-            // Fallback de desenvolvimento (mock documentado no CLAUDE.md).
-            ok = password === (configured || 'admin123')
           }
           if (ok) {
             return {

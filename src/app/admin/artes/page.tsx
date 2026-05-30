@@ -9,45 +9,6 @@ import { Plus, Edit3, Trash2, Sparkles, Loader2, AlertCircle, Image as ImageIcon
 import Image from 'next/image'
 import { useArtworks } from '@/hooks/useArtworks'
 
-const mockCategories: Category[] = [
-  { id: 'c1', name: 'Estampas', slug: 'estampas', color: '#10b981', showInFilter: true, filterOrder: 1 },
-  { id: 'c2', name: 'Fontes', slug: 'fontes', color: '#ec4899', showInFilter: true, filterOrder: 2 },
-  { id: 'c3', name: 'Vetores', slug: 'vetores', color: '#3b82f6', showInFilter: true, filterOrder: 3 },
-]
-
-const mockArtworks: ArtworkWithRelations[] = [
-  {
-    id: 'f1',
-    title: 'Estampa Camiseta Automotiva Vintage Car',
-    slug: 'estampa-camiseta-automotiva-vintage-car',
-    description: 'Vetor completo de altíssima definição para sublimação e serigrafia.',
-    status: Status.PUBLISHED,
-    isFree: true,
-    previewUrl: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=500&auto=format&fit=crop&q=60',
-    categoryId: 'c1',
-    category: mockCategories[0],
-    tags: [],
-    files: [{ id: 'file1', format: 'CDR', url: '#', size: 12500000, artworkId: 'f1' }],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: 'f2',
-    title: 'Pacote Fontes Caligráficas para Casamentos',
-    slug: 'pacote-fontes-caligraficas-para-casamentos',
-    description: 'Arquivos de fontes em formato OTF com curvas elegantes.',
-    status: Status.PUBLISHED,
-    isFree: false,
-    previewUrl: 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=500&auto=format&fit=crop&q=60',
-    categoryId: 'c2',
-    category: mockCategories[1],
-    tags: [],
-    files: [{ id: 'file3', format: 'OTF', url: '#', size: 450000, artworkId: 'f2' }],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-]
-
 export default function ArtesAdminPage() {
   const [searchQuery, setSearchQuery] = React.useState('')
   const { artworks: dbArtworks, loading, error, deleteArtwork } = useArtworks({
@@ -58,7 +19,7 @@ export default function ArtesAdminPage() {
   const [actionLoading, setActionLoading] = React.useState(false)
   const [actionError, setActionError] = React.useState<string | null>(null)
 
-  const artworks = dbArtworks.length > 0 ? dbArtworks : (searchQuery ? [] : mockArtworks)
+  const artworks = dbArtworks
 
   const handleDelete = async (id: string) => {
     if (confirm('Deseja realmente excluir esta arte permanentemente? Todos os arquivos vinculados serão removidos.')) {
@@ -82,7 +43,7 @@ export default function ArtesAdminPage() {
             Artes
           </h1>
           <p className="text-xs font-semibold text-nks-gray-400 mt-1">
-            {dbArtworks.length > 0 ? dbArtworks.length.toLocaleString('pt-BR') : '1.240'} artes no catálogo.
+            {loading ? '...' : dbArtworks.length.toLocaleString('pt-BR')} artes no catálogo.
           </p>
         </div>
 
