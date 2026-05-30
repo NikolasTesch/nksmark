@@ -20,8 +20,12 @@ export function AdminSidebar() {
 
   const isLinkActive = (path: string) => {
     if (path === '/admin') return pathname === '/admin'
+    if (path === '/admin/artes') {
+      return pathname === '/admin/artes' || (pathname.startsWith('/admin/artes/') && pathname !== '/admin/artes/nova')
+    }
     return pathname.startsWith(path)
   }
+
 
   return (
     <aside className="w-64 bg-nks-black text-white min-h-screen p-6 flex flex-col justify-between border-r border-white/5 shrink-0 shadow-nks">
