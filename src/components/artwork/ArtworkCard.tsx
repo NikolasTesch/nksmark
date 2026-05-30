@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { ArtworkWithRelations } from '@/types/artwork'
 import { Lock, Download, Heart, Image as ImageIcon } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 interface ArtworkCardProps {
   artwork: ArtworkWithRelations
@@ -23,7 +24,18 @@ export function ArtworkCard({ artwork }: ArtworkCardProps) {
   const extraTag = artwork.tags[0]?.name
 
   return (
-    <div className="group relative flex flex-col border border-nks-gray-200 rounded-lg bg-white overflow-hidden transition-shadow duration-[160ms] hover:shadow-[0_6px_20px_rgba(17,17,17,0.10)]">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -5 }}
+      transition={{ 
+        type: 'spring', 
+        stiffness: 300, 
+        damping: 24,
+        y: { type: 'tween', duration: 0.16, ease: 'easeOut' }
+      }}
+      className="group relative flex flex-col border border-nks-gray-200 rounded bg-white overflow-hidden transition-all duration-[160ms] hover:shadow-nks-md hover:border-nks-gray-400"
+    >
       {/* Preview dominante (4:5) */}
       <Link href={href} className="relative block aspect-[4/5] w-full overflow-hidden bg-nks-gray-100">
         {artwork.previewUrl ? (
@@ -31,7 +43,7 @@ export function ArtworkCard({ artwork }: ArtworkCardProps) {
             src={artwork.previewUrl}
             alt={artwork.title}
             fill
-            className="object-cover transition-transform duration-[320ms] group-hover:scale-[1.05]"
+            className="object-cover transition-transform duration-[320ms] group-hover:scale-[1.04]"
             sizes="(max-width: 980px) 50vw, 320px"
           />
         ) : (
@@ -54,7 +66,7 @@ export function ArtworkCard({ artwork }: ArtworkCardProps) {
           </span>
         )}
 
-        {/* Favoritar */}
+        {/* Favoritar com Pop Animation */}
         <button
           type="button"
           aria-label="Favoritar"
@@ -62,12 +74,21 @@ export function ArtworkCard({ artwork }: ArtworkCardProps) {
             e.preventDefault()
             setFav((v) => !v)
           }}
-          className="absolute top-[9px] right-[9px] flex h-7 w-7 items-center justify-center rounded-full bg-white/92 shadow-[0_1px_2px_rgba(17,17,17,0.06)]"
+          className="absolute top-[9px] right-[9px] flex h-7 w-7 items-center justify-center rounded-full bg-white/92 shadow-[0_1px_2px_rgba(17,17,17,0.06)] cursor-pointer"
         >
-          <Heart
-            className="h-4 w-4"
-            style={{ color: fav ? 'var(--color-nks-red)' : 'var(--color-nks-gray-400)', fill: fav ? 'var(--color-nks-red)' : 'transparent' }}
-          />
+          <motion.div
+            whileTap={{ scale: 0.8 }}
+            animate={fav ? { scale: [1, 1.35, 1] } : { scale: 1 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+          >
+            <Heart
+              className="h-4 w-4 transition-colors"
+              style={{ 
+                color: fav ? 'var(--color-nks-red)' : 'var(--color-nks-gray-400)', 
+                fill: fav ? 'var(--color-nks-red)' : 'transparent' 
+              }}
+            />
+          </motion.div>
         </button>
       </Link>
 
@@ -100,6 +121,6 @@ export function ArtworkCard({ artwork }: ArtworkCardProps) {
           </Link>
         )}
       </div>
-    </div>
+    </motion.div>
   )
 }

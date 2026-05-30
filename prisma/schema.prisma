@@ -94,5 +94,6 @@ model Suggestion {
   id          String   @id @default(cuid())
   email       String?
   description String
+  imageUrl    String?
   createdAt   DateTime @default(now())
 }

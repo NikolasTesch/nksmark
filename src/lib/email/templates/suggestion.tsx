@@ -3,11 +3,13 @@ import * as React from 'react'
 interface SuggestionEmailTemplateProps {
   email?: string
   description: string
+  imageUrl?: string | null
 }
 
 export const SuggestionEmailTemplate: React.FC<Readonly<SuggestionEmailTemplateProps>> = ({
   email,
   description,
+  imageUrl,
 }) => (
   <div style={{ fontFamily: 'sans-serif', padding: '20px', color: '#333' }}>
     <h2 style={{ color: '#ec4899' }}>Nova Sugestão de Arte — NKS Art</h2>
@@ -16,6 +18,19 @@ export const SuggestionEmailTemplate: React.FC<Readonly<SuggestionEmailTemplateP
       <p><strong>Email do Sugerente:</strong> {email || 'Anônimo'}</p>
       <p><strong>Descrição da Ideia:</strong></p>
       <p style={{ whiteSpace: 'pre-wrap' }}>{description}</p>
+      {imageUrl && (
+        <div style={{ marginTop: '15px' }}>
+          <p><strong>Imagem de Exemplo:</strong></p>
+          <a href={imageUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#ec4899', textDecoration: 'underline', display: 'block', marginBottom: '10px' }}>
+            Visualizar imagem em tela cheia
+          </a>
+          <img 
+            src={imageUrl} 
+            alt="Exemplo" 
+            style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '6px', border: '1px solid #e5e7eb' }} 
+          />
+        </div>
+      )}
     </div>
     <p style={{ fontSize: '12px', color: '#6b7280' }}>
       Este email foi gerado automaticamente pelo portal NKS Art.

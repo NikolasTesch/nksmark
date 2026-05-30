@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Menu, X, LogIn, LogOut, User as UserIcon, ShieldAlert } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { MobileMenu } from './MobileMenu'
 
 export function Header() {
@@ -18,11 +19,10 @@ export function Header() {
 
   const menuItems = [
     { name: 'Loja', path: '/loja' },
-    { name: 'FAQ', path: '/faq' },
     { name: 'Suporte', path: '/suporte' },
     { name: 'Sugerir Arte', path: '/sugerir-arte' },
     { name: 'Quem Somos', path: '/quem-somos' },
-    { name: 'Grátis', path: '/gratis' },
+    { name: 'FAQ', path: '/faq' },
   ]
 
   const userRole = (session?.user as { role?: string })?.role
@@ -47,21 +47,31 @@ export function Header() {
             />
           </Link>
 
-          {/* Desktop Menu Links */}
+          {/* Desktop Menu Links with Magic Underline */}
           <nav className="hidden md:flex items-center gap-[22px]">
-            {menuItems.map((item) => (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`text-sm font-medium pb-0.5 border-b-2 transition-colors ${
-                  isLinkActive(item.path)
-                    ? 'text-white border-nks-red'
-                    : 'text-white/65 border-transparent hover:text-white'
-                }`}
-              >
-                {item.name}
-              </Link>
-            ))}
+            {menuItems.map((item) => {
+              const active = isLinkActive(item.path)
+              return (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  className={`relative text-sm font-medium pb-1.5 transition-colors ${
+                    active
+                      ? 'text-white'
+                      : 'text-white/65 hover:text-white'
+                  }`}
+                >
+                  <span>{item.name}</span>
+                  {active && (
+                    <motion.div
+                      layoutId="header-active-indicator"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-nks-red"
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </Link>
+              )
+            })}
           </nav>
         </div>
 
@@ -84,7 +94,7 @@ export function Header() {
                 <UserIcon className="h-3.5 w-3.5" /> {session.user?.name || 'Equipe NKS'}
               </span>
               <button
-                onClick={() => signOut({ callbackUrl: '/' })}
+                onClick={() => signOut({ callbackUrl: '/loja' })}
                 className="inline-flex items-center gap-1.5 text-[13px] font-medium text-white/55 hover:text-white transition-colors"
               >
                 <LogOut className="h-3.5 w-3.5" /> Sair

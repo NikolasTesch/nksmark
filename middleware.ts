@@ -17,7 +17,7 @@ export default auth((req) => {
       return NextResponse.redirect(new URL('/login', req.nextUrl))
     }
     if (userRole !== Role.ADMIN) {
-      return NextResponse.redirect(new URL('/', req.nextUrl))
+      return NextResponse.redirect(new URL('/loja', req.nextUrl))
     }
   }
 
@@ -27,7 +27,7 @@ export default auth((req) => {
       return NextResponse.redirect(new URL('/login', req.nextUrl))
     }
     if (userRole !== Role.FASE && userRole !== Role.ADMIN) {
-      return NextResponse.redirect(new URL('/', req.nextUrl))
+      return NextResponse.redirect(new URL('/loja', req.nextUrl))
     }
   }
 

@@ -53,7 +53,7 @@ export function AdminSidebar() {
 
       <div className="flex flex-col gap-4 pt-6 border-t border-slate-800">
         <Link 
-          href="/" 
+          href="/loja" 
           className="flex items-center justify-between text-xs text-slate-400 hover:text-white transition-colors"
           target="_blank"
         >
@@ -62,7 +62,7 @@ export function AdminSidebar() {
         </Link>
         
         <button
-          onClick={() => signOut({ callbackUrl: '/' })}
+          onClick={() => signOut({ callbackUrl: '/loja' })}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-red-400 hover:text-red-300 hover:bg-red-950/20 transition-all text-left w-full"
         >
           <LogOut className="h-4.5 w-4.5" />

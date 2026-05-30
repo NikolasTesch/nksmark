@@ -12,7 +12,7 @@ export function Footer() {
 
         {/* Column 1 - Brand & Tagline */}
         <div className="flex flex-col gap-3 md:col-span-2">
-          <Link href="/" className="w-fit block">
+          <Link href="/loja" className="w-fit block">
             <Image
               src="/brand/nks-logo-mark-white.png"
               alt="NKS Art"
@@ -52,7 +52,6 @@ export function Footer() {
           </span>
           <nav className="flex flex-col gap-2.5">
             <Link href="/loja" className="text-sm text-white/60 hover:text-white transition-colors">Catálogo completo</Link>
-            <Link href="/gratis" className="text-sm text-white/60 hover:text-white transition-colors">Artes grátis</Link>
             <Link href="/sugerir-arte" className="text-sm text-white/60 hover:text-white transition-colors">Sugerir arte</Link>
             <Link href="/quem-somos" className="text-sm text-white/60 hover:text-white transition-colors">Quem somos</Link>
           </nav>

@@ -1,7 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import { HelpCircle, ChevronDown } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface FAQItem {
   question: string
@@ -38,8 +39,34 @@ export default function FAQPage() {
     setActiveIndex(activeIndex === index ? null : index)
   }
 
+  // Animation variants for staggered accordion item entries
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08,
+        delayChildren: 0.1
+      }
+    }
+  }
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    show: { 
+      opacity: 1, 
+      y: 0, 
+      transition: { type: 'spring' as const as const, stiffness: 260, damping: 25 } 
+    }
+  }
+
   return (
-    <div className="flex flex-col gap-6 py-4 max-w-2xl mx-auto animate-in fade-in duration-300">
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.2, 0.6, 0.2, 1] }}
+      className="flex flex-col gap-6 py-4 max-w-2xl mx-auto"
+    >
       <div className="text-center">
         <span className="nks-eyebrow">Dúvidas Frequentes</span>
         <h1 className="font-display font-extrabold uppercase tracking-[-0.03em] leading-[1.02] text-3xl sm:text-4xl mt-3 mb-4 text-nks-black">
@@ -50,13 +77,24 @@ export default function FAQPage() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-3 mt-6">
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="flex flex-col gap-3 mt-6"
+      >
         {faqItems.map((item, idx) => {
           const isOpen = activeIndex === idx
           return (
-            <div 
+            <motion.div 
               key={idx}
-              className="bg-white border border-nks-gray-200 rounded overflow-hidden transition-all"
+              variants={itemVariants}
+              className="bg-white border border-nks-gray-200 rounded overflow-hidden shadow-nks-sm"
+              whileHover={{ 
+                borderColor: 'var(--color-nks-gray-400)',
+                y: -1,
+                transition: { duration: 0.12 }
+              }}
             >
               <button
                 onClick={() => toggleAccordion(idx)}
@@ -68,19 +106,26 @@ export default function FAQPage() {
                 }`} />
               </button>
 
-              <div 
-                className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                  isOpen ? 'max-h-[300px] opacity-100 border-t border-nks-gray-200' : 'max-h-0 opacity-0'
-                }`}
-              >
-                <div className="p-4 text-xs sm:text-sm text-nks-gray-700 leading-relaxed bg-nks-gray-100/50">
-                  {item.answer}
-                </div>
-              </div>
-            </div>
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: [0.2, 0.6, 0.2, 1] }}
+                    className="overflow-hidden border-t border-nks-gray-200"
+                  >
+                    <div className="p-4 text-xs sm:text-sm text-nks-gray-700 leading-relaxed bg-nks-gray-100/50">
+                      {item.answer}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           )
         })}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }
+

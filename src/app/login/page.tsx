@@ -11,7 +11,7 @@ import Link from 'next/link'
 function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || '/'
+  const callbackUrl = searchParams.get('callbackUrl') || '/loja'
   
   const [email, setEmail] = React.useState('')
   const [password, setPassword] = React.useState('')
@@ -49,7 +49,7 @@ function LoginContent() {
       <div className="w-full max-w-md bg-nks-gray-900 border border-white/10 p-8 rounded shadow-nks-lg relative z-10 flex flex-col gap-6 animate-in fade-in zoom-in duration-300">
         
         <div className="text-center flex flex-col items-center gap-1.5">
-          <Link href="/" className="font-display font-extrabold uppercase tracking-[-0.03em] leading-none text-2xl text-white">
+          <Link href="/loja" className="font-display font-extrabold uppercase tracking-[-0.03em] leading-none text-2xl text-white">
             NKS Art
           </Link>
           <span className="text-[10px] font-bold text-nks-gray-400 uppercase tracking-[0.12em] block mt-1">Acesso de equipe</span>
@@ -109,8 +109,8 @@ function LoginContent() {
           <span className="text-[10px] text-nks-gray-400 flex items-center justify-center gap-1">
             <Sparkles className="h-3 w-3 text-nks-red" /> Acesso restrito para equipe homologada FASE.
           </span>
-          <Link href="/" className="text-xs text-nks-red hover:underline mt-2 block font-semibold hover:text-nks-red-light">
-            ← Voltar para o site público
+          <Link href="/loja" className="text-xs text-nks-red hover:underline mt-2 block font-semibold hover:text-nks-red-light">
+            ← Voltar para o catálogo
           </Link>
         </div>
       </div>

@@ -3,12 +3,41 @@ import { suggestionSchema } from '@/lib/validations/suggestion'
 import prisma from '@/lib/prisma'
 import { resend, EMAIL_FROM } from '@/lib/email/resend'
 import { SuggestionEmailTemplate } from '@/lib/email/templates/suggestion'
+import { uploadFileToR2 } from '@/lib/r2/upload'
 import * as React from 'react'
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json()
-    const result = suggestionSchema.safeParse(body)
+    const contentType = req.headers.get('content-type') || ''
+    let email: string | null = null
+    let description = ''
+    let imageUrl: string | null = null
+
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await req.formData()
+      email = (formData.get('email') as string) || null
+      description = (formData.get('description') as string) || ''
+      const file = formData.get('image') as File | null
+
+      if (file && file.size > 0) {
+        const arrayBuffer = await file.arrayBuffer()
+        const buffer = Buffer.from(arrayBuffer)
+        const uploadResult = await uploadFileToR2(
+          buffer,
+          file.name,
+          file.type || 'application/octet-stream',
+          'previews'
+        )
+        imageUrl = uploadResult.url
+      }
+    } else {
+      const body = await req.json()
+      email = body.email || null
+      description = body.description || ''
+      imageUrl = body.imageUrl || null
+    }
+
+    const result = suggestionSchema.safeParse({ email, description, imageUrl })
 
     if (!result.success) {
       return NextResponse.json(
@@ -17,12 +46,11 @@ export async function POST(req: Request) {
       )
     }
 
-    const { email, description } = result.data
-
     const suggestion = await prisma.suggestion.create({
       data: {
         email: email || null,
         description,
+        imageUrl: imageUrl || null,
       },
     })
 
@@ -35,6 +63,7 @@ export async function POST(req: Request) {
           react: React.createElement(SuggestionEmailTemplate, {
             email: email || undefined,
             description,
+            imageUrl,
           }),
         })
       } catch (err) {
