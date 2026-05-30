@@ -1,1 +1,92 @@
 @import "tailwindcss";
+
+/* ============================================================
+   NKS Art — Design tokens (tricolor: vermelho · preto · branco)
+   Identidade editorial e gráfica, bordas retas, display quadrada.
+   ============================================================ */
+
+@theme {
+  /* ---- Brand red (exclusivo de ação) ---- */
+  --color-nks-red: #B31217;
+  --color-nks-red-light: #E8191F;
+  --color-nks-red-dark: #8B0D11;
+  --color-nks-red-subtle: #F7E6E7;
+
+  /* ---- Ink / neutrals ---- */
+  --color-nks-black: #111111;
+  --color-nks-gray-900: #1A1A1A;
+  --color-nks-gray-700: #3D3D3D;
+  --color-nks-gray-400: #888888;
+  --color-nks-gray-200: #DEDEDE;
+  --color-nks-gray-100: #F2F2F2;
+  --color-nks-white: #FFFFFF;
+
+  /* ---- Semantic roles (drive bg-primary, text-primary, border, …) ---- */
+  --color-background: var(--color-nks-white);
+  --color-foreground: var(--color-nks-black);
+  --color-card: var(--color-nks-white);
+  --color-card-foreground: var(--color-nks-black);
+  --color-popover: var(--color-nks-white);
+  --color-popover-foreground: var(--color-nks-black);
+  --color-primary: var(--color-nks-red);
+  --color-primary-foreground: var(--color-nks-white);
+  --color-secondary: var(--color-nks-gray-100);
+  --color-secondary-foreground: var(--color-nks-gray-700);
+  --color-muted: var(--color-nks-gray-100);
+  --color-muted-foreground: var(--color-nks-gray-400);
+  --color-accent: var(--color-nks-red);
+  --color-accent-foreground: var(--color-nks-white);
+  --color-destructive: var(--color-nks-red);
+  --color-destructive-foreground: var(--color-nks-white);
+  --color-border: var(--color-nks-gray-200);
+  --color-input: var(--color-nks-gray-200);
+  --color-ring: var(--color-nks-red);
+
+  /* ---- Type families ---- */
+  --font-sans: var(--font-dm-sans), system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-archivo), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), 'SF Mono', Menlo, monospace;
+
+  /* ---- Radii — bordas retas, identidade editorial ---- */
+  --radius-sm: 2px;
+  --radius: 4px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  /* ---- Elevation — discreta, gráfica ---- */
+  --shadow-nks-sm: 0 1px 2px rgba(17, 17, 17, .06);
+  --shadow-nks: 0 2px 8px rgba(17, 17, 17, .08);
+  --shadow-nks-md: 0 6px 20px rgba(17, 17, 17, .10);
+  --shadow-nks-lg: 0 16px 40px rgba(17, 17, 17, .14);
+
+  /* ---- Motion ---- */
+  --ease-nks: cubic-bezier(.2, .6, .2, 1);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-nks-gray-200);
+  }
+  body {
+    background-color: var(--color-nks-white);
+    color: var(--color-nks-black);
+    font-family: var(--font-sans);
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Display quadrada e geométrica — só em títulos grandes */
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  /* Eyebrow / label de categoria em destaque (vermelho de ação) */
+  .nks-eyebrow {
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--color-nks-red);
+  }
+}

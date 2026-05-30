@@ -1,0 +1,98 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String?
+  passwordHash String?
+  role         Role       @default(VISITOR)
+  downloads    Download[]
+  createdAt    DateTime   @default(now())
+}
+
+enum Role {
+  VISITOR
+  FASE
+  ADMIN
+}
+
+model Artwork {
+  id          String     @id @default(cuid())
+  title       String
+  slug        String     @unique
+  description String?
+  status      Status     @default(DRAFT)
+  isFree      Boolean    @default(true)
+  previewUrl  String
+  files       File[]
+  category    Category   @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  tags        Tag[]
+  downloads   Download[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+enum Status {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model File {
+  id        String   @id @default(cuid())
+  format    Format
+  url       String
+  size      Int
+  artwork   Artwork  @relation(fields: [artworkId], references: [id])
+  artworkId String
+}
+
+enum Format {
+  CDR
+  AI
+  PDF
+  OTF
+  PNG
+  JPG
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  color     String?
+  showInFilter Boolean @default(true)
+  filterOrder Int     @default(0)
+  artworks  Artwork[]
+}
+
+model Tag {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  artworks Artwork[]
+}
+
+model Download {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  artwork   Artwork  @relation(fields: [artworkId], references: [id])
+  artworkId String
+  fileId    String
+  createdAt DateTime @default(now())
+}
+
+model Suggestion {
+  id          String   @id @default(cuid())
+  email       String?
+  description String
+  createdAt   DateTime @default(now())
+}
