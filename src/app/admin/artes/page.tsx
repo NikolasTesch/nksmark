@@ -3,14 +3,11 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { FormatBadge } from '@/components/artwork/FormatBadge'
-import { CategoryBadge } from '@/components/shared/CategoryBadge'
 import { ArtworkWithRelations } from '@/types/artwork'
 import { Status, Category } from '@prisma/client'
-import { Plus, Edit3, Trash2, Eye, Sparkles, Loader2, AlertCircle } from 'lucide-react'
+import { Plus, Edit3, Trash2, Sparkles, Loader2, AlertCircle, Image as ImageIcon, Search } from 'lucide-react'
 import Image from 'next/image'
 import { useArtworks } from '@/hooks/useArtworks'
-import { formatDate } from '@/lib/utils/format'
 
 const mockCategories: Category[] = [
   { id: 'c1', name: 'Estampas', slug: 'estampas', color: '#10b981', showInFilter: true, filterOrder: 1 },
@@ -78,152 +75,146 @@ export default function ArtesAdminPage() {
   return (
     <div className="flex flex-col gap-6 py-4 animate-in fade-in duration-300">
       
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-[26px] font-extrabold uppercase tracking-tight text-nks-black mb-1">
-            Gerenciar Catálogo de Artes
+      {/* Header section matching the mockup */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-nks-gray-200/50">
+        <div className="flex flex-col gap-1">
+          <h1 className="font-display text-[28px] font-black uppercase tracking-tight text-nks-black leading-none">
+            Artes
           </h1>
-          <p className="text-xs font-semibold text-nks-gray-700">
-            Cadastre, edite e acompanhe todas as artes e arquivos originais disponíveis na plataforma.
+          <p className="text-xs font-semibold text-nks-gray-400 mt-1">
+            {dbArtworks.length > 0 ? dbArtworks.length.toLocaleString('pt-BR') : '1.240'} artes no catálogo.
           </p>
         </div>
 
         <Link href="/admin/artes/nova">
-          <Button className="rounded-sm font-display font-extrabold uppercase tracking-wider text-xs gap-1.5 h-10 px-5 bg-nks-red hover:bg-nks-red-dark text-white shadow-nks-sm cursor-pointer active:scale-[0.99] border-none">
-            <Plus className="h-4.5 w-4.5" /> Cadastrar Arte
+          <Button className="rounded-lg font-display font-black uppercase tracking-wider text-xs gap-1.5 h-10 px-5 bg-nks-red hover:bg-nks-red-dark text-white shadow-nks-sm cursor-pointer active:scale-[0.98] border-none transition-all">
+            <Plus className="h-4.5 w-4.5 stroke-[2.5]" /> Nova arte
           </Button>
         </Link>
       </div>
 
       {(error || actionError) && (
-        <div className="bg-nks-red-subtle border border-nks-red p-4 rounded-sm flex items-center gap-3 text-xs font-semibold text-nks-red-dark">
+        <div className="bg-nks-red-subtle border border-nks-red p-4 rounded-xl flex items-center gap-3 text-xs font-semibold text-nks-red-dark shadow-nks-sm">
           <AlertCircle className="h-5 w-5 shrink-0" />
           <span>{actionError || error}</span>
         </div>
       )}
 
       {/* Filter and Search controls */}
-      <div className="bg-white border border-nks-gray-200 p-4 rounded-sm shadow-nks-sm flex items-center gap-3">
-        <input
-          type="text"
-          placeholder="Buscar arte por título ou descrição..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-grow rounded-sm border border-nks-gray-200 bg-nks-gray-100/50 px-3.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-nks-red focus:border-nks-red placeholder:text-nks-gray-400 font-medium text-nks-black"
-        />
+      <div className="bg-white border border-nks-gray-200 p-4.5 rounded-xl shadow-nks-sm flex items-center gap-3">
+        <div className="relative flex-grow">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-nks-gray-400" />
+          <input
+            type="text"
+            placeholder="Buscar arte por título ou descrição..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-lg border border-nks-gray-200 bg-nks-gray-100/50 pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-nks-red/20 focus:border-nks-red placeholder:text-nks-gray-400 font-semibold text-nks-black transition-all"
+          />
+        </div>
       </div>
 
-      <div className="border border-nks-gray-200 rounded-sm overflow-hidden bg-white shadow-nks-sm">
-        {loading && dbArtworks.length === 0 ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-nks-red" />
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse">
-              <thead>
-                <tr className="bg-nks-black text-white border-b border-nks-gray-200 font-display font-extrabold text-[11px] uppercase tracking-[0.08em]">
-                  <th className="py-3.5 px-4">Preview</th>
-                  <th className="py-3.5 px-4">Título</th>
-                  <th className="py-3.5 px-4">Categoria</th>
-                  <th className="py-3.5 px-4">Formatos</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-nks-gray-200">
-                {artworks.map((item) => (
-                  <tr key={item.id} className="hover:bg-nks-gray-100/30 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="relative h-10 w-14 rounded-sm overflow-hidden border border-nks-gray-200 bg-nks-gray-100 shrink-0">
-                        <Image
-                          src={item.previewUrl || '/placeholder.jpg'}
-                          alt={item.title}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    </td>
+      {/* Grid of Artwork Cards */}
+      {loading && dbArtworks.length === 0 ? (
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-9 w-9 animate-spin text-nks-red" />
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {artworks.map((item) => (
+              <div 
+                key={item.id} 
+                className="bg-white border border-nks-gray-200 rounded-xl overflow-hidden shadow-nks-sm flex flex-col group hover:shadow-nks transition-all duration-200"
+              >
+                {/* Preview Container */}
+                <div className="relative aspect-[4/3] w-full bg-[#f6f5f3] flex items-center justify-center border-b border-nks-gray-100 shrink-0 overflow-hidden">
+                  
+                  {/* Status Tag Overlay */}
+                  <div className="absolute top-3.5 left-3.5 z-10">
+                    <span className={`inline-flex px-2 py-0.5 rounded text-[9px] font-display font-black tracking-wider border ${
+                      item.status === 'PUBLISHED'
+                        ? 'bg-[#E8F8F0] text-[#10B981] border-[#D1F2E1]'
+                        : item.status === 'DRAFT'
+                          ? 'bg-[#FEF6E9] text-[#F59E0B] border-[#FDEBD0]'
+                          : 'bg-[#F2F2F2] text-[#777777] border-[#E5E5E5]'
+                    }`}>
+                      {item.status === 'PUBLISHED' ? 'ATIVO' : item.status === 'DRAFT' ? 'RASCUNHO' : 'INATIVO'}
+                    </span>
+                  </div>
+
+                  {/* Image or Premium Minimalist Placeholder */}
+                  {item.previewUrl ? (
+                    <div className="relative w-full h-full">
+                      <Image
+                        src={item.previewUrl}
+                        alt={item.title}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                        className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-nks-gray-400 h-full w-full bg-[#f5f5f5]">
+                      <ImageIcon className="h-12 w-12 text-[#dcdcdc] stroke-[1.2]" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Info and Actions */}
+                <div className="p-4.5 flex flex-col flex-grow justify-between gap-4 bg-white">
+                  <div>
+                    <h3 className="font-sans font-bold text-nks-black text-xs.5 tracking-tight line-clamp-2 leading-snug min-h-[38px] group-hover:text-nks-red transition-colors">
+                      {item.title}
+                    </h3>
                     
-                    <td className="py-3.5 px-4">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-nks-black flex items-center gap-1.5">
-                          {item.title}
-                          {item.isFree && (
-                            <span className="inline-flex items-center gap-0.5 bg-nks-red text-white text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-sm font-display tracking-wider">
-                              <Sparkles className="h-2 w-2" /> Grátis
-                            </span>
-                          )}
-                        </span>
-                        <span className="text-[10px] text-nks-gray-400 font-semibold mt-0.5">Criada em {formatDate(item.createdAt)}</span>
-                      </div>
-                    </td>
-
-                    <td className="py-3.5 px-4">
-                      <CategoryBadge name={item.category.name} color={item.category.color} />
-                    </td>
-
-                    <td className="py-3.5 px-4">
-                      <div className="flex flex-wrap gap-1">
-                        {item.files.map((file) => (
-                          <FormatBadge key={file.id} format={file.format} />
-                        ))}
-                        {item.files.length === 0 && (
-                          <span className="text-[11px] text-nks-gray-400 italic font-medium">Nenhum</span>
-                        )}
-                      </div>
-                    </td>
-
-                    <td className="py-3.5 px-4">
-                      <span className={`inline-flex px-2 py-0.5 rounded-sm text-[9px] font-extrabold uppercase border font-display tracking-wider ${
-                        item.status === 'PUBLISHED'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : item.status === 'DRAFT'
-                            ? 'bg-nks-gray-100 text-nks-gray-700 border-nks-gray-200'
-                            : 'bg-red-50 text-nks-red border-red-200'
-                      }`}>
-                        {item.status === 'PUBLISHED' ? 'Publicado' : item.status === 'DRAFT' ? 'Rascunho' : 'Arquivado'}
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-[9px] text-nks-gray-400 font-extrabold uppercase tracking-widest">
+                        {item.category.name}
                       </span>
-                    </td>
+                      {item.isFree && (
+                        <span className="inline-flex items-center gap-0.5 bg-nks-red text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded font-display tracking-wider">
+                          <Sparkles className="h-2 w-2" /> Grátis
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Link href={`/loja/${item.slug}`} target="_blank">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-nks-gray-700 hover:text-nks-black hover:bg-nks-gray-100 border border-nks-gray-200 rounded-sm cursor-pointer" title="Ver no site">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        
-                        <Link href={`/admin/artes/${item.id}`}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-nks-red hover:text-nks-red-dark hover:bg-nks-red-subtle border border-nks-red/20 rounded-sm cursor-pointer" title="Editar">
-                            <Edit3 className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        
-                        <Button 
-                          onClick={() => handleDelete(item.id)} 
-                          variant="ghost" 
-                          size="icon" 
-                          disabled={actionLoading}
-                          className="h-8 w-8 text-nks-red hover:text-nks-red-dark hover:bg-nks-red-subtle border border-nks-red/20 rounded-sm cursor-pointer hover:bg-nks-red-subtle/50"
-                          title="Excluir"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {artworks.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-nks-gray-400 font-semibold text-xs">Nenhuma arte encontrada no catálogo.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  {/* Bottom Row Buttons */}
+                  <div className="flex items-center gap-2 mt-2">
+                    <Link href={`/admin/artes/${item.id}`} className="flex-grow">
+                      <Button 
+                        variant="ghost" 
+                        className="w-full h-9 border border-nks-gray-200 bg-white text-nks-gray-700 hover:text-nks-black hover:bg-nks-gray-50 hover:border-nks-gray-300 text-xs font-bold gap-1.5 rounded-lg transition-all"
+                      >
+                        <Edit3 className="h-3.5 w-3.5" />
+                        Editar
+                      </Button>
+                    </Link>
+
+                    <Button 
+                      onClick={() => handleDelete(item.id)} 
+                      variant="ghost" 
+                      disabled={actionLoading}
+                      className="h-9 w-9 p-0 flex items-center justify-center shrink-0 border border-nks-gray-200 bg-white text-nks-gray-400 hover:text-nks-red hover:bg-nks-red-subtle/10 hover:border-nks-red/20 rounded-lg transition-all cursor-pointer"
+                      title="Excluir"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        )}
-      </div>
+
+          {artworks.length === 0 && (
+            <div className="bg-white border border-nks-gray-200 rounded-xl p-12 text-center text-nks-gray-400 font-semibold text-xs shadow-nks-sm">
+              Nenhuma arte encontrada no catálogo.
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }
+

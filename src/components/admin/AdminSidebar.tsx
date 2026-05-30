@@ -3,18 +3,20 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Image as ImageIcon, FolderTree, Users, LogOut, ExternalLink } from 'lucide-react'
+import { LayoutGrid, Upload, Sliders, Users, BarChart3, LogOut, History } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 
 export function AdminSidebar() {
   const pathname = usePathname()
 
   const navItems = [
-    { name: 'Dashboard', path: '/admin', icon: <LayoutDashboard className="h-4.5 w-4.5" /> },
-    { name: 'Gerenciar Artes', path: '/admin/artes', icon: <ImageIcon className="h-4.5 w-4.5" /> },
-    { name: 'Gestão de Conteúdo', path: '/admin/conteudo', icon: <FolderTree className="h-4.5 w-4.5" /> },
-    { name: 'Gerenciar Equipe', path: '/admin/usuarios', icon: <Users className="h-4.5 w-4.5" /> },
+    { name: 'Artes', path: '/admin/artes', icon: <LayoutGrid className="h-4.5 w-4.5" /> },
+    { name: 'Upload', path: '/admin/artes/nova', icon: <Upload className="h-4.5 w-4.5" /> },
+    { name: 'Conteúdo', path: '/admin/conteudo', icon: <Sliders className="h-4.5 w-4.5" /> },
+    { name: 'Usuários Fase', path: '/admin/usuarios', icon: <Users className="h-4.5 w-4.5" /> },
+    { name: 'Log de downloads', path: '/admin/downloads', icon: <History className="h-4.5 w-4.5" /> },
   ]
+
 
   const isLinkActive = (path: string) => {
     if (path === '/admin') return pathname === '/admin'
@@ -22,25 +24,28 @@ export function AdminSidebar() {
   }
 
   return (
-    <aside className="w-64 bg-nks-black text-white min-h-screen p-6 flex flex-col justify-between border-r border-white/10 shrink-0 shadow-nks">
-      <div className="flex flex-col gap-8">
+    <aside className="w-64 bg-nks-black text-white min-h-screen p-6 flex flex-col justify-between border-r border-white/5 shrink-0 shadow-nks">
+      <div className="flex flex-col gap-6">
         
-        <div className="flex flex-col gap-1">
-          <span className="font-display font-extrabold text-[17px] text-white uppercase tracking-tight">NKS Art Admin</span>
-          <span className="text-[9px] text-nks-red font-bold uppercase tracking-widest">Área Protegida</span>
+        {/* Logo NKS | ADMIN */}
+        <div className="flex items-center gap-2 py-2">
+          <span className="font-display font-black text-[18px] text-white uppercase tracking-tight">NKS</span>
+          <span className="text-white/20 font-light text-[18px]">|</span>
+          <span className="font-display font-medium text-[11px] text-white/50 uppercase tracking-widest mt-0.5">Admin</span>
         </div>
 
-        <nav className="flex flex-col gap-1">
+        {/* Navigation */}
+        <nav className="flex flex-col gap-1.5 mt-2">
           {navItems.map((item) => {
             const active = isLinkActive(item.path)
             return (
               <Link
                 key={item.path}
                 href={item.path}
-                className={`flex items-center gap-3 py-2.5 text-xs font-semibold transition-all rounded-none border-l-[3px] ${
+                className={`flex items-center gap-3.5 px-4 py-3 text-xs font-semibold transition-all rounded-lg ${
                   active
-                    ? 'bg-white/10 text-white font-bold border-l-nks-red pl-2.5'
-                    : 'text-white/60 hover:text-white hover:bg-white/5 border-l-transparent pl-[13px]'
+                    ? 'bg-nks-red text-white font-bold shadow-nks-sm'
+                    : 'text-white/60 hover:text-white hover:bg-white/5'
                 }`}
               >
                 {item.icon}
@@ -51,24 +56,27 @@ export function AdminSidebar() {
         </nav>
       </div>
 
-      <div className="flex flex-col gap-4 pt-6 border-t border-white/10">
-        <Link 
-          href="/loja" 
-          className="flex items-center justify-between text-[11px] font-medium text-white/60 hover:text-white transition-colors"
-          target="_blank"
-        >
-          <span>Ir para a Loja</span>
-          <ExternalLink className="h-3 w-3" />
-        </Link>
+      {/* User profile footer */}
+      <div className="flex items-center justify-between pt-5 border-t border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-full bg-nks-red flex items-center justify-center text-white font-display font-black text-sm shadow-nks-sm">
+            A
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs font-bold text-white leading-tight">Admin NKS</span>
+            <span className="text-[10px] text-nks-gray-400 font-medium leading-none mt-0.5">admin@nksart.com.br</span>
+          </div>
+        </div>
         
         <button
           onClick={() => signOut({ callbackUrl: '/loja' })}
-          className="flex items-center justify-center gap-2.5 px-3 py-2.5 rounded-sm text-xs font-bold text-white/70 hover:text-nks-red hover:bg-nks-red-subtle/10 border border-white/15 hover:border-nks-red transition-all cursor-pointer text-center w-full"
+          className="text-white/40 hover:text-nks-red transition-colors p-2 hover:bg-white/5 rounded-lg cursor-pointer"
+          title="Sair"
         >
-          <LogOut className="h-3.5 w-3.5" />
-          Sair do Admin
+          <LogOut className="h-4.5 w-4.5" />
         </button>
       </div>
     </aside>
   )
 }
+
