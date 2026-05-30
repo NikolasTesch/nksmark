@@ -2,8 +2,10 @@ import { NextAuthConfig } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import prisma from '../prisma'
 import { Role } from '@prisma/client'
+import { edgeAuthConfig } from './edge-config'
 
 export const authConfig: NextAuthConfig = {
+  ...edgeAuthConfig,
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -64,28 +66,5 @@ export const authConfig: NextAuthConfig = {
         return null
       }
     })
-  ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.role = (user as { role?: Role }).role
-        token.id = user.id
-      }
-      return token
-    },
-    async session({ session, token }) {
-      if (token && session.user) {
-        (session.user as { role?: Role; id?: string }).role = token.role as Role;
-        (session.user as { role?: Role; id?: string }).id = token.id as string;
-      }
-      return session
-    }
-  },
-  pages: {
-    signIn: '/login',
-    error: '/auth/error'
-  },
-  session: {
-    strategy: 'jwt'
-  }
+  ]
 }

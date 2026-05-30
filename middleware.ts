@@ -1,6 +1,11 @@
-import { auth } from './src/lib/auth/auth'
+import NextAuth from 'next-auth'
 import { NextResponse } from 'next/server'
 import { Role } from '@prisma/client'
+import { edgeAuthConfig } from './src/lib/auth/edge-config'
+
+// Middleware roda no Edge Runtime: usa apenas a config edge-safe (sem Prisma
+// nem scrypt). A config completa com providers fica em ./src/lib/auth/auth.
+const { auth } = NextAuth(edgeAuthConfig)
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth
