@@ -9,14 +9,14 @@ interface StatsCardProps {
 
 export function StatsCard({ title, value, description, icon }: StatsCardProps) {
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-xl shadow-sm flex items-center justify-between">
+    <div className="bg-white border border-nks-gray-200 p-5 rounded-sm shadow-nks-sm flex items-center justify-between">
       <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{title}</span>
-        <span className="text-2xl font-extrabold text-slate-900 dark:text-slate-50">{value}</span>
-        {description && <span className="text-xs text-slate-500 dark:text-slate-400">{description}</span>}
+        <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-nks-gray-400">{title}</span>
+        <span className="font-display text-2xl font-extrabold uppercase tracking-tight text-nks-black">{value}</span>
+        {description && <span className="text-[11px] text-nks-gray-750 font-medium">{description}</span>}
       </div>
       {icon && (
-        <div className="p-3 bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400 rounded-full">
+        <div className="p-3 bg-nks-red-subtle text-nks-red rounded-sm flex items-center justify-center shrink-0">
           {icon}
         </div>
       )}

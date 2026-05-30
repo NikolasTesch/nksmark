@@ -22,25 +22,25 @@ export function AdminSidebar() {
   }
 
   return (
-    <aside className="w-64 bg-slate-900 text-slate-100 min-h-screen p-6 flex flex-col justify-between shadow-lg shrink-0">
+    <aside className="w-64 bg-nks-black text-white min-h-screen p-6 flex flex-col justify-between border-r border-white/10 shrink-0 shadow-nks">
       <div className="flex flex-col gap-8">
         
         <div className="flex flex-col gap-1">
-          <span className="font-extrabold text-lg text-white tracking-wide">NKS Art Admin</span>
-          <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider">Área Protegida</span>
+          <span className="font-display font-extrabold text-[17px] text-white uppercase tracking-tight">NKS Art Admin</span>
+          <span className="text-[9px] text-nks-red font-bold uppercase tracking-widest">Área Protegida</span>
         </div>
 
-        <nav className="flex flex-col gap-1.5">
+        <nav className="flex flex-col gap-1">
           {navItems.map((item) => {
             const active = isLinkActive(item.path)
             return (
               <Link
                 key={item.path}
                 href={item.path}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                className={`flex items-center gap-3 py-2.5 text-xs font-semibold transition-all rounded-none border-l-[3px] ${
                   active
-                    ? 'bg-indigo-600 text-white font-bold shadow-md shadow-indigo-900/35'
-                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800'
+                    ? 'bg-white/10 text-white font-bold border-l-nks-red pl-2.5'
+                    : 'text-white/60 hover:text-white hover:bg-white/5 border-l-transparent pl-[13px]'
                 }`}
               >
                 {item.icon}
@@ -51,10 +51,10 @@ export function AdminSidebar() {
         </nav>
       </div>
 
-      <div className="flex flex-col gap-4 pt-6 border-t border-slate-800">
+      <div className="flex flex-col gap-4 pt-6 border-t border-white/10">
         <Link 
           href="/loja" 
-          className="flex items-center justify-between text-xs text-slate-400 hover:text-white transition-colors"
+          className="flex items-center justify-between text-[11px] font-medium text-white/60 hover:text-white transition-colors"
           target="_blank"
         >
           <span>Ir para a Loja</span>
@@ -63,9 +63,9 @@ export function AdminSidebar() {
         
         <button
           onClick={() => signOut({ callbackUrl: '/loja' })}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-red-400 hover:text-red-300 hover:bg-red-950/20 transition-all text-left w-full"
+          className="flex items-center justify-center gap-2.5 px-3 py-2.5 rounded-sm text-xs font-bold text-white/70 hover:text-nks-red hover:bg-nks-red-subtle/10 border border-white/15 hover:border-nks-red transition-all cursor-pointer text-center w-full"
         >
-          <LogOut className="h-4.5 w-4.5" />
+          <LogOut className="h-3.5 w-3.5" />
           Sair do Admin
         </button>
       </div>

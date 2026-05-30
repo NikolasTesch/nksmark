@@ -261,7 +261,6 @@ export default function LojaPage() {
 
           {/* Filtro por artes gratuitas */}
           <div className="flex flex-col gap-2.5">
-            <span className="nks-eyebrow text-nks-gray-400">Acesso</span>
             <button
               onClick={() => setIsFree(filters.isFree ? undefined : true)}
               className={`flex items-center gap-2 py-2 px-3 text-sm font-semibold rounded border w-full justify-center transition-all cursor-pointer ${
