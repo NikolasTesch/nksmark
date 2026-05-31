@@ -2,17 +2,16 @@
 
 import * as React from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArtworkForm } from '@/components/admin/ArtworkForm'
-import { Category, Status } from '@prisma/client'
-import { ChevronLeft, Loader2 } from 'lucide-react'
-import Link from 'next/link'
+import { ArtworkFormNks } from '@/components/admin/ArtworkFormNks'
+import { Category } from '@prisma/client'
+import { ArtworkWithRelations } from '@/types/artwork'
+import { Loader2 } from 'lucide-react'
 
 export default function EditarArtePage() {
-  const { id } = useParams()
+  const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [categories, setCategories] = React.useState<Category[]>([])
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [artworkData, setArtworkData] = React.useState<any>(null)
+  const [artwork, setArtwork] = React.useState<ArtworkWithRelations | null>(null)
   const [loading, setLoading] = React.useState(true)
 
   React.useEffect(() => {
@@ -21,9 +20,9 @@ export default function EditarArtePage() {
       try {
         const [catRes, artRes] = await Promise.all([
           fetch('/api/categories'),
-          fetch(`/api/artworks/${id}`)
+          fetch(`/api/artworks/${id}`),
         ])
-        
+
         const cats = await catRes.json()
         const art = await artRes.json()
 
@@ -32,7 +31,7 @@ export default function EditarArtePage() {
         }
 
         if (art.success) {
-          setArtworkData(art.data)
+          setArtwork(art.data)
         } else {
           alert('Erro ao carregar detalhes da arte: ' + (art.error || 'Não encontrada'))
           router.push('/admin/artes')
@@ -43,74 +42,40 @@ export default function EditarArtePage() {
         setLoading(false)
       }
     }
-    
+
     if (id) {
       fetchInitData()
     }
   }, [id, router])
 
   const initialData = React.useMemo(() => {
-    if (!artworkData) return null
+    if (!artwork) return null
     return {
-      title: artworkData.title,
-      description: artworkData.description || '',
-      categoryId: artworkData.categoryId,
-      status: artworkData.status as Status,
-      isFree: artworkData.isFree,
-      tags: artworkData.tags || [],
+      title: artwork.title,
+      description: artwork.description || '',
+      categoryId: artwork.categoryId,
+      status: artwork.status,
+      isFree: artwork.isFree,
+      previewUrl: artwork.previewUrl,
+      tags: artwork.tags.map((t) => ({ name: t.name })),
+      files: artwork.files.map((f) => ({ id: f.id, format: f.format, size: f.size })),
     }
-  }, [artworkData])
+  }, [artwork])
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleSubmit = async (formData: Record<string, unknown>, _files: File[]) => {
-    try {
-      const res = await fetch(`/api/artworks/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
-      const result = await res.json()
-      if (!result.success) {
-        throw new Error(result.error || 'Erro ao salvar alterações no banco.')
-      }
-      
-      alert('Arte atualizada com sucesso!')
-      router.push('/admin/artes')
-    } catch (e) {
-      console.error(e)
-      alert(e instanceof Error ? e.message : 'Erro ao atualizar arte.')
-      throw e
-    }
+  if (loading) {
+    return (
+      <div className="flex items-center py-20 justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-nks-red" />
+      </div>
+    )
   }
 
   return (
-    <div className="flex flex-col gap-6 py-4 animate-in fade-in duration-300">
-      <div>
-        <Link href="/admin/artes" className="inline-flex items-center gap-1 text-[11px] font-bold text-nks-gray-400 hover:text-nks-red uppercase tracking-wider mb-2 transition-colors">
-          <ChevronLeft className="h-4 w-4" /> Voltar para Listagem
-        </Link>
-        <h1 className="font-display text-[26px] font-extrabold uppercase tracking-tight text-nks-black mb-1.5">
-          Editar Arte Existente
-        </h1>
-        <p className="text-xs font-semibold text-nks-gray-700">
-          Modifique as informações gerais da arte ou gerencie seus arquivos de download.
-        </p>
-      </div>
-
-      <div className="mt-4">
-        {loading ? (
-          <div className="flex items-center py-12 justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-nks-red" />
-          </div>
-        ) : (
-          <ArtworkForm
-            categories={categories}
-            tags={[]}
-            initialData={initialData}
-            onSubmit={handleSubmit}
-          />
-        )}
-      </div>
-    </div>
+    <ArtworkFormNks
+      mode="edit"
+      artworkId={id}
+      categories={categories}
+      initialData={initialData}
+    />
   )
 }
