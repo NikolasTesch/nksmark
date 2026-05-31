@@ -16,6 +16,16 @@ export const artworkSchema = z.object({
   categoryId: z.string().min(1, 'Selecione uma categoria'),
   tagNames: z.array(z.string()).optional(),
   files: z.array(fileSchema).min(1, 'Adicione pelo menos um arquivo original'),
+  addGalleryImages: z
+    .array(
+      z.object({
+        url: z.string().url('URL inválida'),
+        format: z.enum(['PNG', 'JPG']),
+        size: z.number().positive('Tamanho inválido'),
+      })
+    )
+    .optional(),
+  removeFileIds: z.array(z.string()).optional(),
 })
 
 export type ArtworkInput = z.infer<typeof artworkSchema>

@@ -4,10 +4,22 @@ import prisma from '@/lib/prisma'
 import { resend, EMAIL_FROM } from '@/lib/email/resend'
 import { SuggestionEmailTemplate } from '@/lib/email/templates/suggestion'
 import { uploadFileToR2 } from '@/lib/r2/upload'
+import { rateLimit, getClientIp } from '@/lib/rate-limit'
 import * as React from 'react'
 
 export async function POST(req: Request) {
   try {
+    // Endpoint público: limita por IP para evitar flood de sugestões, abuso de
+    // upload no R2 (storage/egress) e email bombing via Resend.
+    const ip = await getClientIp()
+    const limit = rateLimit(`suggestion:${ip}`, 5, 60_000)
+    if (!limit.success) {
+      return NextResponse.json(
+        { success: false, error: 'Muitas sugestões em sequência. Aguarde um momento e tente novamente.' },
+        { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } }
+      )
+    }
+
     const contentType = req.headers.get('content-type') || ''
     let email: string | null = null
     let description = ''

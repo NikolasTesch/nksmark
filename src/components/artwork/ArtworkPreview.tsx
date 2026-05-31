@@ -56,6 +56,21 @@ export function ArtworkPreview({ images, title, formats }: ArtworkPreviewProps) 
     }
   }, [lightboxOpen, next, prev])
 
+  const touchStartX = React.useRef<number | null>(null)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || !hasMultiple) return
+    const delta = touchStartX.current - e.changedTouches[0].clientX
+    if (Math.abs(delta) > 40) {
+      delta > 0 ? next() : prev()
+    }
+    touchStartX.current = null
+  }
+
   const uniqueFormats = Array.from(new Set(formats.map((f) => f.toUpperCase())))
   const activeImage = safeGallery[activeIndex]
 
@@ -85,7 +100,11 @@ export function ArtworkPreview({ images, title, formats }: ArtworkPreviewProps) 
         )}
 
         {/* Imagem principal */}
-        <div className="relative flex-grow aspect-[4/3] rounded-2xl overflow-hidden border border-nks-gray-200 bg-nks-gray-100 group shadow-nks-sm">
+        <div
+          className="relative flex-grow aspect-[4/3] rounded-2xl overflow-hidden border border-nks-gray-200 bg-nks-gray-100 group shadow-nks-sm"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           <Image
             src={activeImage}
             alt={title}

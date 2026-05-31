@@ -53,7 +53,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       )
     }
 
-    const { title, description, status, isFree, previewUrl, categoryId, tagNames } = result.data
+    const { title, description, status, isFree, previewUrl, categoryId, tagNames, addGalleryImages, removeFileIds } = result.data
     const dataToUpdate: Prisma.ArtworkUpdateInput = {}
 
     if (title !== undefined) {
@@ -83,14 +83,31 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       }
     }
 
-    const updatedArtwork = await prisma.artwork.update({
+    await prisma.artwork.update({
       where: { id },
       data: dataToUpdate,
-      include: {
-        category: true,
-        tags: true,
-        files: true,
-      },
+    })
+
+    if (removeFileIds && removeFileIds.length > 0) {
+      await prisma.file.deleteMany({
+        where: { id: { in: removeFileIds }, artworkId: id },
+      })
+    }
+
+    if (addGalleryImages && addGalleryImages.length > 0) {
+      await prisma.file.createMany({
+        data: addGalleryImages.map((img) => ({
+          format: img.format as 'PNG' | 'JPG',
+          url: img.url,
+          size: img.size,
+          artworkId: id,
+        })),
+      })
+    }
+
+    const updatedArtwork = await prisma.artwork.findUnique({
+      where: { id },
+      include: { category: true, tags: true, files: true },
     })
 
     return NextResponse.json({ success: true, data: updatedArtwork })

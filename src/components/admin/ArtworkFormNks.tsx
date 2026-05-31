@@ -3,11 +3,11 @@
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import { Category, Status } from '@prisma/client'
-import { Upload, Check, X, ChevronDown, Loader2, FileText } from 'lucide-react'
+import { Upload, Check, X, ChevronDown, Loader2, FileText, Images, RotateCcw } from 'lucide-react'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 
-type ExistingFile = { id?: string; format: string; size: number }
+type ExistingFile = { id?: string; format: string; size: number; url?: string }
 
 interface ArtworkFormNksProps {
   mode: 'create' | 'edit'
@@ -44,6 +44,28 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData }: Art
   const [newTag, setNewTag] = React.useState('')
   const [isAddingTag, setIsAddingTag] = React.useState(false)
   const [files, setFiles] = React.useState<File[]>([])
+  const [galleryFiles, setGalleryFiles] = React.useState<File[]>([])
+  const [fileIdsToRemove, setFileIdsToRemove] = React.useState<string[]>([])
+
+  const galleryInputRef = React.useRef<HTMLInputElement>(null)
+
+  const existingGalleryFiles = React.useMemo(
+    () => (initialData?.files || []).filter((f) => f.format === 'PNG' || f.format === 'JPG'),
+    [initialData]
+  )
+
+  const toggleRemoveFile = (fileId: string) => {
+    setFileIdsToRemove((prev) =>
+      prev.includes(fileId) ? prev.filter((id) => id !== fileId) : [...prev, fileId]
+    )
+  }
+
+  const handleGalleryInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setGalleryFiles((prev) => [...prev, ...Array.from(e.target.files!)])
+    }
+    e.target.value = ''
+  }
 
   const [submitting, setSubmitting] = React.useState(false)
   const [error, setError] = React.useState('')
@@ -122,8 +144,6 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData }: Art
       const activeStatus = forceStatus || status
 
       if (isEdit) {
-        // PATCH só atualiza metadados (+ capa opcional). Arquivos de download
-        // não são gerenciados por esta rota.
         const payload: Record<string, unknown> = {
           title,
           description,
@@ -137,6 +157,20 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData }: Art
         if (newCover) {
           const uploaded = await uploadSingleFile(newCover, 'previews')
           payload.previewUrl = uploaded.url
+        }
+
+        if (galleryFiles.length > 0) {
+          const uploaded: { url: string; format: string; size: number }[] = []
+          for (const file of galleryFiles) {
+            const result = await uploadSingleFile(file, 'files')
+            const ext = file.name.split('.').pop()?.toUpperCase() || 'PNG'
+            uploaded.push({ url: result.url, format: ext === 'JPG' ? 'JPG' : 'PNG', size: result.size })
+          }
+          payload.addGalleryImages = uploaded
+        }
+
+        if (fileIdsToRemove.length > 0) {
+          payload.removeFileIds = fileIdsToRemove
         }
 
         const res = await fetch(`/api/artworks/${artworkId}`, {
@@ -316,32 +350,146 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData }: Art
           )}
 
           {/* Arquivos originais já existentes (somente leitura, em edição) */}
-          {isEdit && initialData?.files && initialData.files.length > 0 && (
+          {isEdit && initialData?.files && initialData.files.filter((f) => f.format !== 'PNG' && f.format !== 'JPG').length > 0 && (
             <div className="flex flex-col gap-2.5 mt-1">
               <span className="text-[10px] font-black text-nks-gray-400 uppercase tracking-wider px-1">
-                Arquivos originais ({initialData.files.length})
+                Arquivos originais ({initialData.files.filter((f) => f.format !== 'PNG' && f.format !== 'JPG').length})
               </span>
               <div className="flex flex-col gap-2">
-                {initialData.files.map((file, idx) => (
-                  <div
-                    key={file.id || idx}
-                    className="flex items-center justify-between p-3 rounded-lg border border-nks-gray-200 bg-nks-gray-100/40"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="bg-nks-gray-100 border border-nks-gray-200/80 text-nks-gray-750 px-2 py-0.5 rounded text-[10px] font-black font-mono tracking-wider uppercase min-w-[36px] text-center">
-                        {file.format}
+                {initialData.files
+                  .filter((f) => f.format !== 'PNG' && f.format !== 'JPG')
+                  .map((file, idx) => (
+                    <div
+                      key={file.id || idx}
+                      className="flex items-center justify-between p-3 rounded-lg border border-nks-gray-200 bg-nks-gray-100/40"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="bg-nks-gray-100 border border-nks-gray-200/80 text-nks-gray-750 px-2 py-0.5 rounded text-[10px] font-black font-mono tracking-wider uppercase min-w-[36px] text-center">
+                          {file.format}
+                        </div>
+                        <FileText className="h-3.5 w-3.5 text-nks-gray-400" />
                       </div>
-                      <FileText className="h-3.5 w-3.5 text-nks-gray-400" />
+                      <span className="text-[10px] text-nks-gray-400 font-bold uppercase">
+                        {(file.size / (1024 * 1024)).toFixed(1).replace('.', ',')} MB
+                      </span>
                     </div>
-                    <span className="text-[10px] text-nks-gray-400 font-bold uppercase">
-                      {(file.size / (1024 * 1024)).toFixed(1).replace('.', ',')} MB
-                    </span>
-                  </div>
-                ))}
+                  ))}
               </div>
               <span className="text-[10px] font-semibold text-nks-gray-400 px-1">
                 A gestão dos arquivos de download ainda não é editável por aqui.
               </span>
+            </div>
+          )}
+
+          {/* Galeria de imagens adicionais (edit mode) */}
+          {isEdit && (
+            <div className="flex flex-col gap-3 pt-4 border-t border-nks-gray-200 mt-1">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-1.5">
+                  <Images className="h-3.5 w-3.5 text-nks-gray-400" />
+                  <span className="text-[10px] font-black text-nks-gray-400 uppercase tracking-wider">
+                    Imagens da galeria
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => galleryInputRef.current?.click()}
+                  className="text-[10px] font-bold text-nks-red hover:text-nks-red-light transition-colors cursor-pointer"
+                >
+                  + adicionar
+                </button>
+              </div>
+
+              <input
+                ref={galleryInputRef}
+                type="file"
+                accept=".png,.jpg,.jpeg,.webp"
+                multiple
+                onChange={handleGalleryInput}
+                className="hidden"
+              />
+
+              {/* Imagens de galeria existentes */}
+              {existingGalleryFiles.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {existingGalleryFiles.map((file, idx) => (
+                    <div
+                      key={file.id || idx}
+                      className={`relative h-[72px] w-[72px] rounded-lg overflow-hidden border bg-nks-gray-100 shrink-0 transition-all duration-200 ${
+                        file.id && fileIdsToRemove.includes(file.id)
+                          ? 'border-nks-red opacity-40'
+                          : 'border-nks-gray-200'
+                      }`}
+                    >
+                      {file.url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={file.url}
+                          alt={file.format}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center">
+                          <span className="text-[9px] font-black text-nks-gray-400 uppercase">
+                            {file.format}
+                          </span>
+                        </div>
+                      )}
+                      {file.id && (
+                        <button
+                          type="button"
+                          onClick={() => toggleRemoveFile(file.id!)}
+                          title={fileIdsToRemove.includes(file.id) ? 'Desfazer remoção' : 'Remover imagem'}
+                          className="absolute top-0.5 right-0.5 bg-white/90 hover:bg-nks-red hover:text-white text-nks-gray-700 rounded p-0.5 shadow-sm transition-colors cursor-pointer"
+                        >
+                          {fileIdsToRemove.includes(file.id) ? (
+                            <RotateCcw className="h-3 w-3" />
+                          ) : (
+                            <X className="h-3 w-3" />
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Novas imagens de galeria a enviar */}
+              {galleryFiles.length > 0 && (
+                <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                  {galleryFiles.map((file, idx) => {
+                    const ext = file.name.split('.').pop()?.toUpperCase() || 'PNG'
+                    return (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-2.5 rounded-lg border border-nks-gray-200 bg-white"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="bg-nks-gray-100 border border-nks-gray-200/80 text-nks-gray-750 px-2 py-0.5 rounded text-[10px] font-black font-mono tracking-wider uppercase min-w-[36px] text-center shrink-0">
+                            {ext}
+                          </div>
+                          <span className="text-xs font-bold text-nks-black truncate" title={file.name}>
+                            {file.name}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setGalleryFiles((prev) => prev.filter((_, i) => i !== idx))}
+                          className="p-1 text-nks-gray-400 hover:text-nks-red rounded-lg transition-colors cursor-pointer hover:bg-nks-gray-100 shrink-0 ml-2"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {existingGalleryFiles.length === 0 && galleryFiles.length === 0 && (
+                <span className="text-[10px] font-semibold text-nks-gray-400 px-1">
+                  Nenhuma imagem adicional. Use "+ adicionar" para incluir fotos do produto na galeria.
+                </span>
+              )}
             </div>
           )}
         </div>

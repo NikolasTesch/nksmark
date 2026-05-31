@@ -85,7 +85,14 @@ export async function POST(req: Request) {
       ? file.url.substring(file.url.indexOf('files/'))
       : file.url
 
-    const signedUrl = await getSignedDownloadUrl(fileKey, `${file.artwork.title.toLowerCase().replace(/\s+/g, '-')}.${file.format.toLowerCase()}`)
+    // Nome do arquivo vai no header Content-Disposition da URL assinada. Removemos
+    // aspas, barras e caracteres de controle para não quebrar/injetar no header.
+    const safeTitle = file.artwork.title
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9._-]/g, '')
+      .slice(0, 100) || 'arte'
+    const signedUrl = await getSignedDownloadUrl(fileKey, `${safeTitle}.${file.format.toLowerCase()}`)
 
     return NextResponse.json({ success: true, data: { downloadUrl: signedUrl } })
   } catch (error) {
