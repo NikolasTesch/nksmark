@@ -87,9 +87,9 @@ export async function POST(req: Request) {
 
     if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 're_placeholder') {
       try {
-        await resend.emails.send({
+        const { data, error } = await resend.emails.send({
           from: EMAIL_FROM,
-          to: process.env.ADMIN_EMAIL || 'admin@nksart.com.br',
+          to: process.env.ADMIN_EMAIL || 'nikolasdtesch@gmail.com',
           subject: 'Nova Sugestão de Arte - NKS Art',
           react: React.createElement(SuggestionEmailTemplate, {
             email: email || undefined,
@@ -97,8 +97,13 @@ export async function POST(req: Request) {
             imageUrl,
           }),
         })
+        if (error) {
+          console.error('Error sending email via Resend API:', error)
+        } else {
+          console.log('Email sent successfully via Resend:', data)
+        }
       } catch (err) {
-        console.error('Error sending email via Resend:', err)
+        console.error('Unexpected error sending email via Resend:', err)
       }
     }
 
