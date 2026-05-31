@@ -42,6 +42,18 @@ export default function ArtworkDetailsPage() {
   const userRole = (session?.user as { role?: string })?.role
   const isFaseOrAdmin = userRole === 'FASE' || userRole === 'ADMIN'
 
+  // Galeria: imagem principal + mockups (PNG/JPG) que tenham url pública liberada.
+  const galleryImages = React.useMemo(() => {
+    if (!artwork) return []
+    const images = [artwork.previewUrl]
+    for (const file of artwork.files) {
+      if ((file.format === 'PNG' || file.format === 'JPG') && file.url) {
+        images.push(file.url)
+      }
+    }
+    return Array.from(new Set(images.filter(Boolean)))
+  }, [artwork])
+
   const handleDownloadClick = () => {
     if (!artwork) return
     if (isFaseOrAdmin) {
@@ -116,7 +128,11 @@ export default function ArtworkDetailsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           <div className="lg:col-span-7 flex flex-col gap-4">
-            <ArtworkPreview url={artwork.previewUrl} title={artwork.title} />
+            <ArtworkPreview
+              images={galleryImages}
+              title={artwork.title}
+              formats={artwork.files.map((f) => f.format)}
+            />
           </div>
 
           <div className="lg:col-span-5 flex flex-col gap-6 p-6 bg-white border border-nks-gray-200 rounded-lg shadow-nks-sm h-fit">

@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma'
 import { protectAdminRoute } from '@/lib/auth/middleware'
 import { artworkSchema } from '@/lib/validations/artwork'
 import { generateSlug } from '@/lib/utils/slug'
-import { Prisma, Status } from '@prisma/client'
+import { Prisma, Status, Format } from '@prisma/client'
 
 export async function GET(req: Request) {
   try {
@@ -59,16 +59,32 @@ export async function GET(req: Request) {
       include: {
         category: true,
         tags: true,
-        // Visitantes/público nunca recebem a URL/chave R2 do arquivo original;
-        // o download acontece sempre via URL assinada no endpoint /api/downloads.
         files: {
-          select: isAdminView
-            ? { id: true, format: true, url: true, size: true, artworkId: true }
-            : { id: true, format: true, size: true, artworkId: true },
+          select: { id: true, format: true, url: true, size: true, artworkId: true },
         },
       },
       orderBy: { createdAt: 'desc' }
     })
+
+    // Visitantes/público só recebem a `url` de mockups (PNG/JPG), usados na galeria
+    // de preview. A URL/chave R2 dos vetores originais (CDR/AI/PDF/OTF) é removida —
+    // o download desses arquivos acontece sempre via URL assinada em /api/downloads.
+    if (!isAdminView) {
+      for (const artwork of artworks) {
+        artwork.files = artwork.files.map((file) => {
+          if (file.format === Format.PNG || file.format === Format.JPG) {
+            return file
+          }
+          // Reconstrói o arquivo sem a `url` para não vazar o caminho do vetor original.
+          return {
+            id: file.id,
+            format: file.format,
+            size: file.size,
+            artworkId: file.artworkId,
+          } as typeof file
+        })
+      }
+    }
 
     return NextResponse.json({ success: true, data: artworks })
   } catch (error) {
