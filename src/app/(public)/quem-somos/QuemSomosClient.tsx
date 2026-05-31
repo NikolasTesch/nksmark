@@ -49,7 +49,12 @@ function AnimatedCounter({ value, suffix = '', duration = 1.5, className = '' }:
   )
 }
 
-export function QuemSomosClient() {
+interface QuemSomosClientProps {
+  artworkCount?: number
+  categoryCount?: number
+}
+
+export function QuemSomosClient({ artworkCount = 1240, categoryCount = 6 }: QuemSomosClientProps) {
   const timelineRef = React.useRef<HTMLDivElement>(null)
   const isTimelineInView = useInView(timelineRef, { once: false, margin: '-100px' })
 
@@ -168,11 +173,11 @@ export function QuemSomosClient() {
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-nks-red via-nks-red-light to-nks-red/0 pointer-events-none" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center max-w-4xl mx-auto">
           <motion.div variants={cardVariants} className="flex flex-col items-center gap-1">
-            <AnimatedCounter value={1240} suffix="+" className="text-nks-red" />
+            <AnimatedCounter value={artworkCount} suffix="+" className="text-nks-red" />
             <span className="text-[11px] uppercase tracking-[0.1em] text-nks-gray-400 font-medium">Artes Homologadas</span>
           </motion.div>
           <motion.div variants={cardVariants} className="flex flex-col items-center gap-1 border-y md:border-y-0 md:border-x border-nks-gray-200 py-6 md:py-0">
-            <AnimatedCounter value={6} suffix=" Categorias" />
+            <AnimatedCounter value={categoryCount} suffix={categoryCount === 1 ? " Categoria" : " Categorias"} />
             <span className="text-[11px] uppercase tracking-[0.1em] text-nks-gray-400 font-medium">Segmentação Técnica</span>
           </motion.div>
           <motion.div variants={cardVariants} className="flex flex-col items-center gap-1">
@@ -194,7 +199,7 @@ export function QuemSomosClient() {
           className="relative aspect-[4/3] rounded-lg overflow-hidden border border-nks-gray-200 shadow-nks bg-nks-gray-100 group"
         >
           <Image
-            src="https://images.unsplash.com/photo-1542744094-3a31f103e35f?w=800&auto=format&fit=crop&q=80"
+            src="/designer-studio.png"
             alt="Designer trabalhando no estúdio"
             fill
             priority

@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import { QuemSomosClient } from './QuemSomosClient'
+import prisma from '@/lib/prisma'
 
 export const metadata: Metadata = {
   title: 'Quem Somos — Nossa História, Métricas & Design de Alta Fidelidade',
@@ -7,6 +8,13 @@ export const metadata: Metadata = {
   keywords: ['quem somos nks', 'estúdio nks art', 'história nks art', 'sublimação de alta fidelidade', 'vetores em curvas', 'fechamento de arquivo'],
 }
 
-export default function QuemSomosPage() {
-  return <QuemSomosClient />
+export default async function QuemSomosPage() {
+  // Query actual counts from the database
+  const artworkCount = await prisma.artwork.count({
+    where: { status: 'PUBLISHED' }
+  })
+  
+  const categoryCount = await prisma.category.count()
+
+  return <QuemSomosClient artworkCount={artworkCount} categoryCount={categoryCount} />
 }

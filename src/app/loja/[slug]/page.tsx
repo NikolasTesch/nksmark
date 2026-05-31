@@ -129,8 +129,9 @@ export default function ArtworkDetailsPage() {
           
           <div className="lg:col-span-7 flex flex-col gap-4">
             <ArtworkPreview
-              images={galleryImages}
+              url={artwork.previewUrl}
               title={artwork.title}
+              images={galleryImages}
               formats={artwork.files.map((f) => f.format)}
             />
           </div>
