@@ -44,6 +44,7 @@ export function useArtworks(options: UseArtworksOptions = {}) {
 
   useEffect(() => {
     if (!options.lazy) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch inicial on-mount (sincroniza com a API)
       fetchArtworks()
     }
   }, [fetchArtworks, options.lazy])

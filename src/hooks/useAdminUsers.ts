@@ -26,6 +26,7 @@ export function useAdminUsers() {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch inicial on-mount (sincroniza com a API)
     fetchUsers()
   }, [fetchUsers])
 

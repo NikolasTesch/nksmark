@@ -43,6 +43,7 @@ export function useDownloadHistory() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch inicial on-mount (sincroniza com a API)
     fetchHistory()
   }, [])
 

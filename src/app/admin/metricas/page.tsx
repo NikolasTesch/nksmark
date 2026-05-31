@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useState } from 'react'
-import { useAdminMetrics } from '@/hooks/useAdminMetrics'
+import { useAdminMetrics, type AdminMetricsFilters } from '@/hooks/useAdminMetrics'
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -56,7 +56,7 @@ export default function AdminMetricsPage() {
 
   const years = [2026, 2025, 2024]
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = <K extends keyof AdminMetricsFilters>(key: K, value: AdminMetricsFilters[K]) => {
     setFilters(prev => ({
       ...prev,
       [key]: value

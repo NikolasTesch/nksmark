@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Scripts utilitários descartáveis (one-off, fora do app)
+    "scratch/**",
   ]),
 ]);
 

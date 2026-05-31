@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import prisma from '@/lib/prisma'
 import { protectAdminRoute } from '@/lib/auth/middleware'
 import { generateSlug } from '@/lib/utils/slug'
@@ -14,7 +15,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const body = await req.json()
     const { name, color, showInFilter, filterOrder } = body
 
-    const dataToUpdate: Record<string, any> = {}
+    const dataToUpdate: Prisma.CategoryUpdateInput = {}
 
     if (name !== undefined) {
       dataToUpdate.name = name
