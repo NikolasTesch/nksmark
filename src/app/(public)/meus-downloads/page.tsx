@@ -56,13 +56,13 @@ export default function MeusDownloadsPage() {
       ) : (
         <div className="border border-nks-gray-200 rounded overflow-hidden bg-white shadow-nks-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm">
+            <table className="w-full text-left border-collapse text-sm min-w-[480px]">
               <thead>
                 <tr className="bg-nks-black text-white border-b border-nks-gray-200 font-semibold text-[11px] uppercase tracking-wider">
                   <th className="py-3.5 px-4">Visual</th>
                   <th className="py-3.5 px-4">Arte / Título</th>
-                  <th className="py-3.5 px-4">Formato</th>
-                  <th className="py-3.5 px-4">Data do download</th>
+                  <th className="py-3.5 px-4 hidden sm:table-cell">Formato</th>
+                  <th className="py-3.5 px-4 hidden md:table-cell">Data do download</th>
                   <th className="py-3.5 px-4 text-right">Ação</th>
                 </tr>
               </thead>
@@ -70,7 +70,7 @@ export default function MeusDownloadsPage() {
                 {history.map((item, idx) => (
                   <tr key={`${item.id}-${idx}`} className="hover:bg-nks-gray-100 transition-colors">
                     <td className="py-3.5 px-4">
-                      <div className="relative h-10 w-14 rounded overflow-hidden border border-nks-gray-200 bg-nks-gray-100">
+                      <div className="relative h-10 w-14 rounded overflow-hidden border border-nks-gray-200 bg-nks-gray-100 shrink-0">
                         <Image
                           src={item.previewUrl || '/placeholder.jpg'}
                           alt={item.artworkTitle}
@@ -79,19 +79,19 @@ export default function MeusDownloadsPage() {
                         />
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 font-semibold text-nks-black">
-                      {item.artworkTitle}
+                    <td className="py-3.5 px-4 font-semibold text-nks-black max-w-[160px] sm:max-w-none">
+                      <span className="line-clamp-2 leading-snug">{item.artworkTitle}</span>
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 hidden sm:table-cell">
                       <FormatBadge format={item.format} />
                     </td>
-                    <td className="py-3.5 px-4 text-xs text-nks-gray-400">
+                    <td className="py-3.5 px-4 text-xs text-nks-gray-400 hidden md:table-cell whitespace-nowrap">
                       {formatDate(item.downloadedAt)}
                     </td>
                     <td className="py-3.5 px-4 text-right">
-                      <Link 
-                        href={`/loja/${item.artworkId}`} 
-                        className="inline-flex items-center gap-1 text-xs font-bold text-nks-red hover:underline hover:text-nks-red-dark"
+                      <Link
+                        href={`/loja/${item.artworkId}`}
+                        className="inline-flex items-center gap-1 text-xs font-bold text-nks-red hover:underline hover:text-nks-red-dark whitespace-nowrap"
                       >
                         Ver arte <ExternalLink className="h-3 w-3" />
                       </Link>

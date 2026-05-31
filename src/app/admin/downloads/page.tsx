@@ -71,13 +71,13 @@ export default function AdminDownloadLogsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse">
+            <table className="w-full text-left text-sm border-collapse min-w-[480px]">
               <thead>
                 <tr className="bg-white border-b border-nks-gray-200/80 font-display font-extrabold text-[10px] uppercase tracking-[0.12em] text-nks-gray-400 select-none">
-                  <th className="py-4.5 px-6 font-bold">Usuário</th>
-                  <th className="py-4.5 px-6 font-bold">Arte</th>
-                  <th className="py-4.5 px-6 font-bold text-center w-24">Formato</th>
-                  <th className="py-4.5 px-6 font-bold w-36">Quando</th>
+                  <th className="py-4.5 px-4 sm:px-6 font-bold">Usuário</th>
+                  <th className="py-4.5 px-4 sm:px-6 font-bold">Arte</th>
+                  <th className="py-4.5 px-4 sm:px-6 font-bold text-center w-20 sm:w-24">Formato</th>
+                  <th className="py-4.5 px-4 sm:px-6 font-bold w-28 sm:w-36 hidden sm:table-cell">Quando</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-nks-gray-100">
@@ -90,31 +90,31 @@ export default function AdminDownloadLogsPage() {
                     className="hover:bg-nks-gray-100/20 transition-colors"
                   >
                     {/* User */}
-                    <td className="py-4 px-6">
+                    <td className="py-4 px-4 sm:px-6">
                       <div className="flex flex-col">
-                        <span className="font-bold text-nks-black text-sm leading-tight">
+                        <span className="font-bold text-nks-black text-xs sm:text-sm leading-tight">
                           {log.userName}
                         </span>
-                        <span className="text-[11px] text-nks-gray-400 font-medium leading-none mt-1 font-sans">
+                        <span className="text-[10px] text-nks-gray-400 font-medium leading-none mt-1 font-sans hidden sm:block">
                           {log.userEmail}
                         </span>
                       </div>
                     </td>
 
                     {/* Artwork */}
-                    <td className="py-4 px-6 text-xs font-semibold text-nks-black">
-                      {log.artworkTitle}
+                    <td className="py-4 px-4 sm:px-6 text-xs font-semibold text-nks-black max-w-[120px] sm:max-w-none">
+                      <span className="line-clamp-2 leading-snug">{log.artworkTitle}</span>
                     </td>
 
                     {/* Format */}
-                    <td className="py-4 px-6 text-center">
+                    <td className="py-4 px-4 sm:px-6 text-center">
                       <span className="inline-block font-mono text-[9px] px-2 py-0.5 border border-nks-gray-200/80 bg-white text-nks-gray-700 font-black rounded-sm shadow-sm select-none tracking-wider">
                         {log.format}
                       </span>
                     </td>
 
                     {/* Timestamp */}
-                    <td className="py-4 px-6 text-xs text-nks-gray-400 font-semibold whitespace-nowrap">
+                    <td className="py-4 px-4 sm:px-6 text-xs text-nks-gray-400 font-semibold whitespace-nowrap hidden sm:table-cell">
                       {formatRelativeTime(log.createdAt)}
                     </td>
                   </motion.tr>
