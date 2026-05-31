@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { ArtworkWithRelations } from '@/types/artwork'
+import { useFavorites } from '@/hooks/useFavorites'
 import { Lock, Download, Heart, Image as ImageIcon } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -19,7 +20,8 @@ export function ArtworkCard({ artwork }: ArtworkCardProps) {
   const role = (session?.user as { role?: string })?.role
   const canDownload = role === 'FASE' || role === 'ADMIN'
 
-  const [fav, setFav] = React.useState(false)
+  const { isFavorite, toggleFavorite } = useFavorites()
+  const fav = isFavorite(artwork.id)
   const href = `/loja/${artwork.slug}`
   const extraTag = artwork.tags[0]?.name
 
@@ -69,10 +71,11 @@ export function ArtworkCard({ artwork }: ArtworkCardProps) {
         {/* Favoritar com Pop Animation */}
         <button
           type="button"
-          aria-label="Favoritar"
+          aria-label={fav ? 'Remover dos favoritos' : 'Favoritar'}
+          aria-pressed={fav}
           onClick={(e) => {
             e.preventDefault()
-            setFav((v) => !v)
+            toggleFavorite(artwork.id)
           }}
           className="absolute top-[9px] right-[9px] flex h-7 w-7 items-center justify-center rounded-full bg-white/92 shadow-[0_1px_2px_rgba(17,17,17,0.06)] cursor-pointer"
         >

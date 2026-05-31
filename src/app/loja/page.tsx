@@ -9,11 +9,17 @@ import { ArtworkWithRelations } from '@/types/artwork'
 import { Category, Tag, Status } from '@prisma/client'
 import { useArtworkFilters } from '@/hooks/useArtworkFilters'
 import { useArtworks } from '@/hooks/useArtworks'
+import { useFavorites } from '@/hooks/useFavorites'
 import { useSession } from 'next-auth/react'
-import { Search, Sparkles, Lock, ArrowRight } from 'lucide-react'
+import { Search, Sparkles, Lock, Heart, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
+
+// Paginação: máximo de 10 linhas por página. Em telas grandes o grid tem 4 colunas,
+// portanto 10 linhas = 40 cards por página. Os controles só aparecem acima desse limite.
+const PAGE_SIZE = 40
 
 export default function LojaPage() {
-  const { filters, setCategory, setTag, setSearch, setIsFree, resetFilters } = useArtworkFilters()
+  const { filters, setCategory, setTag, setSearch, setIsFree, setOnlyFavorites, resetFilters } = useArtworkFilters()
+  const { favoriteIds, favoritesCount } = useFavorites()
   const { data: session } = useSession()
   const [categories, setCategories] = React.useState<Category[]>([])
   const [tags, setTags] = React.useState<Tag[]>([])
@@ -51,11 +57,13 @@ export default function LojaPage() {
   const totalCount = artworks.length
 
   // Filtragem reativa do lado do cliente
+  const favoriteSet = React.useMemo(() => new Set(favoriteIds), [favoriteIds])
   const filteredArtworks = React.useMemo(() => {
     return artworks.filter((art) => {
       if (filters.categoryId && art.categoryId !== filters.categoryId) return false
       if (filters.tagId && !art.tags.some((t) => t.id === filters.tagId)) return false
       if (filters.isFree !== undefined && art.isFree !== filters.isFree) return false
+      if (filters.onlyFavorites && !favoriteSet.has(art.id)) return false
       if (filters.search) {
         const query = filters.search.toLowerCase()
         const matchTitle = art.title.toLowerCase().includes(query)
@@ -65,7 +73,26 @@ export default function LojaPage() {
       }
       return true
     })
-  }, [artworks, filters])
+  }, [artworks, filters, favoriteSet])
+
+  // Estado de paginação (client-side)
+  const [page, setPage] = React.useState(1)
+  const totalPages = Math.max(1, Math.ceil(filteredArtworks.length / PAGE_SIZE))
+
+  // Volta para a primeira página sempre que os filtros mudam
+  React.useEffect(() => {
+    setPage(1)
+  }, [filters.categoryId, filters.tagId, filters.search, filters.isFree, filters.onlyFavorites])
+
+  // Garante que a página atual nunca ultrapasse o total disponível
+  React.useEffect(() => {
+    if (page > totalPages) setPage(totalPages)
+  }, [page, totalPages])
+
+  const pagedArtworks = React.useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE
+    return filteredArtworks.slice(start, start + PAGE_SIZE)
+  }, [filteredArtworks, page])
 
   const userRole = (session?.user as { role?: string })?.role
   const canDownload = userRole === 'FASE' || userRole === 'ADMIN'
@@ -174,8 +201,32 @@ export default function LojaPage() {
           {/* Divisor */}
           <div className="border-t border-nks-gray-200" />
 
-          {/* Filtro por artes gratuitas */}
+          {/* Filtros rápidos: favoritas e gratuitas */}
           <div className="flex flex-col gap-2.5">
+            <button
+              onClick={() => setOnlyFavorites(filters.onlyFavorites ? undefined : true)}
+              className={`flex items-center gap-2 py-2 px-3 text-sm font-semibold rounded border w-full justify-center transition-all cursor-pointer ${
+                filters.onlyFavorites
+                  ? 'bg-nks-red border-nks-red text-white'
+                  : 'bg-white border-nks-gray-200 text-nks-gray-700 hover:bg-nks-gray-100'
+              }`}
+            >
+              <Heart
+                className="h-4 w-4"
+                style={{ fill: filters.onlyFavorites ? 'currentColor' : 'transparent' }}
+              />
+              Favoritas
+              {favoritesCount > 0 && (
+                <span
+                  className={`font-mono text-[11px] ${
+                    filters.onlyFavorites ? 'text-white/80' : 'text-nks-gray-400'
+                  }`}
+                >
+                  {favoritesCount}
+                </span>
+              )}
+            </button>
+
             <button
               onClick={() => setIsFree(filters.isFree ? undefined : true)}
               className={`flex items-center gap-2 py-2 px-3 text-sm font-semibold rounded border w-full justify-center transition-all cursor-pointer ${
@@ -215,7 +266,7 @@ export default function LojaPage() {
           )}
 
           {/* Ação de resetar todos os filtros */}
-          {(filters.categoryId || filters.tagId || filters.search || filters.isFree !== undefined) && (
+          {(filters.categoryId || filters.tagId || filters.search || filters.isFree !== undefined || filters.onlyFavorites) && (
             <button
               onClick={resetFilters}
               className="text-xs text-nks-red hover:underline font-semibold text-center w-full mt-2 cursor-pointer"
@@ -247,21 +298,62 @@ export default function LojaPage() {
             )}
           </div>
 
-          {/* Grid de Cards de Alta Fidelidade (3 colunas em telas médias/grandes) */}
+          {/* Grid de Cards de Alta Fidelidade (4 colunas em telas grandes) */}
           {loading ? (
-            <LoadingGrid count={6} />
+            <LoadingGrid count={8} />
           ) : filteredArtworks.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[18px]">
-              {filteredArtworks.map((art) => (
-                <ArtworkCard key={art.id} artwork={art} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-[18px]">
+                {pagedArtworks.map((art) => (
+                  <ArtworkCard key={art.id} artwork={art} />
+                ))}
+              </div>
+
+              {/* Controles de paginação — só aparecem com mais de 10 linhas (40 cards) */}
+              {totalPages > 1 && (
+                <nav
+                  aria-label="Paginação"
+                  className="flex items-center justify-center gap-1.5 mt-10"
+                >
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="inline-flex items-center gap-1 h-9 px-3 rounded border border-nks-gray-200 bg-white text-sm font-semibold text-nks-gray-700 hover:bg-nks-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                  >
+                    <ChevronLeft className="h-4 w-4" /> Anterior
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      aria-current={p === page ? 'page' : undefined}
+                      className={`h-9 min-w-[36px] px-2 rounded border text-sm font-semibold transition-colors cursor-pointer ${
+                        p === page
+                          ? 'bg-nks-red border-nks-red text-white'
+                          : 'bg-white border-nks-gray-200 text-nks-gray-700 hover:bg-nks-gray-100'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="inline-flex items-center gap-1 h-9 px-3 rounded border border-nks-gray-200 bg-white text-sm font-semibold text-nks-gray-700 hover:bg-nks-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                  >
+                    Próxima <ChevronRight className="h-4 w-4" />
+                  </button>
+                </nav>
+              )}
+            </>
           ) : (
             <div className="text-center py-20 bg-nks-gray-100 border border-nks-gray-200 rounded p-6">
               <span className="text-nks-gray-400 text-sm font-medium">
                 Nenhuma arte localizada sob estes critérios de busca.
               </span>
-              {(filters.categoryId || filters.tagId || filters.search || filters.isFree !== undefined) && (
+              {(filters.categoryId || filters.tagId || filters.search || filters.isFree !== undefined || filters.onlyFavorites) && (
                 <button
                   onClick={resetFilters}
                   className="text-nks-red hover:underline block mx-auto mt-2 text-xs font-semibold cursor-pointer"

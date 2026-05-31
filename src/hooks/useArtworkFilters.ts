@@ -7,6 +7,7 @@ export function useArtworkFilters() {
     tagId: undefined,
     search: '',
     isFree: undefined,
+    onlyFavorites: undefined,
   })
 
   const setCategory = useCallback((categoryId?: string) => {
@@ -25,12 +26,17 @@ export function useArtworkFilters() {
     setFilters((prev) => ({ ...prev, isFree }))
   }, [])
 
+  const setOnlyFavorites = useCallback((onlyFavorites?: boolean) => {
+    setFilters((prev) => ({ ...prev, onlyFavorites }))
+  }, [])
+
   const resetFilters = useCallback(() => {
     setFilters({
       categoryId: undefined,
       tagId: undefined,
       search: '',
       isFree: undefined,
+      onlyFavorites: undefined,
     })
   }, [])
 
@@ -40,6 +46,7 @@ export function useArtworkFilters() {
     setTag,
     setSearch,
     setIsFree,
+    setOnlyFavorites,
     resetFilters,
   }
 }

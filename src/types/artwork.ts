@@ -16,4 +16,5 @@ export interface ArtworkFilterState {
   tagId?: string
   search?: string
   isFree?: boolean
+  onlyFavorites?: boolean
 }
