@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { protectAdminRoute } from '@/lib/auth/middleware'
 import { generateSlug } from '@/lib/utils/slug'
+import { categorySchema } from '@/lib/validations/admin'
 
 export async function GET() {
   try {
@@ -21,12 +22,15 @@ export async function POST(req: Request) {
       return authStatus.response
     }
 
-    const { name, color } = await req.json()
-
-    if (!name) {
-      return NextResponse.json({ success: false, error: 'Nome é obrigatório' }, { status: 400 })
+    const result = categorySchema.safeParse(await req.json())
+    if (!result.success) {
+      return NextResponse.json(
+        { success: false, error: result.error.issues[0].message },
+        { status: 400 }
+      )
     }
 
+    const { name, color } = result.data
     const slug = generateSlug(name)
 
     const category = await prisma.category.create({

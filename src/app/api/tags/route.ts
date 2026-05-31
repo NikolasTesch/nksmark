@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { protectAdminRoute } from '@/lib/auth/middleware'
 import { generateSlug } from '@/lib/utils/slug'
+import { tagSchema } from '@/lib/validations/admin'
 
 export async function GET() {
   try {
@@ -21,13 +22,15 @@ export async function POST(req: Request) {
       return authStatus.response
     }
 
-    const { name } = await req.json()
-
-    if (!name) {
-      return NextResponse.json({ success: false, error: 'Nome da tag é obrigatório' }, { status: 400 })
+    const result = tagSchema.safeParse(await req.json())
+    if (!result.success) {
+      return NextResponse.json(
+        { success: false, error: result.error.issues[0].message },
+        { status: 400 }
+      )
     }
 
-    const cleanName = generateSlug(name)
+    const cleanName = generateSlug(result.data.name)
 
     const tag = await prisma.tag.upsert({
       where: { name: cleanName },

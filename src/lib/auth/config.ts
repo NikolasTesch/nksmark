@@ -21,6 +21,24 @@ export const authConfig: NextAuthConfig = {
         const email = (credentials.email as string).trim().toLowerCase()
         const password = credentials.password as string
 
+        // Rejeita inputs absurdos antes de qualquer trabalho (defesa básica
+        // contra payloads gigantes e e-mails malformados).
+        if (email.length > 254 || password.length > 200) {
+          return null
+        }
+
+        // Rate limit ANTES do scrypt: além de frear brute-force online por IP,
+        // evita gastar CPU com a verificação cara em uma enxurrada de tentativas.
+        // Chave combina IP + e-mail para não punir usuários distintos atrás do
+        // mesmo proxy mais do que o necessário.
+        const { rateLimit, getClientIp } = await import('../rate-limit')
+        const ip = await getClientIp()
+        const limited = rateLimit(`login:${ip}:${email}`, 5, 60_000).success === false
+        const ipLimited = rateLimit(`login:ip:${ip}`, 20, 60_000).success === false
+        if (limited || ipLimited) {
+          return null
+        }
+
         const { verifyPassword, isHashed } = await import('./password')
 
         // Admin master (env). Exige verificação estrita contra ADMIN_PASSWORD_HASH (scrypt).

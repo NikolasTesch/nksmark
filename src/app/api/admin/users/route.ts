@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma'
 import { protectAdminRoute } from '@/lib/auth/middleware'
 import { hashPassword } from '@/lib/auth/password'
 import { Role } from '@prisma/client'
+import { userCreateSchema } from '@/lib/validations/admin'
 
 // Campos seguros para retornar ao cliente (nunca expor passwordHash).
 const publicUserSelect = {
@@ -42,20 +43,15 @@ export async function POST(req: Request) {
       return authStatus.response
     }
 
-    const { name, email, role, password } = await req.json()
-
-    if (!email) {
-      return NextResponse.json({ success: false, error: 'E-mail é obrigatório.' }, { status: 400 })
-    }
-
-    if (!password || typeof password !== 'string' || password.length < 8) {
+    const result = userCreateSchema.safeParse(await req.json())
+    if (!result.success) {
       return NextResponse.json(
-        { success: false, error: 'Senha é obrigatória e deve ter ao menos 8 caracteres.' },
+        { success: false, error: result.error.issues[0].message },
         { status: 400 }
       )
     }
 
-    const emailClean = email.trim().toLowerCase()
+    const { name, email: emailClean, role, password } = result.data
 
     // Check if user already exists
     const userExists = await prisma.user.findUnique({

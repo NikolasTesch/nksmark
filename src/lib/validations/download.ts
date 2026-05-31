@@ -1,8 +1,16 @@
 import { z } from 'zod'
 
+// IDs do Prisma são cuids: alfanuméricos curtos. Restringir charset e tamanho
+// rejeita payloads malformados/gigantes antes de tocar o banco.
+const idSchema = z
+  .string()
+  .min(1, 'ID obrigatório')
+  .max(64, 'ID inválido')
+  .regex(/^[a-z0-9_-]+$/i, 'ID inválido')
+
 export const downloadRequestSchema = z.object({
-  artworkId: z.string().min(1, 'ID da arte é obrigatório'),
-  fileId: z.string().min(1, 'ID do arquivo é obrigatório'),
+  artworkId: idSchema,
+  fileId: idSchema,
 })
 
 export type DownloadRequestInput = z.infer<typeof downloadRequestSchema>

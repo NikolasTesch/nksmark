@@ -91,3 +91,24 @@ describe('authorize — usuário do banco', () => {
     expect(await authorize(undefined)).toBeNull()
   })
 })
+
+describe('authorize — rate limit (anti brute-force)', () => {
+  it('bloqueia após exceder o limite de tentativas por e-mail, mesmo com senha correta', async () => {
+    const email = 'brute-target@equipe.com'
+    findUnique.mockResolvedValue({
+      id: 'u9',
+      email,
+      name: 'Alvo',
+      role: Role.FASE,
+      passwordHash: await hashPassword('senhaCerta1'),
+    })
+
+    // 5 tentativas com senha errada consomem a janela (limite = 5/min por e-mail).
+    for (let i = 0; i < 5; i++) {
+      expect(await authorize({ email, password: 'errada' })).toBeNull()
+    }
+
+    // A 6ª tentativa, ainda que com a senha CORRETA, é barrada pelo rate limit.
+    expect(await authorize({ email, password: 'senhaCerta1' })).toBeNull()
+  })
+})

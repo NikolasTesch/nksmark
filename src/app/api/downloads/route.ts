@@ -4,6 +4,7 @@ import { downloadRequestSchema } from '@/lib/validations/download'
 import { protectFaseRoute } from '@/lib/auth/middleware'
 import prisma from '@/lib/prisma'
 import { getSignedDownloadUrl } from '@/lib/r2/signed-url'
+import { rateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: Request) {
   try {
@@ -13,6 +14,16 @@ export async function POST(req: Request) {
     }
 
     const userId = authStatus.user?.id as string
+
+    // Limita geração de URLs assinadas por usuário: evita download em massa /
+    // raspagem do acervo por uma conta FASE comprometida.
+    const limit = rateLimit(`download:${userId}`, 30, 60_000)
+    if (!limit.success) {
+      return NextResponse.json(
+        { success: false, error: 'Muitos downloads em sequência. Aguarde um momento e tente novamente.' },
+        { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } }
+      )
+    }
 
     const body = await req.json()
     const result = downloadRequestSchema.safeParse(body)

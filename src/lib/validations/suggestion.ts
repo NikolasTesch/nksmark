@@ -1,9 +1,9 @@
 import { z } from 'zod'
 
 export const suggestionSchema = z.object({
-  email: z.string().email('Email inválido').optional().or(z.literal('')),
+  email: z.string().email('Email inválido').max(254, 'Email muito longo').optional().or(z.literal('')),
   description: z.string().min(10, 'A descrição deve ter pelo menos 10 caracteres').max(1000, 'A descrição deve ter no máximo 1000 caracteres'),
-  imageUrl: z.string().url('URL inválida').optional().nullable().or(z.literal('')),
+  imageUrl: z.string().url('URL inválida').max(2048, 'URL muito longa').optional().nullable().or(z.literal('')),
 })
 
 export type SuggestionInput = z.infer<typeof suggestionSchema>
