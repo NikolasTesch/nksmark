@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 export interface DownloadHistoryItem {
   id: string
   artworkId: string
+  artworkSlug?: string
   artworkTitle: string
   previewUrl: string
   format: string
@@ -18,7 +19,8 @@ export function useDownloadHistory() {
     try {
       const res = await fetch('/api/downloads')
       const result = await res.json()
-      if (result.success && result.data.length > 0) {
+      if (result.success) {
+        // API succeeded: use server data (even if empty — don't mix with localStorage)
         setHistory(result.data)
       } else {
         loadFromLocalStorage()

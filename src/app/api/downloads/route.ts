@@ -117,6 +117,7 @@ export async function GET(req: Request) {
           select: {
             id: true,
             title: true,
+            slug: true,
             previewUrl: true,
           }
         }
@@ -136,6 +137,7 @@ export async function GET(req: Request) {
     const history = downloads.map((dl) => ({
       id: dl.id,
       artworkId: dl.artworkId,
+      artworkSlug: dl.artwork.slug,
       artworkTitle: dl.artwork.title,
       previewUrl: dl.artwork.previewUrl,
       format: formatByFileId.get(dl.fileId) ?? 'N/D',

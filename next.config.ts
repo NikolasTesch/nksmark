@@ -1,5 +1,23 @@
 import type { NextConfig } from "next";
 
+// CSP: Next.js com Tailwind requer 'unsafe-inline' para estilos.
+// Para scripts, 'unsafe-inline' é inevitável sem nonces (gerados por middleware).
+// As proteções efetivas aqui são: object-src, base-uri, form-action e img-src restrito.
+const cspHeader = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://*.cloudflarepub.com https://pub-*.r2.dev https://nksmark.com.br",
+  "font-src 'self'",
+  "connect-src 'self'",
+  "media-src 'none'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "upgrade-insecure-requests",
+].join('; ')
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -15,14 +33,6 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'nksmark.com.br',
       },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-      }
     ],
   },
   // Cabeçalhos de segurança aplicados a todas as respostas.
@@ -31,6 +41,7 @@ const nextConfig: NextConfig = {
       {
         source: '/:path*',
         headers: [
+          { key: 'Content-Security-Policy', value: cspHeader },
           // Impede que o site seja embutido em iframes (clickjacking).
           { key: 'X-Frame-Options', value: 'DENY' },
           // Impede o navegador de "adivinhar" o MIME type (MIME sniffing).

@@ -3,10 +3,11 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutGrid, Upload, Sliders, Users, LogOut, History, Menu, X } from 'lucide-react'
-import { signOut } from 'next-auth/react'
+import { LayoutDashboard, LayoutGrid, Upload, Sliders, Users, LogOut, History, Menu, X } from 'lucide-react'
+import { signOut, useSession } from 'next-auth/react'
 
 const navItems = [
+  { name: 'Dashboard', path: '/admin', icon: <LayoutDashboard className="h-4 w-4" /> },
   { name: 'Artes', path: '/admin/artes', icon: <LayoutGrid className="h-4 w-4" /> },
   { name: 'Upload', path: '/admin/artes/nova', icon: <Upload className="h-4 w-4" /> },
   { name: 'Conteúdo', path: '/admin/conteudo', icon: <Sliders className="h-4 w-4" /> },
@@ -48,20 +49,27 @@ function NavLinks({ pathname, onLinkClick }: { pathname: string; onLinkClick?: (
 }
 
 function UserFooter() {
+  const { data: session } = useSession()
+  const name = session?.user?.name || 'Admin NKS'
+  const email = session?.user?.email || ''
+  const initial = name.charAt(0).toUpperCase()
+
   return (
     <div className="flex items-center justify-between pt-5 border-t border-white/5">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 min-w-0">
         <div className="h-9 w-9 rounded-full bg-nks-red flex items-center justify-center text-white font-display font-black text-sm shadow-nks-sm shrink-0">
-          A
+          {initial}
         </div>
-        <div className="flex flex-col">
-          <span className="text-xs font-bold text-white leading-tight">Admin NKS</span>
-          <span className="text-[10px] text-nks-gray-400 font-medium leading-none mt-0.5">admin@nksart.com.br</span>
+        <div className="flex flex-col min-w-0">
+          <span className="text-xs font-bold text-white leading-tight truncate">{name}</span>
+          {email && (
+            <span className="text-[10px] text-nks-gray-400 font-medium leading-none mt-0.5 truncate">{email}</span>
+          )}
         </div>
       </div>
       <button
         onClick={() => signOut({ callbackUrl: '/loja' })}
-        className="text-white/40 hover:text-nks-red transition-colors p-2 hover:bg-white/5 rounded-lg cursor-pointer"
+        className="text-white/40 hover:text-nks-red transition-colors p-2 hover:bg-white/5 rounded-lg cursor-pointer shrink-0"
         title="Sair"
       >
         <LogOut className="h-4 w-4" />

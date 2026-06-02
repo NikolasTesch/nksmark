@@ -4,13 +4,21 @@ import * as React from 'react'
 import { useDownloadHistory } from '@/hooks/useDownloadHistory'
 import { FormatBadge } from '@/components/artwork/FormatBadge'
 import { Button } from '@/components/ui/button'
-import { Trash2, History, ArrowRight, ExternalLink } from 'lucide-react'
+import { Trash2, History, ArrowRight, ExternalLink, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { formatDate } from '@/lib/utils/format'
 
 export default function MeusDownloadsPage() {
-  const { history, clearHistory } = useDownloadHistory()
+  const { history, loading, clearHistory } = useDownloadHistory()
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-7 w-7 animate-spin text-nks-gray-400" />
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-6 py-4 animate-in fade-in duration-300">
@@ -90,7 +98,7 @@ export default function MeusDownloadsPage() {
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <Link
-                        href={`/loja/${item.artworkId}`}
+                        href={`/loja/${item.artworkSlug ?? item.artworkId}`}
                         className="inline-flex items-center gap-1 text-xs font-bold text-nks-red hover:underline hover:text-nks-red-dark whitespace-nowrap"
                       >
                         Ver arte <ExternalLink className="h-3 w-3" />

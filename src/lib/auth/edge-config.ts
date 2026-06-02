@@ -35,6 +35,9 @@ export const edgeAuthConfig: NextAuthConfig = {
     error: '/auth/error'
   },
   session: {
-    strategy: 'jwt'
+    strategy: 'jwt',
+    // 8h para admin/equipe interna — minimiza a janela de exposição se uma sessão
+    // for comprometida (ex.: máquina sem lock, token em clipboard).
+    maxAge: 8 * 60 * 60,
   }
 }

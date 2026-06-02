@@ -92,7 +92,7 @@ export function MobileMenu({ open, onClose, menuItems, session, userRole }: Mobi
                   <Button
                     onClick={() => {
                       onClose()
-                      signOut({ callbackUrl: '/' })
+                      signOut({ callbackUrl: '/loja' })
                     }}
                     variant="ghost"
                     className="w-full gap-2 text-xs text-nks-red-light hover:bg-nks-red-subtle/10 hover:text-white bg-transparent rounded-sm"

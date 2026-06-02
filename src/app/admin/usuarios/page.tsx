@@ -3,19 +3,20 @@
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, Trash2, Loader2, AlertCircle, Mail, Shield } from 'lucide-react'
+import { Plus, Trash2, Loader2, AlertCircle, Mail, Shield, Check, X } from 'lucide-react'
 import { useAdminUsers } from '@/hooks/useAdminUsers'
 import { formatDate } from '@/lib/utils/format'
 
 export default function UsuariosPage() {
   const { users, loading, error, createUser, deleteUser } = useAdminUsers()
-  
+
   const [name, setName] = React.useState('')
   const [email, setEmail] = React.useState('')
   const [password, setPassword] = React.useState('')
   const [role, setRole] = React.useState('FASE')
   const [actionLoading, setActionLoading] = React.useState(false)
   const [actionError, setActionError] = React.useState<string | null>(null)
+  const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,15 +42,14 @@ export default function UsuariosPage() {
     }
   }
 
-  const handleDelete = async (id: string, userEmail: string) => {
-    if (confirm(`Deseja realmente remover o usuário com e-mail ${userEmail}?`)) {
-      setActionLoading(true)
-      setActionError(null)
-      const result = await deleteUser(id)
-      setActionLoading(false)
-      if (!result.success) {
-        setActionError(result.error || 'Erro ao excluir usuário.')
-      }
+  const handleDeleteConfirm = async (id: string) => {
+    setPendingDeleteId(null)
+    setActionLoading(true)
+    setActionError(null)
+    const result = await deleteUser(id)
+    setActionLoading(false)
+    if (!result.success) {
+      setActionError(result.error || 'Erro ao excluir usuário.')
     }
   }
 
@@ -181,15 +181,37 @@ export default function UsuariosPage() {
                         {formatDate(user.createdAt)}
                       </td>
                       <td className="py-3.5 px-4 text-right">
-                        <Button 
-                          onClick={() => handleDelete(user.id, user.email)} 
-                          variant="ghost" 
-                          size="icon" 
-                          disabled={actionLoading || user.id === 'admin'}
-                          className="h-8 w-8 text-nks-red hover:text-nks-red-dark hover:bg-nks-red-subtle border border-nks-red/20 rounded-sm cursor-pointer hover:bg-nks-red-subtle/50 disabled:opacity-30"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {pendingDeleteId === user.id ? (
+                          <div className="flex items-center justify-end gap-1.5">
+                            <span className="text-[10px] font-bold text-nks-red hidden sm:block">Confirmar?</span>
+                            <Button
+                              onClick={() => handleDeleteConfirm(user.id)}
+                              disabled={actionLoading}
+                              size="sm"
+                              className="h-7 px-2.5 gap-1 text-[10px] font-black bg-nks-red hover:bg-nks-red-dark text-white rounded-sm border-none"
+                            >
+                              <Check className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              onClick={() => setPendingDeleteId(null)}
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2.5 border border-nks-gray-200 rounded-sm text-[10px] font-bold"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            onClick={() => setPendingDeleteId(user.id)}
+                            variant="ghost"
+                            size="icon"
+                            disabled={actionLoading || user.id === 'admin'}
+                            className="h-8 w-8 text-nks-red hover:text-nks-red-dark hover:bg-nks-red-subtle border border-nks-red/20 rounded-sm cursor-pointer hover:bg-nks-red-subtle/50 disabled:opacity-30"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))}

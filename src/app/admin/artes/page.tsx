@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArtworkWithRelations } from '@/types/artwork'
 import { Status, Category } from '@prisma/client'
-import { Plus, Edit3, Trash2, Sparkles, Loader2, AlertCircle, Image as ImageIcon, Search } from 'lucide-react'
+import { Plus, Edit3, Trash2, Sparkles, Loader2, AlertCircle, Image as ImageIcon, Search, X, Check } from 'lucide-react'
 import Image from 'next/image'
 import { useArtworks } from '@/hooks/useArtworks'
 
@@ -15,21 +15,21 @@ export default function ArtesAdminPage() {
     admin: true,
     search: searchQuery || undefined
   })
-  
+
   const [actionLoading, setActionLoading] = React.useState(false)
   const [actionError, setActionError] = React.useState<string | null>(null)
+  const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(null)
 
   const artworks = dbArtworks
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Deseja realmente excluir esta arte permanentemente? Todos os arquivos vinculados serão removidos.')) {
-      setActionLoading(true)
-      setActionError(null)
-      const result = await deleteArtwork(id)
-      setActionLoading(false)
-      if (!result.success) {
-        setActionError(result.error || 'Erro ao excluir arte do banco.')
-      }
+  const handleDeleteConfirm = async (id: string) => {
+    setPendingDeleteId(null)
+    setActionLoading(true)
+    setActionError(null)
+    const result = await deleteArtwork(id)
+    setActionLoading(false)
+    if (!result.success) {
+      setActionError(result.error || 'Erro ao excluir arte do banco.')
     }
   }
 
@@ -143,25 +143,48 @@ export default function ArtesAdminPage() {
 
                   {/* Bottom Row Buttons */}
                   <div className="flex items-center gap-2 mt-2">
-                    <Link href={`/admin/artes/${item.id}`} className="flex-grow">
-                      <Button 
-                        variant="ghost" 
-                        className="w-full h-9 border border-nks-gray-200 bg-white text-nks-gray-700 hover:text-nks-black hover:bg-nks-gray-50 hover:border-nks-gray-300 text-xs font-bold gap-1.5 rounded-lg transition-all"
-                      >
-                        <Edit3 className="h-3.5 w-3.5" />
-                        Editar
-                      </Button>
-                    </Link>
-
-                    <Button 
-                      onClick={() => handleDelete(item.id)} 
-                      variant="ghost" 
-                      disabled={actionLoading}
-                      className="h-9 w-9 p-0 flex items-center justify-center shrink-0 border border-nks-gray-200 bg-white text-nks-gray-400 hover:text-nks-red hover:bg-nks-red-subtle/10 hover:border-nks-red/20 rounded-lg transition-all cursor-pointer"
-                      title="Excluir"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                    {pendingDeleteId === item.id ? (
+                      <div className="flex items-center gap-1.5 w-full">
+                        <span className="text-[10px] font-bold text-nks-red flex-grow leading-tight">Confirmar exclusão?</span>
+                        <Button
+                          onClick={() => handleDeleteConfirm(item.id)}
+                          disabled={actionLoading}
+                          size="sm"
+                          className="h-8 px-2.5 gap-1 text-[10px] font-black bg-nks-red hover:bg-nks-red-dark text-white rounded-lg border-none"
+                        >
+                          <Check className="h-3 w-3" /> Sim
+                        </Button>
+                        <Button
+                          onClick={() => setPendingDeleteId(null)}
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2.5 gap-1 text-[10px] font-bold border border-nks-gray-200 rounded-lg"
+                        >
+                          <X className="h-3 w-3" /> Não
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <Link href={`/admin/artes/${item.id}`} className="flex-grow">
+                          <Button
+                            variant="ghost"
+                            className="w-full h-9 border border-nks-gray-200 bg-white text-nks-gray-700 hover:text-nks-black hover:bg-nks-gray-50 hover:border-nks-gray-300 text-xs font-bold gap-1.5 rounded-lg transition-all"
+                          >
+                            <Edit3 className="h-3.5 w-3.5" />
+                            Editar
+                          </Button>
+                        </Link>
+                        <Button
+                          onClick={() => setPendingDeleteId(item.id)}
+                          variant="ghost"
+                          disabled={actionLoading}
+                          className="h-9 w-9 p-0 flex items-center justify-center shrink-0 border border-nks-gray-200 bg-white text-nks-gray-400 hover:text-nks-red hover:bg-nks-red-subtle/10 hover:border-nks-red/20 rounded-lg transition-all cursor-pointer"
+                          title="Excluir"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

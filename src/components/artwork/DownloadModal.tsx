@@ -145,8 +145,8 @@ export function DownloadModal({
         </div>
 
         {successMessage && (
-          <div className="bg-nks-gray-100 border border-nks-gray-200 p-3.5 rounded flex items-center gap-2.5 text-xs text-nks-black animate-in fade-in duration-300">
-            <CheckCircle2 className="h-4 w-4 text-nks-black shrink-0" />
+          <div className="bg-green-50 border border-green-200 p-3.5 rounded flex items-center gap-2.5 text-xs text-green-800 animate-in fade-in duration-300 font-semibold">
+            <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
             <span>{successMessage}</span>
           </div>
         )}

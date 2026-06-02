@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma'
 import { protectAdminRoute } from '@/lib/auth/middleware'
 import { hashPassword } from '@/lib/auth/password'
 import { Prisma, Role } from '@prisma/client'
+import { userUpdateSchema } from '@/lib/validations/admin'
 
 const publicUserSelect = {
   id: true,
@@ -20,27 +21,28 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
 
     const { id } = await params
-    const { name, role, password } = await req.json()
 
+    // Validação via Zod antes de qualquer trabalho pesado (ex.: hashPassword/scrypt).
+    // O limite de 200 chars na senha aqui é barreira contra CPU DoS — scrypt em
+    // strings enormes satura o servidor antes de qualquer auth check importar.
+    const parsed = userUpdateSchema.safeParse(await req.json())
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: parsed.error.issues[0].message },
+        { status: 400 }
+      )
+    }
+
+    const { name, role, password } = parsed.data
     const dataToUpdate: Prisma.UserUpdateInput = {}
 
     if (name !== undefined) dataToUpdate.name = name || null
 
-    // Só altera o role quando explicitamente enviado e válido — nunca rebaixa por omissão.
     if (role !== undefined) {
-      if (role !== Role.ADMIN && role !== Role.FASE && role !== Role.VISITOR) {
-        return NextResponse.json({ success: false, error: 'Nível de acesso (role) inválido.' }, { status: 400 })
-      }
       dataToUpdate.role = role as Role
     }
 
     if (password !== undefined) {
-      if (typeof password !== 'string' || password.length < 8) {
-        return NextResponse.json(
-          { success: false, error: 'A senha deve ter ao menos 8 caracteres.' },
-          { status: 400 }
-        )
-      }
       dataToUpdate.passwordHash = await hashPassword(password)
     }
 

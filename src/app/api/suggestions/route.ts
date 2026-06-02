@@ -99,8 +99,6 @@ export async function POST(req: Request) {
         })
         if (error) {
           console.error('Error sending email via Resend API:', error)
-        } else {
-          console.log('Email sent successfully via Resend:', data)
         }
       } catch (err) {
         console.error('Unexpected error sending email via Resend:', err)

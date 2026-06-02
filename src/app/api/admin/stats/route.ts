@@ -30,16 +30,20 @@ export async function GET() {
       }
     })
 
-    const formattedDownloads = recentDownloads.map((dl) => {
-      // Find the file format from download if possible or default to CDR
-      return {
-        id: dl.id,
-        email: dl.user.email,
-        art: dl.artwork.title,
-        format: dl.fileId.split('_').pop()?.toUpperCase() || 'CDR', // fallback format extraction
-        time: dl.createdAt,
-      }
+    const recentFileIds = [...new Set(recentDownloads.map((dl) => dl.fileId))]
+    const recentFiles = await prisma.file.findMany({
+      where: { id: { in: recentFileIds } },
+      select: { id: true, format: true },
     })
+    const recentFormatByFileId = new Map(recentFiles.map((f) => [f.id, f.format]))
+
+    const formattedDownloads = recentDownloads.map((dl) => ({
+      id: dl.id,
+      email: dl.user.email,
+      art: dl.artwork.title,
+      format: recentFormatByFileId.get(dl.fileId) ?? 'CDR',
+      time: dl.createdAt,
+    }))
 
     return NextResponse.json({
       success: true,

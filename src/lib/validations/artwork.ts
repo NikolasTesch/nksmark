@@ -1,9 +1,11 @@
 import { z } from 'zod'
 
+// Arquivos privados (CDR/AI/PDF/OTF) armazenam apenas a chave R2 (ex: "files/1234-arte.cdr"),
+// não uma URL pública. Por isso aceitamos qualquer string não-vazia além de URLs completas.
 export const fileSchema = z.object({
   id: z.string().optional(),
   format: z.enum(['CDR', 'AI', 'PDF', 'OTF', 'PNG', 'JPG']),
-  url: z.string().url('URL inválida'),
+  url: z.string().min(1, 'Caminho do arquivo obrigatório'),
   size: z.number().positive('Tamanho deve ser maior que zero'),
 })
 
