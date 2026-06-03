@@ -1,4 +1,7 @@
-# NKS Art — Project Spec (v2)
+# NKS Art — Project Spec (v3)
+
+> **Última atualização:** 2026-06-02 → revisado 2026-06-02  
+> Stack real: Next.js **16.2.6** (não 14 como indicado abaixo). Consulte `CLAUDE.md` para a tabela de stack atual.
 
 ## Visão geral
 
@@ -62,7 +65,7 @@ Loja | FAQ | Suporte | Sugerir Arte | Quem Somos | Grátis | Meus Downloads
 
 | Rota | Página | Acesso |
 |---|---|---|
-| `/` | Home — hero, destaques, últimas artes | Público |
+| `/` | Redireciona para `/loja` (hero removida por ora) | Público |
 | `/loja` | Catálogo com filtro por categoria e tag | Público |
 | `/loja/[slug]` | Detalhe da arte + preview + download (se fase) | Público / Download: fase |
 | `/gratis` | Artes gratuitas (Fase 2: distinção free/pago) | Público |
@@ -235,24 +238,29 @@ model Suggestion {
 ## Funcionalidades por fase
 
 ### Fase 1 — MVP
-- [ ] Catálogo público com grid de artes
-- [ ] Filtros por categoria e tag
-- [ ] Página de detalhe com preview
-- [ ] Download liberado apenas para role FASE
-- [ ] Visitante vê "Login para baixar"
-- [ ] Autenticação com roles (VISITOR, FASE, ADMIN)
-- [ ] Histórico de downloads em /meus-downloads
-- [ ] Admin: upload, edição, publicação de artes
-- [ ] Admin: página de gestão (categorias, tags, filtros)
-- [ ] Admin: gestão de usuários FASE
-- [ ] FAQ, Suporte (Resend), Sugerir Arte, Quem Somos
+- [x] Catálogo público com grid de artes
+- [x] Filtros por categoria e tag
+- [x] Página de detalhe com preview e galeria com zoom
+- [x] Download liberado apenas para role FASE
+- [x] Visitante vê "Login para baixar"
+- [x] Autenticação com roles (VISITOR, FASE, ADMIN)
+- [x] Histórico de downloads em /meus-downloads
+- [x] Admin: upload, edição, publicação de artes
+- [x] Admin: gestão de categorias e tags
+- [ ] Admin: aba Filtros (ordenar/ativar categorias no menu da loja)
+- [x] Admin: gestão de usuários FASE
+- [x] FAQ, Suporte (Resend), Sugerir Arte, Quem Somos
+- [x] Admin: log de downloads com filtros
+- [x] Admin: dashboard de métricas com gráficos
 
 ### Fase 2 — Pós-lançamento
-- [ ] Sistema de pagamento (Stripe ou Mercado Pago)
-- [ ] Artes premium vs gratuitas
+- [ ] Aba Filtros no admin/conteudo (pendente da Fase 1)
+- [ ] Vercel Analytics configurado
 - [ ] Preview com marca d'água automática
 - [ ] Busca por texto livre
 - [ ] Coleções / séries de artes
+- [ ] Sistema de pagamento (Stripe ou Mercado Pago)
+- [ ] Artes premium vs gratuitas
 - [ ] Newsletter de novas artes
 - [ ] Analytics avançado no painel admin
 

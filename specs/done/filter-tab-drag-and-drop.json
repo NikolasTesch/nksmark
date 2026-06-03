@@ -1,0 +1,64 @@
+{
+  "id": "filter-tab-drag-and-drop",
+  "title": "Aba Filtros — drag-and-drop para ordernar categorias visíveis na loja",
+  "status": "done",
+  "priority": "high",
+  "created_at": "2026-06-02",
+  "completed_at": "2026-06-02",
+  "description": "A aba 'Ordenação de Filtros' em /admin/conteudo já renderiza os toggles de showInFilter, mas não tem drag-and-drop para persistir filterOrder. Além disso, a loja exibe todas as categorias sem respeitar showInFilter. Esta spec cobre o drag-and-drop admin + a correção da loja.",
+  "context": {
+    "schema_ready": true,
+    "fields": ["Category.showInFilter (Boolean)", "Category.filterOrder (Int)"],
+    "api_patch_ready": true,
+    "api_patch_path": "src/app/api/categories/[id]/route.ts — PATCH já aceita filterOrder e showInFilter",
+    "missing_api": "Endpoint de reorder em batch (PUT /api/categories/reorder) — necessário para salvar a nova ordem em uma única operação",
+    "loja_bug": "src/app/loja/page.tsx busca /api/categories mas não filtra por showInFilter — exibe categorias ocultas no sidebar",
+    "hook": "useAdminContent.ts tem updateCategory mas não tem reorderCategories",
+    "dnd_lib": "Nenhuma lib de DnD instalada — usar @dnd-kit/core + @dnd-kit/sortable (mais leve e acessível)"
+  },
+  "acceptance_criteria": [
+    "Admin consegue arrastar e soltar categorias na aba Filtros para definir filterOrder",
+    "Toggle showInFilter continua funcionando (já ok, manter)",
+    "A nova ordem é salva no banco via PUT /api/categories/reorder",
+    "Loja exibe apenas categorias com showInFilter = true no sidebar de filtros",
+    "Loja respeita a ordem filterOrder ao listar as categorias",
+    "Feedback visual de loading durante o save da ordem"
+  ],
+  "steps": [
+    {
+      "id": 1,
+      "title": "Instalar @dnd-kit/core e @dnd-kit/sortable",
+      "status": "done",
+      "files_affected": ["package.json", "package-lock.json"]
+    },
+    {
+      "id": 2,
+      "title": "Criar endpoint PUT /api/categories/reorder",
+      "status": "done",
+      "files_affected": ["src/app/api/categories/reorder/route.ts (novo)"]
+    },
+    {
+      "id": 3,
+      "title": "Adicionar reorderCategories ao useAdminContent",
+      "status": "done",
+      "files_affected": ["src/hooks/useAdminContent.ts"]
+    },
+    {
+      "id": 4,
+      "title": "Implementar drag-and-drop na aba Filtros em /admin/conteudo",
+      "status": "done",
+      "files_affected": ["src/app/admin/conteudo/page.tsx"]
+    },
+    {
+      "id": 5,
+      "title": "Corrigir loja para respeitar showInFilter e filterOrder",
+      "status": "done",
+      "files_affected": ["src/app/loja/page.tsx"]
+    }
+  ],
+  "out_of_scope": [
+    "Reordenação de tags (não há campo equivalente no schema)",
+    "Drag-and-drop na loja (só admin)",
+    "Qualquer mudança no schema Prisma (campos já existem)"
+  ]
+}

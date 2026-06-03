@@ -32,7 +32,7 @@ export default function LojaPage() {
     fetch('/api/categories')
       .then((r) => r.json())
       .then((res) => {
-        if (res.success) setCategories(res.data)
+        if (res.success) setCategories((res.data as Category[]).filter((c) => c.showInFilter))
       })
       .catch((err) => console.error('Erro ao buscar categorias:', err))
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 export interface DownloadHistoryItem {
   id: string
@@ -13,62 +13,36 @@ export interface DownloadHistoryItem {
 export function useDownloadHistory() {
   const [history, setHistory] = useState<DownloadHistoryItem[]>([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | undefined>(undefined)
 
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     setLoading(true)
+    setError(undefined)
     try {
       const res = await fetch('/api/downloads')
       const result = await res.json()
       if (result.success) {
-        // API succeeded: use server data (even if empty — don't mix with localStorage)
         setHistory(result.data)
       } else {
-        loadFromLocalStorage()
+        setError(result.error ?? 'Erro ao carregar histórico.')
+        setHistory([])
       }
     } catch {
-      loadFromLocalStorage()
+      setError('Falha na comunicação com o servidor.')
+      setHistory([])
     } finally {
       setLoading(false)
     }
-  }
-
-  const loadFromLocalStorage = () => {
-    const stored = localStorage.getItem('nks_art_download_history')
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored)
-        setHistory(parsed)
-      } catch (e) {
-        console.error('Error parsing download history', e)
-      }
-    }
-  }
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch inicial on-mount (sincroniza com a API)
-    fetchHistory()
   }, [])
 
-  const addToHistory = (item: Omit<DownloadHistoryItem, 'downloadedAt'>) => {
-    const newItem: DownloadHistoryItem = {
-      ...item,
-      downloadedAt: new Date().toISOString(),
-    }
-    const updated = [newItem, ...history.filter((h) => h.id !== item.id)].slice(0, 100)
-    setHistory(updated)
-    localStorage.setItem('nks_art_download_history', JSON.stringify(updated))
-  }
-
-  const clearHistory = () => {
-    setHistory([])
-    localStorage.removeItem('nks_art_download_history')
-  }
+  useEffect(() => {
+    fetchHistory()
+  }, [fetchHistory])
 
   return {
     history,
     loading,
-    addToHistory,
-    clearHistory,
+    error,
     refresh: fetchHistory,
   }
 }

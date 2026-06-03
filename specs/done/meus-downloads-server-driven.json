@@ -1,0 +1,57 @@
+{
+  "id": "meus-downloads-server-driven",
+  "title": "Meus Downloads — migrar de localStorage para dados do servidor",
+  "status": "done",
+  "priority": "medium",
+  "created_at": "2026-06-02",
+  "description": "A página /meus-downloads e o hook useDownloadHistory ainda mantêm lógica de localStorage como fonte primária/fallback. O endpoint GET /api/downloads já retorna o histórico real por usuário autenticado, persistido no banco. A mudança remove toda dependência de localStorage, tornando o histórico consistente entre dispositivos e navegadores. Também atualiza os textos da UI que ainda dizem 'neste navegador'.",
+  "context": {
+    "api_ready": true,
+    "api_path": "src/app/api/downloads/route.ts — GET retorna DownloadHistoryItem[] do banco para o userId autenticado",
+    "hook_path": "src/hooks/useDownloadHistory.ts — ainda usa localStorage como fallback e addToHistory escreve nele",
+    "page_path": "src/app/(public)/meus-downloads/page.tsx — título e descrição mencionam 'navegador'",
+    "dead_code": "addToHistory() é exportada mas não é chamada em nenhum outro arquivo (confirmado via grep) — pode ser removida com segurança",
+    "clear_history": "clearHistory() remove do localStorage mas não tem ação server-side; sem endpoint DELETE para limpar histórico. Botão deve ser removido da UI pois não faz sentido apagar registros do servidor no MVP",
+    "download_modal": "DownloadModal.tsx não chama addToHistory — o POST /api/downloads já registra o download no banco automaticamente"
+  },
+  "acceptance_criteria": [
+    "Página /meus-downloads exibe apenas dados vindos do servidor (GET /api/downloads), sem qualquer leitura de localStorage",
+    "O histórico é idêntico ao acessar de dispositivos ou navegadores diferentes com a mesma conta",
+    "Estado de loading é exibido durante a requisição ao servidor",
+    "Estado vazio exibe a mensagem correta quando não há downloads",
+    "O botão 'Limpar histórico' é removido (não há endpoint DELETE no MVP)",
+    "Título e descrição da página não fazem mais referência a 'navegador' — refletem que o histórico é da conta",
+    "Nenhuma referência a localStorage permanece no hook",
+    "addToHistory é removido do hook e da interface exportada",
+    "Testes do hook cobrem: loading, sucesso, erro de rede"
+  ],
+  "steps": [
+    {
+      "id": 1,
+      "title": "Refatorar useDownloadHistory — remover localStorage e addToHistory",
+      "status": "done",
+      "details": "Reescrever src/hooks/useDownloadHistory.ts. Manter apenas: estado history, loading, error, e a função refresh(). fetchHistory() chama GET /api/downloads; em caso de erro de rede, seta estado error. Remover: addToHistory, clearHistory, loadFromLocalStorage, toda leitura/escrita em localStorage. Manter a interface DownloadHistoryItem (shape compatível com a resposta da API). Adicionar campo error?: string ao retorno do hook.",
+      "files_affected": ["src/hooks/useDownloadHistory.ts"]
+    },
+    {
+      "id": 2,
+      "title": "Atualizar página meus-downloads — remover botão, atualizar textos",
+      "status": "done",
+      "details": "Em src/app/(public)/meus-downloads/page.tsx: (1) Remover o botão 'Limpar histórico' e o import de Trash2. (2) Mudar eyebrow de 'Histórico do Navegador' para 'Histórico da Conta'. (3) Mudar subtítulo de 'Histórico das artes baixadas recentemente neste navegador.' para 'Todas as artes baixadas pela sua conta, sincronizadas entre dispositivos.'. (4) Adicionar tratamento de estado error (exibir mensagem de erro com botão de retry que chama refresh()). (5) Remover destructuring de clearHistory do hook.",
+      "files_affected": ["src/app/(public)/meus-downloads/page.tsx"]
+    },
+    {
+      "id": 3,
+      "title": "Criar teste unitário para o hook refatorado",
+      "status": "done",
+      "details": "Criar src/hooks/useDownloadHistory.test.ts usando vitest + @testing-library/react (já presentes no projeto). Mockar fetch globalmente. Casos obrigatórios: (a) exibe loading=true enquanto fetch pendente, depois loading=false; (b) popula history com dados retornados pela API; (c) quando fetch falha (network error), seta error e history=[]; (d) refresh() re-executa o fetch e atualiza history. Não deve haver nenhum teste sobre localStorage.",
+      "files_affected": ["src/hooks/useDownloadHistory.test.ts (novo)"]
+    }
+  ],
+  "out_of_scope": [
+    "Endpoint DELETE para limpar histórico do servidor (Fase 2)",
+    "Paginação do histórico (Fase 2)",
+    "Qualquer mudança no schema Prisma ou na API GET /api/downloads",
+    "Remoção do campo email do DownloadModal (texto do campo já foi atualizado para ser opcional)"
+  ]
+}

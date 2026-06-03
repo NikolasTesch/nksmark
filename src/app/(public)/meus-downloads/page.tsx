@@ -4,13 +4,13 @@ import * as React from 'react'
 import { useDownloadHistory } from '@/hooks/useDownloadHistory'
 import { FormatBadge } from '@/components/artwork/FormatBadge'
 import { Button } from '@/components/ui/button'
-import { Trash2, History, ArrowRight, ExternalLink, Loader2 } from 'lucide-react'
+import { History, ArrowRight, ExternalLink, Loader2, AlertTriangle, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { formatDate } from '@/lib/utils/format'
 
 export default function MeusDownloadsPage() {
-  const { history, loading, clearHistory } = useDownloadHistory()
+  const { history, loading, error, refresh } = useDownloadHistory()
 
   if (loading) {
     return (
@@ -20,30 +20,34 @@ export default function MeusDownloadsPage() {
     )
   }
 
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center p-12 border border-nks-gray-200 bg-nks-gray-100 rounded max-w-lg mx-auto my-8">
+        <div className="flex h-12 w-12 items-center justify-center rounded bg-nks-red text-white mb-4">
+          <AlertTriangle className="h-6 w-6" />
+        </div>
+        <h3 className="font-semibold text-lg text-nks-black mb-1.5">Erro ao carregar histórico</h3>
+        <p className="text-sm text-nks-gray-700 mb-6 max-w-xs leading-normal">{error}</p>
+        <Button onClick={refresh} variant="outline" size="sm" className="gap-1.5">
+          <RefreshCw className="h-4 w-4" />
+          Tentar novamente
+        </Button>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-6 py-4 animate-in fade-in duration-300">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="nks-eyebrow">Histórico do Navegador</span>
+          <span className="nks-eyebrow">Histórico da Conta</span>
           <h1 className="font-display font-extrabold uppercase tracking-[-0.03em] leading-[1.02] text-2xl md:text-3xl text-nks-black mt-2 mb-2">
             Meus Downloads
           </h1>
           <p className="text-sm text-nks-gray-700">
-            Histórico das artes baixadas recentemente neste navegador.
+            Todas as artes baixadas pela sua conta, sincronizadas entre dispositivos.
           </p>
         </div>
-        
-        {history.length > 0 && (
-          <Button 
-            onClick={clearHistory} 
-            variant="outline" 
-            size="sm" 
-            className="gap-1.5"
-          >
-            <Trash2 className="h-4 w-4" />
-            Limpar histórico
-          </Button>
-        )}
       </div>
 
       {history.length === 0 ? (

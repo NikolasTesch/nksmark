@@ -128,6 +128,38 @@ export function useAdminContent() {
     }
   }
 
+  const reorderCategories = async (orderedIds: string[]) => {
+    setError(null)
+    try {
+      const order = orderedIds.map((id, index) => ({ id, filterOrder: index }))
+      const res = await fetch('/api/categories/reorder', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order }),
+      })
+      const result = await res.json()
+      if (result.success) {
+        setCategories((prev) => {
+          const map = new Map(prev.map((c) => [c.id, c]))
+          return orderedIds
+            .map((id, index) => {
+              const cat = map.get(id)
+              return cat ? { ...cat, filterOrder: index } : null
+            })
+            .filter(Boolean) as typeof prev
+        })
+        return { success: true }
+      } else {
+        setError(result.error || 'Erro ao reordenar categorias.')
+        return { success: false, error: result.error }
+      }
+    } catch (err) {
+      console.error(err)
+      setError('Erro de conexão ao reordenar categorias.')
+      return { success: false, error: 'Erro de conexão' }
+    }
+  }
+
   const deleteTag = async (id: string) => {
     setError(null)
     try {
@@ -157,6 +189,7 @@ export function useAdminContent() {
     addCategory,
     updateCategory,
     deleteCategory,
+    reorderCategories,
     addTag,
     deleteTag,
     refresh: fetchContent

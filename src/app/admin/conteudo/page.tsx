@@ -3,9 +3,78 @@
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { FolderPlus, Tag as TagIcon, Settings, Trash2, Loader2, AlertCircle } from 'lucide-react'
+import { FolderPlus, Tag as TagIcon, Settings, Trash2, Loader2, AlertCircle, GripVertical } from 'lucide-react'
 import { useAdminContent } from '@/hooks/useAdminContent'
 import { Category } from '@prisma/client'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+
+function SortableCategoryRow({
+  category,
+  actionLoading,
+  onToggle,
+}: {
+  category: Category
+  actionLoading: boolean
+  onToggle: (c: Category) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: category.id,
+  })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center justify-between p-3.5 border border-nks-gray-200 rounded-sm bg-nks-gray-100/40 hover:bg-nks-gray-100/80 transition-colors"
+    >
+      <div className="flex items-center gap-3">
+        <button
+          {...attributes}
+          {...listeners}
+          className="text-nks-gray-400 hover:text-nks-gray-700 cursor-grab active:cursor-grabbing touch-none"
+          tabIndex={-1}
+          aria-label="Arrastar para reordenar"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+        <div className="h-4 w-4 rounded-sm border border-nks-gray-200 shadow-sm" style={{ backgroundColor: category.color || '#ccc' }} />
+        <span className="text-sm font-bold text-nks-black">{category.name}</span>
+      </div>
+
+      <label className="flex items-center gap-2 text-xs font-bold text-nks-gray-700 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={category.showInFilter}
+          disabled={actionLoading}
+          onChange={() => onToggle(category)}
+          className="rounded-sm text-nks-red focus:ring-nks-red h-4 w-4 cursor-pointer"
+        />
+        Aparece no filtro da Loja
+      </label>
+    </div>
+  )
+}
 
 export default function ConteudoPage() {
   const [activeTab, setActiveTab] = React.useState<'categories' | 'tags' | 'filters'>('categories')
@@ -17,9 +86,26 @@ export default function ConteudoPage() {
     addCategory,
     updateCategory,
     deleteCategory,
+    reorderCategories,
     addTag,
     deleteTag,
   } = useAdminContent()
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+  const [reorderLoading, setReorderLoading] = React.useState(false)
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = categories.findIndex((c) => c.id === active.id)
+    const newIndex = categories.findIndex((c) => c.id === over.id)
+    const newOrder = arrayMove(categories, oldIndex, newIndex).map((c) => c.id)
+
+    setReorderLoading(true)
+    await reorderCategories(newOrder)
+    setReorderLoading(false)
+  }
 
   const [catName, setCatName] = React.useState('')
   const [catColor, setCatColor] = React.useState('#6366f1')
@@ -310,39 +396,33 @@ export default function ConteudoPage() {
 
           {activeTab === 'filters' && (
             <div className="bg-white border border-nks-gray-200 p-6 rounded-sm shadow-nks-sm flex flex-col gap-6 max-w-2xl">
-              <div>
-                <h3 className="font-display font-extrabold uppercase tracking-tight text-nks-black text-[16px] mb-1">Configurações de Exibição</h3>
-                <p className="text-xs font-semibold text-nks-gray-750">
-                  Escolha quais categorias devem aparecer no filtro da loja e ative ou desative-as sem excluí-las.
-                </p>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="font-display font-extrabold uppercase tracking-tight text-nks-black text-[16px] mb-1">Configurações de Exibição</h3>
+                  <p className="text-xs font-semibold text-nks-gray-750">
+                    Arraste para reordenar. Marque o checkbox para exibir a categoria no filtro da loja.
+                  </p>
+                </div>
+                {reorderLoading && <Loader2 className="h-4 w-4 animate-spin text-nks-red shrink-0 mt-1" />}
               </div>
 
-              <div className="flex flex-col gap-3">
-                {categories.map((c) => (
-                  <div 
-                    key={c.id} 
-                    className="flex items-center justify-between p-3.5 border border-nks-gray-200 rounded-sm bg-nks-gray-100/40 hover:bg-nks-gray-100/80 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-4.5 w-4.5 rounded-sm border border-nks-gray-200 shadow-sm" style={{ backgroundColor: c.color || '#ccc' }} />
-                      <span className="text-sm font-bold text-nks-black">{c.name}</span>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <label className="flex items-center gap-2 text-xs font-bold text-nks-gray-700 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={c.showInFilter}
-                          disabled={actionLoading}
-                          onChange={() => handleToggleFilter(c)}
-                          className="rounded-sm text-nks-red focus:ring-nks-red h-4 w-4 cursor-pointer"
-                        />
-                        Aparece no filtro da Loja
-                      </label>
-                    </div>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={categories.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+                  <div className="flex flex-col gap-3">
+                    {categories.map((c) => (
+                      <SortableCategoryRow
+                        key={c.id}
+                        category={c}
+                        actionLoading={actionLoading || reorderLoading}
+                        onToggle={handleToggleFilter}
+                      />
+                    ))}
+                    {categories.length === 0 && (
+                      <p className="text-xs text-nks-gray-400 font-semibold py-4 text-center">Nenhuma categoria cadastrada.</p>
+                    )}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
             </div>
           )}
         </>
