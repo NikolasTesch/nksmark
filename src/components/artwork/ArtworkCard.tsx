@@ -27,15 +27,11 @@ export function ArtworkCard({ artwork }: ArtworkCardProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -5 }}
-      transition={{ 
-        type: 'spring', 
-        stiffness: 300, 
-        damping: 24,
-        y: { type: 'tween', duration: 0.16, ease: 'easeOut' }
+      variants={{
+        hidden: { opacity: 0, y: 14 },
+        show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 280, damping: 22 } },
       }}
+      whileHover={{ y: -5, transition: { type: 'tween', duration: 0.15, ease: 'easeOut' } }}
       className="group relative flex flex-col border border-nks-gray-200 rounded bg-white overflow-hidden transition-all duration-[160ms] hover:shadow-nks-md hover:border-nks-gray-400"
     >
       {/* Preview dominante (4:5) */}

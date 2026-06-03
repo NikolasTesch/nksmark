@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { ArtworkCard } from '@/components/artwork/ArtworkCard'
@@ -113,21 +114,11 @@ export default function LojaPage() {
 
   const closeFilters = () => setIsFiltersOpen(false)
 
+  const gridKey = `${filters.categoryId ?? ''}-${filters.tagId ?? ''}-${filters.search ?? ''}-${filters.isFree}-${filters.onlyFavorites}-${page}`
+
   // Conteúdo do painel de filtros (reutilizado no desktop e no drawer mobile)
   const filterPanel = (
     <>
-      {/* Caixa de Busca */}
-      <div className="relative">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-nks-gray-400 pointer-events-none" />
-        <input
-          type="text"
-          placeholder="Buscar arte ou tag…"
-          value={filters.search || ''}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9 h-10 w-full rounded border border-nks-gray-200 bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-nks-red focus-visible:border-nks-red placeholder:text-nks-gray-400"
-        />
-      </div>
-
       {/* Trilho de Categorias */}
       <div className="flex flex-col gap-2.5">
         <span className="nks-eyebrow text-nks-gray-400">Categorias</span>
@@ -251,7 +242,12 @@ export default function LojaPage() {
       <Header />
 
       {/* MiniHero editorial da loja */}
-      <section className="bg-nks-black text-white border-b border-white/10">
+      <motion.section
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+        className="bg-nks-black text-white border-b border-white/10"
+      >
         <div className="container mx-auto px-4 md:px-8 py-7 md:py-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
           <div>
             <span className="nks-eyebrow">Catálogo NKS Art</span>
@@ -264,6 +260,27 @@ export default function LojaPage() {
               <span className="font-mono text-white/80">PDF</span> e{' '}
               <span className="font-mono text-white/80">OTF</span> — liberado para a equipe.
             </p>
+
+            {/* Barra de busca por texto livre */}
+            <div className="relative mt-4 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Buscar por título, descrição ou tag…"
+                value={filters.search || ''}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 pr-8 h-10 w-full rounded border border-white/20 bg-white/10 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-nks-red focus:bg-white/15 transition-colors"
+              />
+              {filters.search && (
+                <button
+                  onClick={() => setSearch('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                  aria-label="Limpar busca"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Stats em vermelho NKS */}
@@ -282,47 +299,72 @@ export default function LojaPage() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
-      {/* Mobile filter backdrop */}
-      {isFiltersOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={closeFilters}
-          aria-hidden
-        />
-      )}
+      {/* Mobile filter backdrop + drawer */}
+      <AnimatePresence>
+        {isFiltersOpen && (
+          <motion.div
+            key="backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+            onClick={closeFilters}
+            aria-hidden
+          />
+        )}
+      </AnimatePresence>
 
-      {/* Mobile filter drawer */}
-      {isFiltersOpen && (
-        <aside className="lg:hidden fixed inset-y-0 left-0 z-50 w-[290px] bg-white p-5 flex flex-col gap-5 shadow-2xl overflow-y-auto">
-          <div className="flex items-center justify-between pb-2 border-b border-nks-gray-200">
-            <span className="font-display font-bold text-sm uppercase tracking-wide text-nks-black">Filtros</span>
-            <button
-              onClick={closeFilters}
-              className="text-nks-gray-400 hover:text-nks-black transition-colors p-1 rounded"
-              aria-label="Fechar filtros"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          {filterPanel}
-        </aside>
-      )}
+      <AnimatePresence>
+        {isFiltersOpen && (
+          <motion.aside
+            key="drawer"
+            initial={{ x: -300, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -300, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+            className="lg:hidden fixed inset-y-0 left-0 z-50 w-[290px] bg-white p-5 flex flex-col gap-5 shadow-2xl overflow-y-auto"
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-nks-gray-200">
+              <span className="font-display font-bold text-sm uppercase tracking-wide text-nks-black">Filtros</span>
+              <button
+                onClick={closeFilters}
+                className="text-nks-gray-400 hover:text-nks-black transition-colors p-1 rounded"
+                aria-label="Fechar filtros"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            {filterPanel}
+          </motion.aside>
+        )}
+      </AnimatePresence>
 
       {/* Layout Split Screen (Menu Lateral + Grid de Artes) */}
       <div className="container mx-auto px-4 md:px-8 py-6 md:py-10 flex gap-10 items-start">
 
         {/* Desktop sidebar — oculto em mobile */}
-        <aside className="hidden lg:flex w-[230px] shrink-0 sticky top-20 flex-col gap-6">
+        <motion.aside
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3, delay: 0.1, ease: 'easeOut' }}
+          className="hidden lg:flex w-[230px] shrink-0 sticky top-20 flex-col gap-6"
+        >
           {filterPanel}
-        </aside>
+        </motion.aside>
 
         {/* Conteúdo Principal — Grid de Artes */}
         <main className="flex-grow min-w-0 w-full">
 
           {/* Linha de Status / Título */}
-          <div className="flex items-end justify-between gap-3 border-b border-nks-gray-200 pb-3 mb-5">
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.15 }}
+            className="flex items-end justify-between gap-3 border-b border-nks-gray-200 pb-3 mb-5"
+          >
             <div>
               <h2 className="font-display font-bold uppercase tracking-[-0.015em] text-base md:text-xl text-nks-black leading-tight">
                 {activeCategoryName}
@@ -360,22 +402,31 @@ export default function LojaPage() {
                 </span>
               )}
             </div>
-          </div>
+          </motion.div>
 
           {/* Grid de Cards */}
           {loading ? (
             <LoadingGrid count={8} />
           ) : filteredArtworks.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-[18px]">
+              <motion.div
+                key={gridKey}
+                variants={{ hidden: {}, show: { transition: { staggerChildren: 0.045, delayChildren: 0.05 } } }}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-[18px]"
+              >
                 {pagedArtworks.map((art) => (
                   <ArtworkCard key={art.id} artwork={art} />
                 ))}
-              </div>
+              </motion.div>
 
               {/* Controles de paginação */}
               {totalPages > 1 && (
-                <nav
+                <motion.nav
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: 0.15 }}
                   aria-label="Paginação"
                   className="flex items-center justify-center gap-1.5 mt-10 flex-wrap"
                 >
@@ -419,11 +470,16 @@ export default function LojaPage() {
                     <span className="hidden sm:inline">Próxima</span>
                     <ChevronRight className="h-4 w-4" />
                   </button>
-                </nav>
+                </motion.nav>
               )}
             </>
           ) : (
-            <div className="text-center py-16 bg-nks-gray-100 border border-nks-gray-200 rounded p-6">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.25 }}
+              className="text-center py-16 bg-nks-gray-100 border border-nks-gray-200 rounded p-6"
+            >
               <span className="text-nks-gray-400 text-sm font-medium">
                 Nenhuma arte localizada sob estes critérios de busca.
               </span>
@@ -435,7 +491,7 @@ export default function LojaPage() {
                   Limpar filtros
                 </button>
               )}
-            </div>
+            </motion.div>
           )}
         </main>
       </div>
