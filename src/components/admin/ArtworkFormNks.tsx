@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import { Category, Status } from '@prisma/client'
-import { Upload, Check, X, ChevronDown, Loader2, FileText, Images, RotateCcw } from 'lucide-react'
+import { Upload, Check, X, ChevronDown, Loader2, FileText, Images, RotateCcw, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 
@@ -44,10 +44,30 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData }: Art
   const [newTag, setNewTag] = React.useState('')
   const [isAddingTag, setIsAddingTag] = React.useState(false)
   const [files, setFiles] = React.useState<File[]>([])
+  const [coverFile, setCoverFile] = React.useState<File | null>(null)
   const [galleryFiles, setGalleryFiles] = React.useState<File[]>([])
   const [fileIdsToRemove, setFileIdsToRemove] = React.useState<string[]>([])
 
   const galleryInputRef = React.useRef<HTMLInputElement>(null)
+  const coverInputRef = React.useRef<HTMLInputElement>(null)
+
+  // Pré-visualização local da capa selecionada (somente criação).
+  const coverPreviewUrl = React.useMemo(
+    () => (coverFile ? URL.createObjectURL(coverFile) : null),
+    [coverFile]
+  )
+  React.useEffect(() => {
+    return () => {
+      if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl)
+    }
+  }, [coverPreviewUrl])
+
+  const handleCoverInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setCoverFile(e.target.files[0])
+    }
+    e.target.value = ''
+  }
 
   const existingGalleryFiles = React.useMemo(
     () => (initialData?.files || []).filter((f) => f.format === 'PNG' || f.format === 'JPG'),
@@ -183,24 +203,32 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData }: Art
           throw new Error(result.error || 'Erro ao salvar alterações.')
         }
       } else {
-        // 1. Imagem de capa (preview)
-        const previewFile = files.find((f) => f.type.startsWith('image/'))
-        const otherFiles = files.filter((f) => !f.type.startsWith('image/'))
+        // 1. Imagem de capa (preview) — campo dedicado
         let previewUrl = PLACEHOLDER_PREVIEW
-        if (previewFile) {
-          const uploaded = await uploadSingleFile(previewFile, 'previews')
+        if (coverFile) {
+          const uploaded = await uploadSingleFile(coverFile, 'previews')
           previewUrl = uploaded.url
         }
 
         // 2. Arquivos originais (download)
         const uploadedFiles: { format: string; url: string; size: number }[] = []
-        const originalFilesToUpload = otherFiles.length > 0 ? otherFiles : files
-        for (const file of originalFilesToUpload) {
+        for (const file of files) {
           const uploaded = await uploadSingleFile(file, 'files')
           const ext = file.name.split('.').pop()?.toUpperCase() || 'CDR'
           const validFormats = ['CDR', 'AI', 'PDF', 'OTF', 'PNG', 'JPG']
           const format = validFormats.includes(ext) ? ext : 'CDR'
           uploadedFiles.push({ format, url: uploaded.url, size: uploaded.size })
+        }
+
+        // 3. Imagens da galeria (PNG/JPG) — campo dedicado
+        for (const file of galleryFiles) {
+          const uploaded = await uploadSingleFile(file, 'files')
+          const ext = file.name.split('.').pop()?.toUpperCase() || 'PNG'
+          uploadedFiles.push({
+            format: ext === 'JPG' || ext === 'JPEG' ? 'JPG' : 'PNG',
+            url: uploaded.url,
+            size: uploaded.size,
+          })
         }
 
         const res = await fetch('/api/artworks', {
@@ -265,6 +293,67 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData }: Art
       >
         {/* COLUNA ESQUERDA: Arquivos */}
         <div className="lg:col-span-5 flex flex-col gap-5 bg-white border border-nks-gray-200 rounded-xl p-6 shadow-nks-sm">
+          {/* Imagem de capa (criação) */}
+          {!isEdit && (
+            <div className="flex flex-col gap-2.5">
+              <span className="text-[10px] font-black text-nks-gray-400 uppercase tracking-wider px-1">
+                Imagem de capa
+              </span>
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept=".png,.jpg,.jpeg,.webp"
+                onChange={handleCoverInput}
+                className="hidden"
+              />
+              {coverPreviewUrl ? (
+                <div className="relative h-44 w-full rounded-xl overflow-hidden border border-nks-gray-200 bg-nks-gray-100 shadow-nks-sm">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={coverPreviewUrl} alt="Imagem de capa" className="h-full w-full object-cover" />
+                  <div className="absolute top-2 right-2 flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => coverInputRef.current?.click()}
+                      className="bg-white/90 hover:bg-white text-nks-gray-750 text-[10px] font-bold px-2.5 py-1 rounded shadow-sm transition-colors cursor-pointer"
+                    >
+                      Trocar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCoverFile(null)}
+                      title="Remover capa"
+                      className="bg-white/90 hover:bg-nks-red hover:text-white text-nks-gray-700 rounded p-1 shadow-sm transition-colors cursor-pointer"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => coverInputRef.current?.click()}
+                  className="border-2 border-dashed border-nks-gray-200 bg-nks-gray-100/50 hover:bg-nks-gray-100 hover:border-nks-gray-400 rounded-xl py-8 px-4 flex flex-col items-center justify-center text-center transition-all duration-200 cursor-pointer"
+                >
+                  <div className="p-2.5 bg-white rounded-full border border-nks-gray-200/60 shadow-nks-sm mb-2">
+                    <ImageIcon className="h-5 w-5 text-nks-gray-400" />
+                  </div>
+                  <span className="text-xs font-black text-nks-black block mb-0.5">
+                    Selecionar imagem de capa
+                  </span>
+                  <span className="text-[10px] font-bold text-nks-gray-400 uppercase tracking-wider block">
+                    PNG - JPG - usada na vitrine
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {!isEdit && (
+            <span className="text-[10px] font-black text-nks-gray-400 uppercase tracking-wider px-1 -mb-2">
+              Arquivos originais (download)
+            </span>
+          )}
+
           <div
             onDragEnter={handleDrag}
             onDragOver={handleDrag}
@@ -381,9 +470,8 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData }: Art
             </div>
           )}
 
-          {/* Galeria de imagens adicionais (edit mode) */}
-          {isEdit && (
-            <div className="flex flex-col gap-3 pt-4 border-t border-nks-gray-200 mt-1">
+          {/* Galeria de imagens adicionais */}
+          <div className="flex flex-col gap-3 pt-4 border-t border-nks-gray-200 mt-1">
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-1.5">
                   <Images className="h-3.5 w-3.5 text-nks-gray-400" />
@@ -490,8 +578,7 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData }: Art
                   Nenhuma imagem adicional. Use "+ adicionar" para incluir fotos do produto na galeria.
                 </span>
               )}
-            </div>
-          )}
+          </div>
         </div>
 
         {/* COLUNA DIREITA: Metadados */}

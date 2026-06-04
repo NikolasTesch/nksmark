@@ -14,3 +14,10 @@ export const downloadRequestSchema = z.object({
 })
 
 export type DownloadRequestInput = z.infer<typeof downloadRequestSchema>
+
+// Download agrupado: baixa todos os arquivos da arte num único .zip.
+export const zipDownloadRequestSchema = z.object({
+  artworkId: idSchema,
+})
+
+export type ZipDownloadRequestInput = z.infer<typeof zipDownloadRequestSchema>

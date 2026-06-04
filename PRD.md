@@ -217,6 +217,7 @@ Browser
 | `/api/artworks` | GET | Público |
 | `/api/artworks/[id]` | GET, PUT, DELETE | ADMIN |
 | `/api/downloads` | POST | FASE/ADMIN |
+| `/api/downloads/zip` | POST | FASE/ADMIN |
 | `/api/categories` | GET, POST | GET: público / POST: ADMIN |
 | `/api/categories/[id]` | PUT, DELETE | ADMIN |
 | `/api/tags` | GET, POST | GET: público / POST: ADMIN |

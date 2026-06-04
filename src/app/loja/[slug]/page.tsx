@@ -87,6 +87,39 @@ export default function ArtworkDetailsPage() {
     }
   }
 
+  const handleZipDownloadRequest = async (): Promise<boolean> => {
+    if (!artwork) return false
+    try {
+      const res = await fetch('/api/downloads/zip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ artworkId: artwork.id }),
+      })
+
+      if (!res.ok) {
+        const result = await res.json().catch(() => null)
+        console.warn('Backend zip download call failed:', result?.error)
+        return false
+      }
+
+      // Resposta é binária (.zip): materializa em blob e dispara o download.
+      const blob = await res.blob()
+      const safeTitle = artwork.title.toLowerCase().replace(/\s+/g, '-')
+      const objectUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = objectUrl
+      a.download = `${safeTitle}.zip`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(objectUrl)
+      return true
+    } catch (e) {
+      console.error('Error downloading zip:', e)
+      return false
+    }
+  }
+
   if (loading) {
     return (
       <>
@@ -227,6 +260,7 @@ export default function ArtworkDetailsPage() {
           files={artwork.files as PrismaFile[]}
           userRole={userRole}
           onDownloadRequest={handleDownloadRequest}
+          onZipDownloadRequest={handleZipDownloadRequest}
         />
       </main>
       <Footer />

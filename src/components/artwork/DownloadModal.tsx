@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { File as PrismaFile, Artwork } from '@prisma/client'
 import { FormatBadge } from './FormatBadge'
-import { Download, Mail, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react'
+import { Download, FileArchive, Mail, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react'
 import { formatBytes } from '@/lib/utils/format'
 
 interface DownloadModalProps {
@@ -16,6 +16,9 @@ interface DownloadModalProps {
   files: PrismaFile[]
   userRole?: string
   onDownloadRequest: (fileId: string, email?: string) => Promise<string | null>
+  /** Baixa todos os arquivos da arte num único .zip. Dispara o download
+   *  diretamente (a resposta é binária, não uma URL). */
+  onZipDownloadRequest?: () => Promise<boolean>
 }
 
 export function DownloadModal({
@@ -25,13 +28,17 @@ export function DownloadModal({
   files,
   userRole,
   onDownloadRequest,
+  onZipDownloadRequest,
 }: DownloadModalProps) {
   const [email, setEmail] = React.useState('')
   const [loadingFileId, setLoadingFileId] = React.useState<string | null>(null)
+  const [zipLoading, setZipLoading] = React.useState(false)
   const [successMessage, setSuccessMessage] = React.useState('')
   const [errorMessage, setErrorMessage] = React.useState('')
 
   const isFaseOrAdmin = userRole === 'FASE' || userRole === 'ADMIN'
+  const hasMultipleFiles = files.length > 1
+  const anyLoading = loadingFileId !== null || zipLoading
 
   const handleDownload = async (file: PrismaFile) => {
     if (!isFaseOrAdmin) {
@@ -61,6 +68,30 @@ export function DownloadModal({
       setErrorMessage('Falha na comunicação com o servidor.')
     } finally {
       setLoadingFileId(null)
+    }
+  }
+
+  const handleZipDownload = async () => {
+    if (!isFaseOrAdmin || !onZipDownloadRequest) {
+      setErrorMessage('Apenas membros da equipe interna (Fase) podem realizar downloads.')
+      return
+    }
+
+    setZipLoading(true)
+    setErrorMessage('')
+    setSuccessMessage('')
+
+    try {
+      const ok = await onZipDownloadRequest()
+      if (ok) {
+        setSuccessMessage('Download do .zip com todos os arquivos iniciado com sucesso!')
+      } else {
+        setErrorMessage('Erro ao gerar o .zip. Tente novamente.')
+      }
+    } catch {
+      setErrorMessage('Falha na comunicação com o servidor.')
+    } finally {
+      setZipLoading(false)
     }
   }
 
@@ -110,6 +141,22 @@ export function DownloadModal({
           <span className="text-xs font-bold text-nks-gray-400 uppercase tracking-wider block">
             Formatos Disponíveis
           </span>
+
+          {isFaseOrAdmin && hasMultipleFiles && onZipDownloadRequest && (
+            <Button
+              onClick={handleZipDownload}
+              disabled={anyLoading}
+              className="gap-2 font-semibold text-xs h-10 rounded w-full"
+            >
+              {zipLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <FileArchive className="h-4 w-4" />
+              )}
+              {zipLoading ? 'Compactando arquivos...' : `Baixar todos (.zip) — ${files.length} arquivos`}
+            </Button>
+          )}
+
           <div className="grid grid-cols-1 gap-2.5">
             {files.map((file) => {
               const isLoading = loadingFileId === file.id
@@ -127,7 +174,7 @@ export function DownloadModal({
                   
                   <Button
                     onClick={() => handleDownload(file)}
-                    disabled={!isFaseOrAdmin || loadingFileId !== null}
+                    disabled={!isFaseOrAdmin || anyLoading}
                     size="sm"
                     className="gap-1.5 font-semibold text-xs px-3.5 h-8 rounded"
                   >

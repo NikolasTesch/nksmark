@@ -214,6 +214,18 @@ model Suggestion {
 7. Registro salvo em Download com userId
 ```
 
+### Download agrupado em .zip (arte com múltiplos arquivos)
+```
+1. Arte com 2+ arquivos exibe botão "Baixar todos (.zip)" no modal
+2. Usuário fase clica em "Baixar todos (.zip)"
+3. POST /api/downloads/zip { artworkId } (verifica role + rate limit)
+4. Backend baixa cada arquivo do R2 e monta um .zip por streaming
+5. Resposta é o binário .zip (servido pelo backend, NÃO via URL assinada)
+6. Registro salvo em Download — um por arquivo incluído no .zip
+```
+> Exceção à regra "download sempre via URL assinada": o .zip agrupado é
+> montado e servido pelo backend. Downloads avulsos continuam por URL assinada.
+
 ### Tentativa de download (visitante)
 ```
 1. Visitante acessa /loja/[slug]
