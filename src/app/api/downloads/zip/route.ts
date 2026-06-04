@@ -103,15 +103,19 @@ export async function POST(req: Request) {
       archive.destroy(err)
     })
 
+    // Dispara todos os GetObject em paralelo para sobrepor a latência de
+    // abertura das conexões; Promise.all preserva a ordem dos arquivos.
+    // (O archiver ainda comprime uma entrada por vez — o ganho é só de I/O.)
+    const objects = await Promise.all(
+      artwork.files.map((file) =>
+        s3Client.send(new GetObjectCommand({ Bucket: R2_BUCKET_NAME, Key: deriveFileKey(file.url) }))
+      )
+    )
+
     const usedNames = new Set<string>()
 
-    for (const [i, file] of artwork.files.entries()) {
-      const key = deriveFileKey(file.url)
-      const obj = await s3Client.send(
-        new GetObjectCommand({ Bucket: R2_BUCKET_NAME, Key: key })
-      )
-
-      const ext = file.format.toLowerCase()
+    objects.forEach((obj, i) => {
+      const ext = artwork.files[i].format.toLowerCase()
       let name = `${safeTitle}.${ext}`
       // Dois arquivos do mesmo formato colidiriam: sufixa com índice.
       if (usedNames.has(name)) {
@@ -120,7 +124,7 @@ export async function POST(req: Request) {
       usedNames.add(name)
 
       archive.append(obj.Body as Readable, { name })
-    }
+    })
 
     // Não aguardamos: a finalização emite os bytes finais à medida que a
     // resposta é lida pelo cliente.
