@@ -19,6 +19,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@prisma/client": "^5.22.0",
     "@radix-ui/react-slot": "^1.2.4",
+    "@vercel/analytics": "^2.0.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.40.0",
     "lucide-react": "^1.17.0",

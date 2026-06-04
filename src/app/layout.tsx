@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Archivo, DM_Sans, IBM_Plex_Mono } from 'next/font/google'
 import { SessionProvider } from 'next-auth/react'
+import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 // Display quadrada e geométrica — ecoa o lettering anguloso da logo
@@ -48,6 +49,7 @@ export default function RootLayout({
         <SessionProvider>
           {children}
         </SessionProvider>
+        <Analytics />
       </body>
     </html>
   )
