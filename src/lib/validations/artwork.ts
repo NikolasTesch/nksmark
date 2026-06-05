@@ -14,6 +14,8 @@ export const artworkSchema = z.object({
   description: z.string().optional(),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).default('DRAFT'),
   isFree: z.boolean().default(true),
+  // Preço em centavos de BRL. Default R$ 15,00. Ignorado quando isFree=true.
+  priceCents: z.number().int('Preço inválido').min(0, 'Preço inválido').default(1500),
   previewUrl: z.string().url('URL de preview inválida'),
   categoryId: z.string().min(1, 'Selecione uma categoria'),
   tagNames: z.array(z.string()).optional(),

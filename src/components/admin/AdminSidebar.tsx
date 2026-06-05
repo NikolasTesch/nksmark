@@ -3,7 +3,7 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, LayoutGrid, Upload, Sliders, Users, LogOut, History, Menu, X } from 'lucide-react'
+import { LayoutDashboard, LayoutGrid, Upload, Sliders, Users, LogOut, History, Menu, X, ShoppingBag } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 
 const navItems = [
@@ -12,6 +12,7 @@ const navItems = [
   { name: 'Upload', path: '/admin/artes/nova', icon: <Upload className="h-4 w-4" /> },
   { name: 'Conteúdo', path: '/admin/conteudo', icon: <Sliders className="h-4 w-4" /> },
   { name: 'Usuários Fase', path: '/admin/usuarios', icon: <Users className="h-4 w-4" /> },
+  { name: 'Vendas', path: '/admin/vendas', icon: <ShoppingBag className="h-4 w-4" /> },
   { name: 'Log de downloads', path: '/admin/downloads', icon: <History className="h-4 w-4" /> },
 ]
 

@@ -29,6 +29,9 @@ export function Header() {
   if (userRole === 'FASE' || userRole === 'ADMIN') {
     menuItems.push({ name: 'Meus Downloads', path: '/meus-downloads' })
   }
+  if (userRole === 'CLIENT') {
+    menuItems.push({ name: 'Minhas Compras', path: '/minhas-compras' })
+  }
 
   return (
     <header className="sticky top-0 z-40 w-full bg-nks-black">
@@ -87,11 +90,11 @@ export function Header() {
                 </Link>
               ) : (
                 <span className="bg-nks-red-subtle text-nks-red-dark border border-nks-red px-2 py-1 rounded-sm text-[11px] font-medium uppercase tracking-[0.05em]">
-                  Fase
+                  {userRole === 'CLIENT' ? 'Cliente' : 'Fase'}
                 </span>
               )}
               <span className="text-[13px] font-medium text-white flex items-center gap-1.5">
-                <UserIcon className="h-3.5 w-3.5" /> {session.user?.name || 'Equipe NKS'}
+                <UserIcon className="h-3.5 w-3.5" /> {session.user?.name || (userRole === 'CLIENT' ? 'Cliente NKS' : 'Equipe NKS')}
               </span>
               <button
                 onClick={() => signOut({ callbackUrl: '/loja' })}

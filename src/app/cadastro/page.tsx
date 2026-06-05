@@ -5,15 +5,16 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn, useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Lock, Mail, Loader2, Sparkles, AlertTriangle } from 'lucide-react'
+import { Lock, Mail, Loader2, User as UserIcon, AlertTriangle, ShoppingBag } from 'lucide-react'
 import Link from 'next/link'
 
-function LoginContent() {
+function CadastroContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/loja'
   const { status } = useSession()
 
+  const [name, setName] = React.useState('')
   const [email, setEmail] = React.useState('')
   const [password, setPassword] = React.useState('')
   const [loading, setLoading] = React.useState(false)
@@ -33,26 +34,35 @@ function LoginContent() {
     )
   }
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
     try {
-      const res = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
       })
+      const result = await res.json()
 
-      if (res?.error) {
-        setError('Credenciais inválidas. Verifique seu email e senha de equipe.')
-      } else {
-        router.push(callbackUrl)
-        router.refresh()
+      if (!result.success) {
+        setError(result.error || 'Não foi possível concluir o cadastro.')
+        return
       }
+
+      // Cadastro OK → autentica automaticamente e segue para o destino.
+      const login = await signIn('credentials', { email, password, redirect: false })
+      if (login?.error) {
+        // Conta criada, mas login falhou — manda para o login manual.
+        router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
+        return
+      }
+      router.push(callbackUrl)
+      router.refresh()
     } catch {
-      setError('Ocorreu um erro no servidor de autenticação.')
+      setError('Ocorreu um erro no servidor. Tente novamente.')
     } finally {
       setLoading(false)
     }
@@ -60,14 +70,14 @@ function LoginContent() {
 
   return (
     <div className="min-h-screen bg-nks-black flex flex-col items-center justify-center p-4 text-white relative overflow-hidden">
-      
       <div className="w-full max-w-md bg-nks-gray-900 border border-white/10 p-8 rounded shadow-nks-lg relative z-10 flex flex-col gap-6 animate-in fade-in zoom-in duration-300">
-        
         <div className="text-center flex flex-col items-center gap-1.5">
           <Link href="/loja" className="font-display font-extrabold uppercase tracking-[-0.03em] leading-none text-2xl text-white">
             NKS Art
           </Link>
-          <span className="text-[10px] font-bold text-nks-gray-400 uppercase tracking-[0.12em] block mt-1">Acesso de equipe</span>
+          <span className="text-[10px] font-bold text-nks-gray-400 uppercase tracking-[0.12em] block mt-1 flex items-center gap-1">
+            <ShoppingBag className="h-3 w-3 text-nks-red" /> Criar conta de cliente
+          </span>
         </div>
 
         {error && (
@@ -77,15 +87,28 @@ function LoginContent() {
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="flex flex-col gap-4">
-          
+        <form onSubmit={handleRegister} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-bold text-nks-gray-400 flex items-center gap-1.5">
-              <Mail className="h-3.5 w-3.5 text-nks-gray-400" /> Email corporativo
+              <UserIcon className="h-3.5 w-3.5 text-nks-gray-400" /> Nome
+            </label>
+            <Input
+              type="text"
+              placeholder="Seu nome"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="bg-nks-black border-white/10 text-white rounded h-10 placeholder:text-nks-gray-400 focus-visible:ring-nks-red focus-visible:border-nks-red"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-nks-gray-400 flex items-center gap-1.5">
+              <Mail className="h-3.5 w-3.5 text-nks-gray-400" /> E-mail
             </label>
             <Input
               type="email"
-              placeholder="seu-email@equipe.com.br"
+              placeholder="seu-email@exemplo.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -95,46 +118,31 @@ function LoginContent() {
 
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-bold text-nks-gray-400 flex items-center gap-1.5">
-              <Lock className="h-3.5 w-3.5 text-nks-gray-400" /> Senha de equipe
+              <Lock className="h-3.5 w-3.5 text-nks-gray-400" /> Senha
             </label>
             <Input
               type="password"
-              placeholder="••••••••"
+              placeholder="Mínimo 8 caracteres"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={8}
               className="bg-nks-black border-white/10 text-white rounded h-10 placeholder:text-nks-gray-400 focus-visible:ring-nks-red focus-visible:border-nks-red"
             />
           </div>
 
-          <Button 
-            type="submit" 
-            disabled={loading}
-            className="w-full h-11 gap-2 mt-2"
-          >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              'Autenticar acesso'
-            )}
+          <Button type="submit" disabled={loading} className="w-full h-11 gap-2 mt-2">
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Criar conta'}
           </Button>
         </form>
 
-        <div className="text-center border-t border-white/10 pt-4 mt-1 flex flex-col gap-2">
-          <div>
-            <span className="text-[11px] text-nks-gray-400">Ainda não tem conta? </span>
-            <Link
-              href={`/cadastro?callbackUrl=${encodeURIComponent(callbackUrl)}`}
-              className="text-xs text-nks-red hover:underline font-semibold hover:text-nks-red-light"
-            >
-              Criar conta de cliente
-            </Link>
-          </div>
-          <span className="text-[10px] text-nks-gray-400 flex items-center justify-center gap-1">
-            <Sparkles className="h-3 w-3 text-nks-red" /> Clientes compram artes; equipe FASE baixa o acervo.
-          </span>
-          <Link href="/loja" className="text-xs text-nks-red hover:underline mt-1 block font-semibold hover:text-nks-red-light">
-            ← Voltar para o catálogo
+        <div className="text-center border-t border-white/10 pt-4 mt-1">
+          <span className="text-[11px] text-nks-gray-400">Já tem conta? </span>
+          <Link
+            href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+            className="text-xs text-nks-red hover:underline font-semibold hover:text-nks-red-light"
+          >
+            Entrar
           </Link>
         </div>
       </div>
@@ -142,14 +150,16 @@ function LoginContent() {
   )
 }
 
-export default function LoginPage() {
+export default function CadastroPage() {
   return (
-    <React.Suspense fallback={
-      <div className="min-h-screen bg-nks-black flex flex-col items-center justify-center p-4 text-white">
-        <Loader2 className="h-8 w-8 animate-spin text-nks-gray-400 animate-pulse" />
-      </div>
-    }>
-      <LoginContent />
+    <React.Suspense
+      fallback={
+        <div className="min-h-screen bg-nks-black flex flex-col items-center justify-center p-4 text-white">
+          <Loader2 className="h-8 w-8 animate-spin text-nks-gray-400 animate-pulse" />
+        </div>
+      }
+    >
+      <CadastroContent />
     </React.Suspense>
   )
 }

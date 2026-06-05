@@ -13,9 +13,9 @@ import { TagBadge } from '@/components/shared/TagBadge'
 import { Button } from '@/components/ui/button'
 import { ArtworkWithRelations } from '@/types/artwork'
 import { File as PrismaFile } from '@prisma/client'
-import { Download, Lock, ChevronLeft, Calendar, FileType, Sparkles, Loader2 } from 'lucide-react'
+import { Download, Lock, ChevronLeft, Calendar, FileType, Sparkles, Loader2, ShoppingCart, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
-import { formatDate } from '@/lib/utils/format'
+import { formatDate, formatBRL } from '@/lib/utils/format'
 
 export default function ArtworkDetailsPage() {
   const { slug } = useParams()
@@ -24,6 +24,9 @@ export default function ArtworkDetailsPage() {
   const [downloadModalOpen, setDownloadModalOpen] = React.useState(false)
   const [artwork, setArtwork] = React.useState<ArtworkWithRelations | null>(null)
   const [loading, setLoading] = React.useState(true)
+  const [hasPurchased, setHasPurchased] = React.useState(false)
+  const [buying, setBuying] = React.useState(false)
+  const [buyError, setBuyError] = React.useState('')
 
   React.useEffect(() => {
     fetch(`/api/artworks?slug=${slug}`)
@@ -40,7 +43,34 @@ export default function ArtworkDetailsPage() {
   }, [slug])
 
   const userRole = (session?.user as { role?: string })?.role
+  const isLoggedIn = !!session?.user
   const isFaseOrAdmin = userRole === 'FASE' || userRole === 'ADMIN'
+  const isClient = userRole === 'CLIENT'
+
+  // Cliente: verifica se já comprou esta arte (pedido PAGO) para liberar download.
+  React.useEffect(() => {
+    if (!artwork || !isClient || artwork.isFree) {
+      setHasPurchased(false)
+      return
+    }
+    let active = true
+    fetch('/api/orders')
+      .then((r) => r.json())
+      .then((res) => {
+        if (!active || !res.success) return
+        const paid = (res.data as { status: string; artwork: { id: string } }[]).some(
+          (o) => o.artwork.id === artwork.id && o.status === 'PAID'
+        )
+        setHasPurchased(paid)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [artwork, isClient])
+
+  // Quem pode baixar: equipe sempre; arte grátis para qualquer logado; cliente que comprou.
+  const canDownload = isFaseOrAdmin || (isLoggedIn && !!artwork?.isFree) || (isClient && hasPurchased)
 
   // Galeria: imagem principal + mockups (PNG/JPG) que tenham url pública liberada.
   const galleryImages = React.useMemo(() => {
@@ -54,12 +84,42 @@ export default function ArtworkDetailsPage() {
     return Array.from(new Set(images.filter(Boolean)))
   }, [artwork])
 
-  const handleDownloadClick = () => {
+  const handlePrimaryClick = async () => {
     if (!artwork) return
-    if (isFaseOrAdmin) {
+
+    // Já pode baixar (equipe, arte grátis logado, ou cliente que comprou).
+    if (canDownload) {
       setDownloadModalOpen(true)
-    } else {
+      return
+    }
+
+    // Não logado → manda autenticar e volta para esta arte.
+    if (!isLoggedIn) {
       router.push(`/login?callbackUrl=/loja/${artwork.slug}`)
+      return
+    }
+
+    // Cliente logado sem compra → inicia o checkout do Mercado Pago.
+    if (isClient && !artwork.isFree) {
+      setBuying(true)
+      setBuyError('')
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ artworkId: artwork.id }),
+        })
+        const result = await res.json()
+        if (result.success && result.data?.initPoint) {
+          window.location.href = result.data.initPoint
+          return
+        }
+        setBuyError(result.error || 'Não foi possível iniciar o pagamento.')
+      } catch {
+        setBuyError('Falha na comunicação com o servidor.')
+      } finally {
+        setBuying(false)
+      }
     }
   }
 
@@ -174,9 +234,13 @@ export default function ArtworkDetailsPage() {
             <div className="flex flex-col gap-2">
               <div className="flex flex-wrap items-center gap-2">
                 <CategoryBadge name={artwork.category.name} color={artwork.category.color} />
-                {artwork.isFree && (
+                {artwork.isFree ? (
                   <span className="inline-flex items-center gap-1 bg-nks-red text-white text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-sm">
                     <Sparkles className="h-3 w-3" /> Grátis
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 bg-nks-black text-white text-[11px] font-extrabold px-2.5 py-0.5 rounded-sm">
+                    {formatBRL(artwork.priceCents)}
                   </span>
                 )}
               </div>
@@ -225,29 +289,65 @@ export default function ArtworkDetailsPage() {
             )}
 
             <div className="border-t border-nks-gray-200 pt-6 mt-2">
-              <Button
-                onClick={handleDownloadClick}
-                size="lg"
-                className="w-full gap-2 font-bold h-12"
-                variant={isFaseOrAdmin ? 'default' : 'secondary'}
-              >
-                {isFaseOrAdmin ? (
-                  <>
-                    <Download className="h-5 w-5 animate-pulse" />
-                    Liberar downloads
-                  </>
-                ) : (
-                  <>
-                    <Lock className="h-5 w-5" />
-                    Entrar como equipe para baixar
-                  </>
-                )}
-              </Button>
-              
+              {(() => {
+                // Estados do botão principal conforme role + situação de compra.
+                let label: React.ReactNode
+                let icon: React.ReactNode
+                let variant: 'default' | 'secondary' = 'default'
+
+                if (canDownload) {
+                  icon = <Download className="h-5 w-5" />
+                  label = isFaseOrAdmin
+                    ? 'Liberar downloads'
+                    : isClient && hasPurchased
+                      ? 'Baixar arte comprada'
+                      : 'Baixar arte grátis'
+                } else if (!isLoggedIn) {
+                  icon = <Lock className="h-5 w-5" />
+                  label = artwork.isFree ? 'Entrar para baixar' : `Entrar para comprar — ${formatBRL(artwork.priceCents)}`
+                  variant = 'secondary'
+                } else if (isClient && !artwork.isFree) {
+                  icon = buying ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShoppingCart className="h-5 w-5" />
+                  label = buying ? 'Redirecionando ao pagamento...' : `Comprar por ${formatBRL(artwork.priceCents)}`
+                } else {
+                  // Visitante autenticado sem permissão (caso raro).
+                  icon = <Lock className="h-5 w-5" />
+                  label = 'Acesso restrito'
+                  variant = 'secondary'
+                }
+
+                return (
+                  <Button
+                    onClick={handlePrimaryClick}
+                    size="lg"
+                    disabled={buying}
+                    className="w-full gap-2 font-bold h-12"
+                    variant={variant}
+                  >
+                    {icon}
+                    {label}
+                  </Button>
+                )
+              })()}
+
+              {hasPurchased && (
+                <p className="text-[11px] text-green-700 text-center font-semibold leading-normal mt-2.5 flex items-center justify-center gap-1">
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Compra confirmada — download liberado.
+                </p>
+              )}
+
+              {buyError && (
+                <p className="text-[11px] text-nks-red text-center font-semibold leading-normal mt-2.5">
+                  {buyError}
+                </p>
+              )}
+
               <p className="text-[10px] text-nks-gray-400 text-center leading-normal mt-2.5 max-w-xs mx-auto">
-                {isFaseOrAdmin 
-                  ? 'Downloads diretos a partir do nosso Cloudflare R2 privado.' 
-                  : 'Arquivos protegidos por direitos autorais. Acesso restrito a designers homologados.'}
+                {isFaseOrAdmin
+                  ? 'Downloads diretos a partir do nosso Cloudflare R2 privado.'
+                  : artwork.isFree
+                    ? 'Arte gratuita — faça login para baixar os arquivos originais.'
+                    : 'Pagamento seguro via Mercado Pago (Pix ou cartão). Download liberado após a confirmação.'}
               </p>
             </div>
           </div>
@@ -259,6 +359,7 @@ export default function ArtworkDetailsPage() {
           artwork={artwork}
           files={artwork.files as PrismaFile[]}
           userRole={userRole}
+          canDownload={canDownload}
           onDownloadRequest={handleDownloadRequest}
           onZipDownloadRequest={handleZipDownloadRequest}
         />

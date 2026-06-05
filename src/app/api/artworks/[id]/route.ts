@@ -53,7 +53,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       )
     }
 
-    const { title, description, status, isFree, previewUrl, categoryId, tagNames, addGalleryImages, removeFileIds } = result.data
+    const { title, description, status, isFree, priceCents, previewUrl, categoryId, tagNames, addGalleryImages, removeFileIds } = result.data
     const dataToUpdate: Prisma.ArtworkUpdateInput = {}
 
     if (title !== undefined) {
@@ -63,6 +63,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (description !== undefined) dataToUpdate.description = description
     if (status !== undefined) dataToUpdate.status = status
     if (isFree !== undefined) dataToUpdate.isFree = isFree
+    if (priceCents !== undefined) dataToUpdate.priceCents = priceCents
     if (previewUrl !== undefined) dataToUpdate.previewUrl = previewUrl
     if (categoryId !== undefined) {
       dataToUpdate.category = {

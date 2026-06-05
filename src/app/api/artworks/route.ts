@@ -110,7 +110,7 @@ export async function POST(req: Request) {
       )
     }
 
-    const { title, description, status, isFree, previewUrl, categoryId, tagNames, files } = result.data
+    const { title, description, status, isFree, priceCents, previewUrl, categoryId, tagNames, files } = result.data
     const slug = generateSlug(title)
 
     const categoryExists = await prisma.category.findUnique({
@@ -136,6 +136,7 @@ export async function POST(req: Request) {
         description: description || null,
         status,
         isFree,
+        priceCents,
         previewUrl,
         categoryId,
         tags: {

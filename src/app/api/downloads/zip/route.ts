@@ -4,10 +4,11 @@ import archiver from 'archiver'
 import { GetObjectCommand } from '@aws-sdk/client-s3'
 import { Role, Status } from '@prisma/client'
 import { zipDownloadRequestSchema } from '@/lib/validations/download'
-import { protectFaseRoute } from '@/lib/auth/middleware'
+import { protectDownloadRoute } from '@/lib/auth/middleware'
 import prisma from '@/lib/prisma'
 import { s3Client, R2_BUCKET_NAME } from '@/lib/r2/client'
 import { deriveFileKey } from '@/lib/r2/file-key'
+import { canDownloadArtwork } from '@/lib/payments/access'
 import { rateLimit } from '@/lib/rate-limit'
 
 // Streaming de arquivos + SDK AWS exigem o runtime Node (não Edge).
@@ -15,12 +16,13 @@ export const runtime = 'nodejs'
 
 export async function POST(req: Request) {
   try {
-    const authStatus = await protectFaseRoute()
+    const authStatus = await protectDownloadRoute()
     if (!authStatus.authorized) {
       return authStatus.response
     }
 
     const userId = authStatus.user?.id as string
+    const userRole = (authStatus.user as { role?: Role } | undefined)?.role
 
     // Mesmo limite do download avulso: protege contra raspagem do acervo.
     const limit = rateLimit(`download:${userId}`, 30, 60_000)
@@ -67,6 +69,20 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { success: false, error: 'Esta arte não possui arquivos para download.' },
         { status: 404 }
+      )
+    }
+
+    // Cliente só baixa arte que comprou (ou arte grátis). FASE/ADMIN baixam livre.
+    const allowed = await canDownloadArtwork({
+      userId,
+      role: userRole,
+      artworkId,
+      isFree: artwork.isFree,
+    })
+    if (!allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Você precisa comprar esta arte antes de baixá-la.' },
+        { status: 403 }
       )
     }
 

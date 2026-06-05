@@ -15,6 +15,9 @@ interface DownloadModalProps {
   artwork: Artwork
   files: PrismaFile[]
   userRole?: string
+  /** Quando definido, sobrepõe a checagem por role: indica se este usuário pode
+   *  baixar esta arte (ex.: cliente que comprou). Default: FASE/ADMIN. */
+  canDownload?: boolean
   onDownloadRequest: (fileId: string, email?: string) => Promise<string | null>
   /** Baixa todos os arquivos da arte num único .zip. Dispara o download
    *  diretamente (a resposta é binária, não uma URL). */
@@ -27,6 +30,7 @@ export function DownloadModal({
   artwork,
   files,
   userRole,
+  canDownload,
   onDownloadRequest,
   onZipDownloadRequest,
 }: DownloadModalProps) {
@@ -36,7 +40,7 @@ export function DownloadModal({
   const [successMessage, setSuccessMessage] = React.useState('')
   const [errorMessage, setErrorMessage] = React.useState('')
 
-  const isFaseOrAdmin = userRole === 'FASE' || userRole === 'ADMIN'
+  const isFaseOrAdmin = canDownload ?? (userRole === 'FASE' || userRole === 'ADMIN')
   const hasMultipleFiles = files.length > 1
   const anyLoading = loadingFileId !== null || zipLoading
 

@@ -14,11 +14,13 @@ model User {
   passwordHash String?
   role         Role       @default(VISITOR)
   downloads    Download[]
+  orders       Order[]
   createdAt    DateTime   @default(now())
 }
 
 enum Role {
   VISITOR
+  CLIENT
   FASE
   ADMIN
 }
@@ -30,12 +32,14 @@ model Artwork {
   description String?
   status      Status     @default(DRAFT)
   isFree      Boolean    @default(true)
+  priceCents  Int        @default(1500)
   previewUrl  String
   files       File[]
   category    Category   @relation(fields: [categoryId], references: [id])
   categoryId  String
   tags        Tag[]
   downloads   Download[]
+  orders      Order[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 }
@@ -96,4 +100,32 @@ model Suggestion {
   description String
   imageUrl    String?
   createdAt   DateTime @default(now())
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  EXPIRED
+  REFUNDED
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  user           User        @relation(fields: [userId], references: [id])
+  userId         String
+  artwork        Artwork     @relation(fields: [artworkId], references: [id])
+  artworkId      String
+  amountCents    Int // snapshot do preço da arte no momento da compra
+  status         OrderStatus @default(PENDING)
+  mpPreferenceId String? // id da preference do Mercado Pago
+  mpPaymentId    String?     @unique // id do pagamento aprovado — garante idempotência
+  paymentMethod  String? // pix | credit_card | boleto (informativo)
+  createdAt      DateTime    @default(now())
+  paidAt         DateTime?
+  updatedAt      DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([artworkId])
+  @@index([status])
 }

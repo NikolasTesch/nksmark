@@ -1,19 +1,21 @@
 import { NextResponse } from 'next/server'
 import { Role, Status } from '@prisma/client'
 import { downloadRequestSchema } from '@/lib/validations/download'
-import { protectFaseRoute } from '@/lib/auth/middleware'
+import { protectDownloadRoute, protectFaseRoute } from '@/lib/auth/middleware'
 import prisma from '@/lib/prisma'
 import { getSignedDownloadUrl } from '@/lib/r2/signed-url'
+import { canDownloadArtwork } from '@/lib/payments/access'
 import { rateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: Request) {
   try {
-    const authStatus = await protectFaseRoute()
+    const authStatus = await protectDownloadRoute()
     if (!authStatus.authorized) {
       return authStatus.response
     }
 
     const userId = authStatus.user?.id as string
+    const userRole = (authStatus.user as { role?: Role } | undefined)?.role
 
     // Limita geração de URLs assinadas por usuário: evita download em massa /
     // raspagem do acervo por uma conta FASE comprometida.
@@ -53,6 +55,20 @@ export async function POST(req: Request) {
     if (file.artwork.status !== Status.PUBLISHED) {
       return NextResponse.json(
         { success: false, error: 'Esta arte não está disponível para download.' },
+        { status: 403 }
+      )
+    }
+
+    // Cliente só baixa arte que comprou (ou arte grátis). FASE/ADMIN baixam livre.
+    const allowed = await canDownloadArtwork({
+      userId,
+      role: userRole,
+      artworkId,
+      isFree: file.artwork.isFree,
+    })
+    if (!allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Você precisa comprar esta arte antes de baixá-la.' },
         { status: 403 }
       )
     }

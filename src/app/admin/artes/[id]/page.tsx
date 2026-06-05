@@ -59,6 +59,7 @@ export default function EditarArtePage() {
       categoryId: artwork.categoryId,
       status: artwork.status,
       isFree: artwork.isFree,
+      priceCents: artwork.priceCents,
       previewUrl: artwork.previewUrl,
       tags: artwork.tags.map((t) => ({ name: t.name })),
       files: artwork.files.map((f) => ({ id: f.id, format: f.format, size: f.size, url: f.url })),

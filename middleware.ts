@@ -31,9 +31,21 @@ export default auth((req) => {
     }
   }
 
+  // /minhas-compras é a área do cliente pagante (CLIENT). Equipe FASE/ADMIN
+  // também pode acessar; visitante é mandado ao login.
+  const isOnMinhasCompras = req.nextUrl.pathname.startsWith('/minhas-compras')
+  if (isOnMinhasCompras) {
+    if (!isLoggedIn) {
+      return NextResponse.redirect(new URL('/login', req.nextUrl))
+    }
+    if (userRole !== Role.CLIENT && userRole !== Role.FASE && userRole !== Role.ADMIN) {
+      return NextResponse.redirect(new URL('/loja', req.nextUrl))
+    }
+  }
+
   return NextResponse.next()
 })
 
 export const config = {
-  matcher: ['/admin/:path*', '/meus-downloads/:path*'],
+  matcher: ['/admin/:path*', '/meus-downloads/:path*', '/minhas-compras/:path*'],
 }

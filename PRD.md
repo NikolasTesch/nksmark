@@ -22,8 +22,14 @@ NKS Art é um catálogo digital de artes para sublimação. O produto resolve o 
 ### Visitante (público, sem login)
 - Descobre o catálogo via redes sociais ou busca orgânica
 - Explora artes, filtra por categoria/tag
-- Não pode baixar — vê CTA para login
-- **Meta:** converter em usuário FASE (cliente)
+- Não pode baixar — vê CTA para login/compra
+- **Meta:** converter em CLIENT (comprador) ou usuário FASE
+
+### Cliente (CLIENT — marketplace, Fase 2)
+- Auto-cadastro público; compra artes individualmente (padrão R$ 15,00) via Mercado Pago
+- Download liberado só após pagamento confirmado pelo webhook
+- Re-download permanente em `/minhas-compras`
+- **Meta:** recompra e crescimento de receita
 
 ### Fase (equipe interna)
 - Funcionário ou parceiro da empresa com acesso autorizado
@@ -223,6 +229,11 @@ Browser
 | `/api/tags` | GET, POST | GET: público / POST: ADMIN |
 | `/api/tags/[id]` | PUT, DELETE | ADMIN |
 | `/api/suggestions` | POST | Público |
+| `/api/auth/register` | POST | Público (cria CLIENT) |
+| `/api/orders` | GET, POST | CLIENT |
+| `/api/orders/[id]` | GET | CLIENT (dono) / ADMIN |
+| `/api/payments/webhook` | POST | Público (assinado pelo Mercado Pago) |
+| `/api/admin/sales` | GET | ADMIN |
 | `/api/admin/upload` | POST | ADMIN |
 | `/api/admin/users` | GET, POST | ADMIN |
 | `/api/admin/users/[id]` | PUT, DELETE | ADMIN |
@@ -244,10 +255,14 @@ Browser
 - [ ] **Coleções / séries** — agrupar artes relacionadas em uma série
 
 ### P2 — Pós-validação de uso
-- [ ] **Sistema de pagamento** — Stripe ou Mercado Pago para artes premium
-- [ ] **Artes premium vs gratuitas** — distinção visível na loja, bloqueio para VISITANTE sem compra
+- [x] **Sistema de pagamento (Mercado Pago)** — marketplace: role CLIENT, compra por arte (Pix/cartão),
+  webhook idempotente com validação de assinatura, e-mail de confirmação
+- [x] **Artes premium vs gratuitas** — `Artwork.priceCents` (default R$ 15,00); download pago liberado
+  apenas após `Order` PAGO; arte grátis baixável por cliente logado
+- [x] **Análise de vendas no admin** (`/admin/vendas`) — receita, artes mais vendidas, nichos
+  (categorias) mais vendidos e clientes que mais compraram, com filtro por período
+- [ ] **Carrinho** com múltiplas artes / cupons de desconto
 - [ ] **Newsletter** — notificação de novas artes para assinantes
-- [ ] **Analytics avançado** — relatórios de artes mais baixadas, usuários mais ativos
 
 ---
 

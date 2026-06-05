@@ -23,6 +23,14 @@ export function formatExtension(format: string): string {
   return format.toUpperCase()
 }
 
+/** Formata um valor em centavos de BRL como moeda (ex.: 1500 → "R$ 15,00"). */
+export function formatBRL(cents: number): string {
+  return (cents / 100).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  })
+}
+
 export function formatRelativeTime(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date
   const now = new Date()

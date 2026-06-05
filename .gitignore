@@ -42,3 +42,6 @@ next-env.d.ts
 
 # scripts de scratch / one-off (podem conter dados sensíveis — nunca commitar)
 /scratch/
+
+# docs de backup (referenciam credenciais/infra — manter local)
+/docs/backup-r2-rclone.md

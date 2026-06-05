@@ -64,14 +64,15 @@ export const authConfig: NextAuthConfig = {
           where: { email }
         })
 
+        // Aceita equipe interna (FASE/ADMIN) e clientes pagantes (CLIENT).
         if (
           user &&
-          (user.role === Role.FASE || user.role === Role.ADMIN) &&
+          (user.role === Role.CLIENT || user.role === Role.FASE || user.role === Role.ADMIN) &&
           (await verifyPassword(password, user.passwordHash))
         ) {
           return {
             id: user.id,
-            name: user.name || 'Equipe Interna',
+            name: user.name || (user.role === Role.CLIENT ? 'Cliente' : 'Equipe Interna'),
             email: user.email,
             role: user.role
           }

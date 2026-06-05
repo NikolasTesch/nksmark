@@ -3,18 +3,20 @@ import { Readable } from 'node:stream'
 import { Status } from '@prisma/client'
 
 // vi.mock é içado para o topo; as variáveis vêm de vi.hoisted() para já existirem.
-const { prismaMock, protectFaseRoute, s3Send } = vi.hoisted(() => ({
+const { prismaMock, protectDownloadRoute, canDownloadArtwork, s3Send } = vi.hoisted(() => ({
   prismaMock: {
     artwork: { findUnique: vi.fn() },
     download: { createMany: vi.fn() },
     user: { upsert: vi.fn() },
   },
-  protectFaseRoute: vi.fn(),
+  protectDownloadRoute: vi.fn(),
+  canDownloadArtwork: vi.fn(),
   s3Send: vi.fn(),
 }))
 
 vi.mock('@/lib/prisma', () => ({ default: prismaMock }))
-vi.mock('@/lib/auth/middleware', () => ({ protectFaseRoute: () => protectFaseRoute() }))
+vi.mock('@/lib/auth/middleware', () => ({ protectDownloadRoute: () => protectDownloadRoute() }))
+vi.mock('@/lib/payments/access', () => ({ canDownloadArtwork: (...a: unknown[]) => canDownloadArtwork(...a) }))
 vi.mock('@/lib/r2/client', () => ({ s3Client: { send: (...a: unknown[]) => s3Send(...a) }, R2_BUCKET_NAME: 'bucket' }))
 vi.mock('@aws-sdk/client-s3', () => ({ GetObjectCommand: class { constructor(public input: unknown) {} } }))
 
@@ -48,7 +50,8 @@ function fileObj(id: string, format: string, url: string) {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  protectFaseRoute.mockResolvedValue({ authorized: true, user: { id: 'user-1' } })
+  protectDownloadRoute.mockResolvedValue({ authorized: true, user: { id: 'user-1', role: 'FASE' } })
+  canDownloadArtwork.mockResolvedValue(true)
   s3Send.mockResolvedValue({ Body: Readable.from([Buffer.from('file-bytes')]) })
   prismaMock.download.createMany.mockResolvedValue({ count: 2 })
 })
@@ -101,13 +104,26 @@ describe('POST /api/downloads/zip', () => {
   })
 
   it('bloqueia quando não autorizado', async () => {
-    protectFaseRoute.mockResolvedValue({
+    protectDownloadRoute.mockResolvedValue({
       authorized: false,
       response: new Response(JSON.stringify({ success: false }), { status: 403 }),
     })
     const res = await POST(postReq({ artworkId: 'art-1' }))
     expect(res.status).toBe(403)
     expect(prismaMock.artwork.findUnique).not.toHaveBeenCalled()
+  })
+
+  it('bloqueia cliente que não comprou a arte', async () => {
+    protectDownloadRoute.mockResolvedValue({ authorized: true, user: { id: 'cliente-1', role: 'CLIENT' } })
+    canDownloadArtwork.mockResolvedValue(false)
+    prismaMock.artwork.findUnique.mockResolvedValue({
+      id: 'art-1', title: 'Paga', status: Status.PUBLISHED, isFree: false,
+      files: [fileObj('f1', 'CDR', 'files/a.cdr')],
+    })
+    const res = await POST(postReq({ artworkId: 'art-1' }))
+    expect(res.status).toBe(403)
+    expect(prismaMock.download.createMany).not.toHaveBeenCalled()
+    expect(s3Send).not.toHaveBeenCalled()
   })
 
   it('valida o body (artworkId obrigatório)', async () => {

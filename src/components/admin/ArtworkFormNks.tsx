@@ -19,6 +19,7 @@ interface ArtworkFormNksProps {
     categoryId?: string
     status?: Status
     isFree?: boolean
+    priceCents?: number
     tags?: { name: string }[]
     previewUrl?: string
     files?: ExistingFile[]
@@ -38,6 +39,10 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData }: Art
   const [categoryId, setCategoryId] = React.useState(initialData?.categoryId || '')
   const [status, setStatus] = React.useState<Status>(initialData?.status || 'PUBLISHED')
   const [isFree, setIsFree] = React.useState<boolean>(initialData?.isFree ?? true)
+  // Preço em reais como string editável; convertido para centavos no envio.
+  const [price, setPrice] = React.useState<string>(
+    ((initialData?.priceCents ?? 1500) / 100).toFixed(2).replace('.', ',')
+  )
   const [tagNames, setTagNames] = React.useState<string[]>(
     initialData?.tags?.map((t) => t.name) || []
   )
@@ -162,6 +167,9 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData }: Art
 
     try {
       const activeStatus = forceStatus || status
+      // "15,90" / "15.90" → 1590 centavos. Inválido vira default 1500.
+      const parsedPrice = Math.round(parseFloat(price.replace(',', '.')) * 100)
+      const priceCents = Number.isFinite(parsedPrice) && parsedPrice >= 0 ? parsedPrice : 1500
 
       if (isEdit) {
         const payload: Record<string, unknown> = {
@@ -170,6 +178,7 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData }: Art
           categoryId,
           status: activeStatus,
           isFree,
+          priceCents,
           tagNames,
         }
 
@@ -240,6 +249,7 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData }: Art
             categoryId,
             status: activeStatus,
             isFree,
+            priceCents,
             tagNames,
             previewUrl,
             files: uploadedFiles,
@@ -746,9 +756,34 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData }: Art
               htmlFor="is-free-checkbox"
               className="text-xs font-bold text-nks-gray-700 cursor-pointer select-none"
             >
-              Marcar como grátis (visível, baixável por visitantes)
+              Marcar como grátis (download liberado a clientes logados, sem cobrança)
             </label>
           </div>
+
+          {/* Preço (ignorado quando grátis) */}
+          {!isFree && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-black uppercase tracking-wider text-nks-gray-400">
+                Preço de venda
+              </label>
+              <div className="relative max-w-[180px]">
+                <span className="absolute inset-y-0 left-3 flex items-center text-xs font-bold text-nks-gray-400 pointer-events-none">
+                  R$
+                </span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="15,00"
+                  className="w-full bg-[#f3f4f6] text-nks-black text-xs font-bold pl-9 pr-4 py-3 rounded-lg border border-transparent focus:border-nks-gray-200 focus:bg-white focus:outline-none transition-all duration-200"
+                />
+              </div>
+              <span className="text-[10px] font-semibold text-nks-gray-400">
+                Valor cobrado do cliente por esta arte. Padrão: R$ 15,00.
+              </span>
+            </div>
+          )}
 
           {/* Ações */}
           <div className="grid grid-cols-2 gap-4 mt-2">

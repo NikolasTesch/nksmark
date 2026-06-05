@@ -37,7 +37,14 @@ Catálogo digital de artes para sublimação e afins. Área pública para navega
 - Visualiza preview da arte
 - **NÃO pode baixar nenhuma arte**
 - Acessa FAQ, Suporte, Sugerir Arte, Quem Somos
-- Vê botão "Faça login para baixar" no lugar do download
+- Vê botão "Faça login para baixar/comprar" no lugar do download
+
+### Cliente (CLIENT — auto-cadastro, marketplace)
+- Auto-cadastro público em `/cadastro` (email + senha)
+- **Compra artes** (preço por arte, padrão R$ 15,00) via Mercado Pago (Pix/cartão)
+- Download liberado **apenas após pagamento confirmado** (ou arte grátis)
+- Acessa "Minhas Compras" (`/minhas-compras`) com re-download permanente
+- Não acessa o painel admin nem o acervo interno completo
 
 ### Fase (equipe interna — autenticado)
 - Todas as permissões do visitante
@@ -69,6 +76,9 @@ Loja | FAQ | Suporte | Sugerir Arte | Quem Somos | Grátis | Meus Downloads
 | `/loja` | Catálogo com filtro por categoria e tag | Público |
 | `/loja/[slug]` | Detalhe da arte + preview + download (se fase) | Público / Download: fase |
 | `/gratis` | Artes gratuitas (Fase 2: distinção free/pago) | Público |
+| `/cadastro` | Auto-cadastro de cliente (role CLIENT) | Público |
+| `/minhas-compras` | Compras do cliente + re-download permanente | Cliente |
+| `/compra/sucesso` `/compra/pendente` `/compra/falha` | Retorno do checkout Mercado Pago | Cliente |
 | `/meus-downloads` | Histórico de downloads do usuário logado | Fase |
 | `/sugerir-arte` | Formulário de sugestão de tema | Público |
 | `/faq` | Perguntas frequentes em accordion | Público |
@@ -80,6 +90,7 @@ Loja | FAQ | Suporte | Sugerir Arte | Quem Somos | Grátis | Meus Downloads
 | `/admin/artes/[id]` | Edição de arte existente | Admin |
 | `/admin/conteudo` | **Gestão de categorias, tags e filtros** | Admin |
 | `/admin/usuarios` | Listagem e gestão de usuários fase | Admin |
+| `/admin/vendas` | **Análise de vendas** (receita, top artes/nichos/clientes) | Admin |
 
 ---
 
@@ -120,6 +131,7 @@ model User {
 
 enum Role {
   VISITOR
+  CLIENT
   FASE
   ADMIN
 }
@@ -131,6 +143,7 @@ model Artwork {
   description String?
   status      Status     @default(DRAFT)
   isFree      Boolean    @default(true)
+  priceCents  Int        @default(1500)
   previewUrl  String
   files       File[]
   category    Category   @relation(fields: [categoryId], references: [id])
@@ -196,6 +209,22 @@ model Suggestion {
   email       String?
   description String
   createdAt   DateTime @default(now())
+}
+
+enum OrderStatus { PENDING PAID FAILED EXPIRED REFUNDED }
+
+model Order {
+  id             String      @id @default(cuid())
+  userId         String      // cliente (role CLIENT)
+  artworkId      String
+  amountCents    Int         // snapshot do preço na compra
+  status         OrderStatus @default(PENDING)
+  mpPreferenceId String?
+  mpPaymentId    String?     @unique  // idempotência do webhook
+  paymentMethod  String?
+  createdAt      DateTime    @default(now())
+  paidAt         DateTime?
+  updatedAt      DateTime    @updatedAt
 }
 ```
 
@@ -271,10 +300,11 @@ model Suggestion {
 - [ ] Preview com marca d'água automática
 - [ ] Busca por texto livre
 - [ ] Coleções / séries de artes
-- [ ] Sistema de pagamento (Stripe ou Mercado Pago)
-- [ ] Artes premium vs gratuitas
+- [x] **Sistema de pagamento (Mercado Pago)** — marketplace com role CLIENT, compra por arte
+- [x] **Artes premium vs gratuitas** — `priceCents` por arte; download pago bloqueado até confirmar
+- [x] **Análise de vendas no admin** (`/admin/vendas`): receita, top artes/nichos/clientes
+- [ ] Carrinho com múltiplas artes / cupons
 - [ ] Newsletter de novas artes
-- [ ] Analytics avançado no painel admin
 
 ---
 
@@ -300,6 +330,10 @@ ADMIN_PASSWORD_HASH=
 # Email
 RESEND_API_KEY=
 EMAIL_FROM=
+
+# Pagamento (Mercado Pago)
+MP_ACCESS_TOKEN=
+MP_WEBHOOK_SECRET=
 
 # App
 NEXT_PUBLIC_APP_URL=
