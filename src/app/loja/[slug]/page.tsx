@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { ArtworkPreview } from '@/components/artwork/ArtworkPreview'
+import { ArtworkCard } from '@/components/artwork/ArtworkCard'
 import { DownloadModal } from '@/components/artwork/DownloadModal'
 import { FormatBadge } from '@/components/artwork/FormatBadge'
 import { CategoryBadge } from '@/components/shared/CategoryBadge'
@@ -13,7 +14,7 @@ import { TagBadge } from '@/components/shared/TagBadge'
 import { Button } from '@/components/ui/button'
 import { ArtworkWithRelations } from '@/types/artwork'
 import { File as PrismaFile } from '@prisma/client'
-import { Download, Lock, ChevronLeft, Calendar, FileType, Sparkles, Loader2, ShoppingCart, CheckCircle2 } from 'lucide-react'
+import { Download, Lock, ChevronRight, Calendar, FileType, Sparkles, Loader2, ShoppingCart, CheckCircle2, FileCheck, ShieldCheck, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import { formatDate, formatBRL } from '@/lib/utils/format'
 
@@ -27,6 +28,7 @@ export default function ArtworkDetailsPage() {
   const [hasPurchased, setHasPurchased] = React.useState(false)
   const [buying, setBuying] = React.useState(false)
   const [buyError, setBuyError] = React.useState('')
+  const [related, setRelated] = React.useState<ArtworkWithRelations[]>([])
 
   React.useEffect(() => {
     fetch(`/api/artworks?slug=${slug}`)
@@ -68,6 +70,24 @@ export default function ArtworkDetailsPage() {
       active = false
     }
   }, [artwork, isClient])
+
+  // Artes relacionadas: mesma categoria, exceto a atual (máx. 5).
+  React.useEffect(() => {
+    if (!artwork) return
+    let active = true
+    fetch(`/api/artworks?categoryId=${artwork.categoryId}`)
+      .then((r) => r.json())
+      .then((res) => {
+        if (!active || !res.success) return
+        setRelated(
+          (res.data as ArtworkWithRelations[]).filter((a) => a.slug !== artwork.slug).slice(0, 5)
+        )
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [artwork])
 
   // Quem pode baixar: equipe sempre; arte grátis para qualquer logado; cliente que comprou.
   const canDownload = isFaseOrAdmin || (isLoggedIn && !!artwork?.isFree) || (isClient && hasPurchased)
@@ -208,15 +228,52 @@ export default function ArtworkDetailsPage() {
     )
   }
 
+  // Estado do botão de ação principal conforme role + situação de compra.
+  // Computado uma vez e reutilizado no painel lateral e na barra fixa do mobile.
+  const primary: { label: React.ReactNode; icon: React.ReactNode; variant: 'default' | 'secondary' } = (() => {
+    if (canDownload) {
+      return {
+        icon: <Download className="h-5 w-5" />,
+        label: isFaseOrAdmin
+          ? 'Liberar downloads'
+          : isClient && hasPurchased
+            ? 'Baixar arte comprada'
+            : 'Baixar arte grátis',
+        variant: 'default',
+      }
+    }
+    if (!isLoggedIn) {
+      return {
+        icon: <Lock className="h-5 w-5" />,
+        label: artwork.isFree ? 'Entrar para baixar' : `Entrar para comprar — ${formatBRL(artwork.priceCents)}`,
+        variant: 'secondary',
+      }
+    }
+    if (isClient && !artwork.isFree) {
+      return {
+        icon: buying ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShoppingCart className="h-5 w-5" />,
+        label: buying ? 'Redirecionando ao pagamento...' : `Comprar por ${formatBRL(artwork.priceCents)}`,
+        variant: 'default',
+      }
+    }
+    // Visitante autenticado sem permissão (caso raro).
+    return { icon: <Lock className="h-5 w-5" />, label: 'Acesso restrito', variant: 'secondary' }
+  })()
+
   return (
     <>
       <Header />
-      <main className="flex-grow flex flex-col container mx-auto px-4 md:px-8 py-8 animate-in fade-in duration-300 gap-8">
-        <div>
-          <Link href="/loja" className="inline-flex items-center gap-1 text-sm font-semibold text-nks-gray-400 hover:text-nks-red transition-colors">
-            <ChevronLeft className="h-4 w-4" /> Voltar para o catálogo
+      <main className="flex-grow flex flex-col container mx-auto px-4 md:px-8 py-8 pb-28 lg:pb-8 animate-in fade-in duration-300 gap-8">
+        {/* Breadcrumb: Loja › Categoria › Título */}
+        <nav aria-label="Navegação estrutural" className="flex items-center gap-1.5 text-xs font-semibold text-nks-gray-400 flex-wrap">
+          <Link href="/loja" className="hover:text-nks-red transition-colors">Loja</Link>
+          <ChevronRight className="h-3 w-3 text-nks-gray-200" />
+          <Link href={`/loja?cat=${artwork.categoryId}`} className="hover:text-nks-red transition-colors">
+            {artwork.category.name}
           </Link>
-        </div>
+          <ChevronRight className="h-3 w-3 text-nks-gray-200" />
+          <span className="text-nks-gray-700 truncate max-w-[180px] sm:max-w-xs">{artwork.title}</span>
+        </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
@@ -289,46 +346,16 @@ export default function ArtworkDetailsPage() {
             )}
 
             <div className="border-t border-nks-gray-200 pt-6 mt-2">
-              {(() => {
-                // Estados do botão principal conforme role + situação de compra.
-                let label: React.ReactNode
-                let icon: React.ReactNode
-                let variant: 'default' | 'secondary' = 'default'
-
-                if (canDownload) {
-                  icon = <Download className="h-5 w-5" />
-                  label = isFaseOrAdmin
-                    ? 'Liberar downloads'
-                    : isClient && hasPurchased
-                      ? 'Baixar arte comprada'
-                      : 'Baixar arte grátis'
-                } else if (!isLoggedIn) {
-                  icon = <Lock className="h-5 w-5" />
-                  label = artwork.isFree ? 'Entrar para baixar' : `Entrar para comprar — ${formatBRL(artwork.priceCents)}`
-                  variant = 'secondary'
-                } else if (isClient && !artwork.isFree) {
-                  icon = buying ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShoppingCart className="h-5 w-5" />
-                  label = buying ? 'Redirecionando ao pagamento...' : `Comprar por ${formatBRL(artwork.priceCents)}`
-                } else {
-                  // Visitante autenticado sem permissão (caso raro).
-                  icon = <Lock className="h-5 w-5" />
-                  label = 'Acesso restrito'
-                  variant = 'secondary'
-                }
-
-                return (
-                  <Button
-                    onClick={handlePrimaryClick}
-                    size="lg"
-                    disabled={buying}
-                    className="w-full gap-2 font-bold h-12"
-                    variant={variant}
-                  >
-                    {icon}
-                    {label}
-                  </Button>
-                )
-              })()}
+              <Button
+                onClick={handlePrimaryClick}
+                size="lg"
+                disabled={buying}
+                className="w-full gap-2 font-bold h-12"
+                variant={primary.variant}
+              >
+                {primary.icon}
+                {primary.label}
+              </Button>
 
               {hasPurchased && (
                 <p className="text-[11px] text-green-700 text-center font-semibold leading-normal mt-2.5 flex items-center justify-center gap-1">
@@ -349,9 +376,40 @@ export default function ArtworkDetailsPage() {
                     ? 'Arte gratuita — faça login para baixar os arquivos originais.'
                     : 'Pagamento seguro via Mercado Pago (Pix ou cartão). Download liberado após a confirmação.'}
               </p>
+
+              {/* Trust badges */}
+              <div className="grid grid-cols-3 gap-2 border-t border-nks-gray-200 pt-4 mt-4">
+                {[
+                  { icon: <FileCheck className="h-4 w-4" />, label: 'Arquivo original' },
+                  { icon: <ShieldCheck className="h-4 w-4" />, label: 'Download seguro' },
+                  { icon: <RefreshCw className="h-4 w-4" />, label: 'Uso comercial' },
+                ].map((item) => (
+                  <div key={item.label} className="flex flex-col items-center text-center gap-1.5">
+                    <span className="text-nks-red">{item.icon}</span>
+                    <span className="text-[10px] font-semibold leading-tight text-nks-gray-700">{item.label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Artes relacionadas */}
+        {related.length > 0 && (
+          <section className="border-t border-nks-gray-200 pt-8 mt-2">
+            <h2 className="font-display font-bold uppercase tracking-[-0.015em] text-lg md:text-xl text-nks-black mb-1">
+              Você também pode gostar
+            </h2>
+            <p className="text-[12px] text-nks-gray-400 font-semibold mb-5">
+              Mais artes em <span className="text-nks-red">{artwork.category.name}</span>
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-[18px]">
+              {related.map((art) => (
+                <ArtworkCard key={art.id} artwork={art} />
+              ))}
+            </div>
+          </section>
+        )}
 
         <DownloadModal
           open={downloadModalOpen}
@@ -364,6 +422,28 @@ export default function ArtworkDetailsPage() {
           onZipDownloadRequest={handleZipDownloadRequest}
         />
       </main>
+
+      {/* Barra de ação fixa (mobile) — mantém o CTA sempre acessível ao rolar */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 flex items-center gap-3 border-t border-nks-gray-200 bg-white px-4 py-3 shadow-[0_-2px_8px_rgba(17,17,17,0.08)]">
+        <div className="flex flex-col leading-none shrink-0">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-nks-gray-400">
+            {artwork.isFree ? 'Arte' : 'Preço'}
+          </span>
+          <span className="text-base font-bold text-nks-black">
+            {artwork.isFree ? <span className="text-nks-red">Grátis</span> : formatBRL(artwork.priceCents)}
+          </span>
+        </div>
+        <Button
+          onClick={handlePrimaryClick}
+          disabled={buying}
+          className="flex-1 gap-2 font-bold h-11"
+          variant={primary.variant}
+        >
+          {primary.icon}
+          {primary.label}
+        </Button>
+      </div>
+
       <Footer />
     </>
   )

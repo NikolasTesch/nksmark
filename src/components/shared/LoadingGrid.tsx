@@ -4,30 +4,28 @@ interface LoadingGridProps {
   count?: number
 }
 
+// Skeleton fiel ao ArtworkCard: mesma grade da loja, preview 4:5, título e rodapé.
 export function LoadingGrid({ count = 8 }: LoadingGridProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-[18px]">
       {Array.from({ length: count }).map((_, i) => (
-        <div 
-          key={i} 
-          className="border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm bg-white dark:bg-slate-900"
+        <div
+          key={i}
+          className="flex flex-col overflow-hidden rounded border border-nks-gray-200 bg-white"
         >
-          {/* Preview Image Skeleton */}
-          <div className="aspect-[4/3] bg-slate-100 dark:bg-slate-800 animate-pulse w-full" />
-          
-          {/* Info Area Skeleton */}
-          <div className="p-4 flex flex-col gap-3">
-            <div className="flex gap-2">
-              <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded animate-pulse w-16" />
-              <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded animate-pulse w-12" />
-            </div>
-            <div className="h-5 bg-slate-100 dark:bg-slate-800 rounded animate-pulse w-3/4" />
-            <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded animate-pulse w-full" />
-            
-            <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-50 dark:border-slate-800">
-              <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded animate-pulse w-24" />
-              <div className="h-8 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse w-20" />
-            </div>
+          {/* Preview (4:5) */}
+          <div className="aspect-[4/5] w-full animate-pulse bg-nks-gray-100" />
+
+          {/* Info: título + categoria + preço */}
+          <div className="flex flex-col items-center gap-1.5 px-2.5 pt-[9px] pb-2">
+            <div className="h-3 w-3/4 animate-pulse rounded bg-nks-gray-100" />
+            <div className="h-2 w-1/3 animate-pulse rounded bg-nks-gray-100" />
+            <div className="mt-0.5 h-3.5 w-12 animate-pulse rounded bg-nks-gray-100" />
+          </div>
+
+          {/* Rodapé (CTA) */}
+          <div className="border-t border-nks-gray-200 p-2">
+            <div className="mx-auto h-3 w-24 animate-pulse rounded bg-nks-gray-100" />
           </div>
         </div>
       ))}

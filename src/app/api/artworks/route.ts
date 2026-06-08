@@ -62,6 +62,8 @@ export async function GET(req: Request) {
         files: {
           select: { id: true, format: true, url: true, size: true, artworkId: true },
         },
+        // Contagem de downloads para a ordenação "mais baixadas" no client.
+        _count: { select: { downloads: true } },
       },
       orderBy: { createdAt: 'desc' }
     })

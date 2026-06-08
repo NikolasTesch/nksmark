@@ -6,8 +6,9 @@ import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { ArtworkWithRelations } from '@/types/artwork'
 import { useFavorites } from '@/hooks/useFavorites'
-import { Lock, Download, Heart, Image as ImageIcon } from 'lucide-react'
+import { Lock, Download, Heart, Image as ImageIcon, Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { formatBRL } from '@/lib/utils/format'
 
 interface ArtworkCardProps {
   artwork: ArtworkWithRelations
@@ -24,6 +25,12 @@ export function ArtworkCard({ artwork }: ArtworkCardProps) {
   const fav = isFavorite(artwork.id)
   const href = `/loja/${artwork.slug}`
   const extraTag = artwork.tags[0]?.name
+
+  // Formatos únicos disponíveis (CDR, AI, …) exibidos no overlay de hover.
+  const formats = React.useMemo(
+    () => Array.from(new Set(artwork.files.map((f) => f.format))),
+    [artwork.files]
+  )
 
   return (
     <motion.div
@@ -73,7 +80,7 @@ export function ArtworkCard({ artwork }: ArtworkCardProps) {
             e.preventDefault()
             toggleFavorite(artwork.id)
           }}
-          className="absolute top-[9px] right-[9px] flex h-7 w-7 items-center justify-center rounded-full bg-white/92 shadow-[0_1px_2px_rgba(17,17,17,0.06)] cursor-pointer"
+          className="absolute top-[9px] right-[9px] z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/92 shadow-[0_1px_2px_rgba(17,17,17,0.06)] cursor-pointer"
         >
           <motion.div
             whileTap={{ scale: 0.8 }}
@@ -82,16 +89,38 @@ export function ArtworkCard({ artwork }: ArtworkCardProps) {
           >
             <Heart
               className="h-4 w-4 transition-colors"
-              style={{ 
-                color: fav ? 'var(--color-nks-red)' : 'var(--color-nks-gray-400)', 
-                fill: fav ? 'var(--color-nks-red)' : 'transparent' 
+              style={{
+                color: fav ? 'var(--color-nks-red)' : 'var(--color-nks-gray-400)',
+                fill: fav ? 'var(--color-nks-red)' : 'transparent'
               }}
             />
           </motion.div>
         </button>
+
+        {/* Overlay de hover — escurece a imagem e revela CTA + formatos disponíveis */}
+        <div className="pointer-events-none absolute inset-0 flex flex-col justify-between bg-gradient-to-t from-black/65 via-black/0 to-black/0 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          <div />
+          <div className="flex translate-y-1.5 flex-col items-center gap-2 p-2.5 transition-transform duration-200 group-hover:translate-y-0">
+            <span className="inline-flex items-center gap-1.5 rounded bg-white px-3 py-1.5 text-[11px] font-bold text-nks-black shadow-nks">
+              <Eye className="h-3.5 w-3.5" /> Ver arte
+            </span>
+            {formats.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-1">
+                {formats.map((f) => (
+                  <span
+                    key={f}
+                    className="rounded-sm bg-white/90 px-1.5 py-0.5 font-mono text-[9px] font-medium tracking-[0.04em] text-nks-black"
+                  >
+                    {f}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </Link>
 
-      {/* Info — título centralizado + categorias (não formatos) */}
+      {/* Info — título centralizado + categoria + preço */}
       <Link href={href} className="px-2.5 pt-[9px] pb-2 text-center">
         <h3 className="mb-[3px] min-h-[31px] text-[12.5px] font-semibold leading-[1.25] text-nks-black">
           {artwork.title}
@@ -99,6 +128,13 @@ export function ArtworkCard({ artwork }: ArtworkCardProps) {
         <div className="text-[9px] font-medium uppercase tracking-[0.08em] text-nks-gray-400">
           <span className="text-nks-red">{artwork.category.name}</span>
           {extraTag && extraTag.toLowerCase() !== artwork.category.name.toLowerCase() ? `, ${extraTag}` : null}
+        </div>
+        <div className="mt-1.5 text-sm font-bold">
+          {artwork.isFree ? (
+            <span className="text-nks-red">Grátis</span>
+          ) : (
+            <span className="text-nks-black">{formatBRL(artwork.priceCents)}</span>
+          )}
         </div>
       </Link>
 

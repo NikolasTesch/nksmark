@@ -12,14 +12,44 @@ import { useArtworkFilters } from '@/hooks/useArtworkFilters'
 import { useArtworks } from '@/hooks/useArtworks'
 import { useFavorites } from '@/hooks/useFavorites'
 import { useSession } from 'next-auth/react'
-import { Search, Sparkles, Lock, Heart, ArrowRight, ChevronLeft, ChevronRight, SlidersHorizontal, X } from 'lucide-react'
+import { ArtworkSort } from '@/types/artwork'
+import { Search, Sparkles, Lock, Heart, ChevronLeft, ChevronRight, SlidersHorizontal, X, ArrowUpDown, SearchX, ArrowUp } from 'lucide-react'
 
 // Paginação: máximo de 10 linhas por página. Em telas grandes o grid tem 4 colunas,
 // portanto 10 linhas = 40 cards por página. Os controles só aparecem acima desse limite.
 const PAGE_SIZE = 40
 
+// Opções de ordenação (rótulo amigável → valor do filtro).
+const SORT_OPTIONS: { value: ArtworkSort; label: string }[] = [
+  { value: 'recent', label: 'Mais recentes' },
+  { value: 'downloads', label: 'Mais baixadas' },
+  { value: 'az', label: 'Nome (A–Z)' },
+  { value: 'free', label: 'Gratuitas primeiro' },
+]
+
+// useArtworkFilters usa useSearchParams → precisa de um Suspense boundary acima.
 export default function LojaPage() {
-  const { filters, setCategory, setTag, setSearch, setIsFree, setOnlyFavorites, resetFilters } = useArtworkFilters()
+  return (
+    <React.Suspense fallback={<LojaFallback />}>
+      <LojaContent />
+    </React.Suspense>
+  )
+}
+
+function LojaFallback() {
+  return (
+    <>
+      <Header />
+      <div className="container mx-auto px-4 md:px-8 py-10">
+        <LoadingGrid count={8} />
+      </div>
+      <Footer />
+    </>
+  )
+}
+
+function LojaContent() {
+  const { filters, setCategory, setTag, setSearch, setIsFree, setOnlyFavorites, setSort, resetFilters } = useArtworkFilters()
   const { favoriteIds, favoritesCount } = useFavorites()
   const { data: session } = useSession()
   const [categories, setCategories] = React.useState<Category[]>([])
@@ -77,14 +107,30 @@ export default function LojaPage() {
     })
   }, [artworks, filters, favoriteSet])
 
+  // Ordenação client-side conforme a opção escolhida (aplicada após a filtragem).
+  const sortedArtworks = React.useMemo(() => {
+    const arr = [...filteredArtworks]
+    switch (filters.sort) {
+      case 'az':
+        return arr.sort((a, b) => a.title.localeCompare(b.title, 'pt-BR'))
+      case 'downloads':
+        return arr.sort((a, b) => (b._count?.downloads ?? 0) - (a._count?.downloads ?? 0))
+      case 'free':
+        return arr.sort((a, b) => Number(b.isFree) - Number(a.isFree))
+      case 'recent':
+      default:
+        return arr.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    }
+  }, [filteredArtworks, filters.sort])
+
   // Estado de paginação (client-side)
   const [page, setPage] = React.useState(1)
-  const totalPages = Math.max(1, Math.ceil(filteredArtworks.length / PAGE_SIZE))
+  const totalPages = Math.max(1, Math.ceil(sortedArtworks.length / PAGE_SIZE))
 
-  // Volta para a primeira página sempre que os filtros mudam
+  // Volta para a primeira página sempre que os filtros ou a ordenação mudam
   React.useEffect(() => {
     setPage(1)
-  }, [filters.categoryId, filters.tagId, filters.search, filters.isFree, filters.onlyFavorites])
+  }, [filters.categoryId, filters.tagId, filters.search, filters.isFree, filters.onlyFavorites, filters.sort])
 
   // Garante que a página atual nunca ultrapasse o total disponível
   React.useEffect(() => {
@@ -93,8 +139,8 @@ export default function LojaPage() {
 
   const pagedArtworks = React.useMemo(() => {
     const start = (page - 1) * PAGE_SIZE
-    return filteredArtworks.slice(start, start + PAGE_SIZE)
-  }, [filteredArtworks, page])
+    return sortedArtworks.slice(start, start + PAGE_SIZE)
+  }, [sortedArtworks, page])
 
   const userRole = (session?.user as { role?: string })?.role
   const canDownload = userRole === 'FASE' || userRole === 'ADMIN'
@@ -114,7 +160,16 @@ export default function LojaPage() {
 
   const closeFilters = () => setIsFiltersOpen(false)
 
-  const gridKey = `${filters.categoryId ?? ''}-${filters.tagId ?? ''}-${filters.search ?? ''}-${filters.isFree}-${filters.onlyFavorites}-${page}`
+  // Botão "voltar ao topo" — aparece após rolar além de ~600px.
+  const [showTopBtn, setShowTopBtn] = React.useState(false)
+  React.useEffect(() => {
+    const onScroll = () => setShowTopBtn(window.scrollY > 600)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  const gridKey = `${filters.categoryId ?? ''}-${filters.tagId ?? ''}-${filters.search ?? ''}-${filters.isFree}-${filters.onlyFavorites}-${filters.sort ?? ''}-${page}`
 
   // Conteúdo do painel de filtros (reutilizado no desktop e no drawer mobile)
   const filterPanel = (
@@ -375,6 +430,24 @@ export default function LojaPage() {
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
+              {/* Ordenação */}
+              <div className="relative">
+                <ArrowUpDown className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-nks-gray-400" />
+                <select
+                  value={filters.sort ?? 'recent'}
+                  onChange={(e) => setSort(e.target.value as ArtworkSort)}
+                  aria-label="Ordenar artes"
+                  className="h-9 cursor-pointer appearance-none rounded border border-nks-gray-200 bg-white pl-8 pr-7 text-xs font-semibold text-nks-gray-700 transition-colors hover:bg-nks-gray-100 focus:border-nks-red focus:outline-none"
+                >
+                  {SORT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronRight className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rotate-90 text-nks-gray-400" />
+              </div>
+
               {/* Botão de filtros (mobile) */}
               <button
                 onClick={() => setIsFiltersOpen(true)}
@@ -478,23 +551,49 @@ export default function LojaPage() {
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.25 }}
-              className="text-center py-16 bg-nks-gray-100 border border-nks-gray-200 rounded p-6"
+              className="flex flex-col items-center text-center py-16 bg-nks-gray-100 border border-nks-gray-200 rounded px-6"
             >
-              <span className="text-nks-gray-400 text-sm font-medium">
-                Nenhuma arte localizada sob estes critérios de busca.
-              </span>
-              {(filters.categoryId || filters.tagId || filters.search || filters.isFree !== undefined || filters.onlyFavorites) && (
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white border border-nks-gray-200 mb-4">
+                <SearchX className="h-6 w-6 text-nks-gray-400" />
+              </div>
+              <h3 className="font-display font-bold uppercase tracking-[-0.015em] text-base text-nks-black">
+                Nenhuma arte encontrada
+              </h3>
+              <p className="text-sm text-nks-gray-400 font-medium mt-1 max-w-sm">
+                {filters.search
+                  ? <>Não achamos nada para <span className="font-semibold text-nks-gray-700">“{filters.search}”</span>. Tente outro termo ou remova alguns filtros.</>
+                  : 'Ajuste ou limpe os filtros para ver mais artes do catálogo.'}
+              </p>
+              {activeFilterCount > 0 && (
                 <button
                   onClick={resetFilters}
-                  className="text-nks-red hover:underline block mx-auto mt-2 text-xs font-semibold cursor-pointer"
+                  className="inline-flex items-center gap-1.5 h-9 px-4 mt-4 rounded bg-nks-red text-white text-xs font-semibold hover:bg-nks-red-dark transition-colors cursor-pointer"
                 >
-                  Limpar filtros
+                  Limpar todos os filtros
                 </button>
               )}
             </motion.div>
           )}
         </main>
       </div>
+
+      {/* Botão flutuante "voltar ao topo" */}
+      <AnimatePresence>
+        {showTopBtn && (
+          <motion.button
+            key="back-to-top"
+            initial={{ opacity: 0, y: 12, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.9 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            aria-label="Voltar ao topo"
+            className="fixed bottom-6 right-6 z-40 flex h-11 w-11 items-center justify-center rounded-full bg-nks-black text-white shadow-nks-lg hover:bg-nks-gray-900 transition-colors cursor-pointer"
+          >
+            <ArrowUp className="h-5 w-5" />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       <Footer />
     </>
