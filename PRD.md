@@ -1,8 +1,8 @@
 # NKS Art — Product Requirements Document (PRD)
 
-**Versão:** 1.0  
-**Data:** 2026-06-02  
-**Status:** MVP implementado — Fase 2 planejada
+**Versão:** 1.1  
+**Data:** 2026-06-13  
+**Status:** MVP implementado — Fase 2 (Marketplace/Pagamentos) implementada e em homologação
 
 ---
 
@@ -115,7 +115,9 @@ NKS Art é um catálogo digital de artes para sublimação. O produto resolve o 
 - A página de detalhe deve mostrar preview em alta resolução via galeria com zoom
 
 ### RF-02: Downloads
-- Apenas usuários com role FASE ou ADMIN podem iniciar downloads
+- Usuários com role FASE ou ADMIN podem iniciar downloads de qualquer arte PUBLISHED
+- Clientes (CLIENT) podem baixar artes gratuitas ou artes com `Order` PAGO para seu usuário
+- Visitantes nunca baixam — vêem CTA para login/compra
 - Cada download deve gerar uma URL assinada do R2 válida por 15 minutos
 - Cada download deve ser registrado com `userId`, `artworkId` e `fileId`
 - A URL pública direta dos arquivos originais nunca deve ser exposta

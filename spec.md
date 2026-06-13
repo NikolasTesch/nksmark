@@ -232,12 +232,16 @@ model Order {
 
 ## Fluxos principais
 
-### Download (role fase)
+### Download (role FASE/ADMIN ou CLIENT pago)
 ```
-1. Usuário fase acessa /loja/[slug]
-2. Vê preview + botões de formato (CDR, AI, PDF, OTF)
-3. Clica em formato desejado
-4. API verifica role = FASE ou ADMIN
+1. Usuário acessa /loja/[slug]
+2. Vê preview + botão de ação por role:
+   - FASE/ADMIN → "Liberar downloads" (acesso direto)
+   - CLIENT com Order PAGO ou arte grátis → "Baixar arte comprada" / "Baixar arte grátis"
+   - CLIENT sem compra → "Comprar por R$ XX" (inicia checkout)
+   - Visitante → "Faça login para baixar/comprar"
+3. Abre modal de download com formatos disponíveis
+4. API verifica: role FASE/ADMIN OU (CLIENT + isFree) OU (CLIENT + Order PAGO para o artworkId)
 5. API gera URL assinada temporária do R2 (15 min)
 6. Download inicia via URL assinada
 7. Registro salvo em Download com userId

@@ -6,20 +6,25 @@ import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { ArtworkWithRelations } from '@/types/artwork'
 import { useFavorites } from '@/hooks/useFavorites'
-import { Lock, Download, Heart, Image as ImageIcon, Eye } from 'lucide-react'
+import { Lock, Download, Heart, Image as ImageIcon, Eye, ShoppingCart } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { formatBRL } from '@/lib/utils/format'
 
 interface ArtworkCardProps {
   artwork: ArtworkWithRelations
+  purchasedArtworkIds?: Set<string>
 }
 
 // Card focado na imagem: a arte é o protagonista, a marca emoldura.
 // Comportamento muda conforme o role — visitante vê cadeado, equipe baixa.
-export function ArtworkCard({ artwork }: ArtworkCardProps) {
+export function ArtworkCard({ artwork, purchasedArtworkIds }: ArtworkCardProps) {
   const { data: session } = useSession()
   const role = (session?.user as { role?: string })?.role
   const canDownload = role === 'FASE' || role === 'ADMIN'
+  const isClient = role === 'CLIENT'
+  const purchased = purchasedArtworkIds?.has(artwork.id) ?? false
+  const canClientDownload = isClient && (artwork.isFree || purchased)
+  const canBuy = isClient && !artwork.isFree && !purchased
 
   const { isFavorite, toggleFavorite } = useFavorites()
   const fav = isFavorite(artwork.id)
@@ -140,12 +145,19 @@ export function ArtworkCard({ artwork }: ArtworkCardProps) {
 
       {/* Rodapé — ação por role */}
       <div className="border-t border-nks-gray-200 p-2 text-center">
-        {canDownload ? (
+        {canDownload || canClientDownload ? (
           <Link
             href={href}
             className="inline-flex items-center gap-[5px] text-[11px] font-semibold text-nks-red hover:text-nks-red-dark"
           >
             <Download className="h-[15px] w-[15px]" /> Baixar arte
+          </Link>
+        ) : canBuy ? (
+          <Link
+            href={href}
+            className="inline-flex items-center gap-[5px] text-[11px] font-semibold text-nks-black hover:text-nks-gray-700"
+          >
+            <ShoppingCart className="h-[15px] w-[15px]" /> Comprar por {formatBRL(artwork.priceCents)}
           </Link>
         ) : (
           <Link

@@ -54,6 +54,7 @@ function LojaContent() {
   const { data: session } = useSession()
   const [categories, setCategories] = React.useState<Category[]>([])
   const [tags, setTags] = React.useState<Tag[]>([])
+  const [purchasedArtworkIds, setPurchasedArtworkIds] = React.useState<Set<string>>(new Set())
   const [isFiltersOpen, setIsFiltersOpen] = React.useState(false)
 
   // Buscamos todas as artes de uma vez para realizar a contagem e filtragem responsiva no client
@@ -144,6 +145,22 @@ function LojaContent() {
 
   const userRole = (session?.user as { role?: string })?.role
   const canDownload = userRole === 'FASE' || userRole === 'ADMIN'
+
+  React.useEffect(() => {
+    if (userRole !== 'CLIENT') return
+    fetch('/api/orders')
+      .then((r) => r.json())
+      .then((res) => {
+        if (!res.success) return
+        const ids = new Set<string>(
+          (res.data as { status: string; artwork: { id: string } }[])
+            .filter((o) => o.status === 'PAID')
+            .map((o) => o.artwork.id)
+        )
+        setPurchasedArtworkIds(ids)
+      })
+      .catch(() => {})
+  }, [userRole])
 
   const activeCategoryName = filters.categoryId
     ? (categories.find((c) => c.id === filters.categoryId)?.name || 'Categoria')
@@ -490,7 +507,7 @@ function LojaContent() {
                 className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-[18px]"
               >
                 {pagedArtworks.map((art) => (
-                  <ArtworkCard key={art.id} artwork={art} />
+                  <ArtworkCard key={art.id} artwork={art} purchasedArtworkIds={purchasedArtworkIds} />
                 ))}
               </motion.div>
 
