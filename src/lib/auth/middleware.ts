@@ -1,8 +1,12 @@
 import { auth } from './auth'
 import { Role } from '@prisma/client'
 import { NextResponse } from 'next/server'
+import { User } from 'next-auth'
 
-export async function protectAdminRoute() {
+export async function protectAdminRoute(): Promise<
+  | { authorized: false; response: NextResponse }
+  | { authorized: true; user: User }
+> {
   const session = await auth()
 
   if (!session || !session.user) {
@@ -38,7 +42,10 @@ export async function protectAdminRoute() {
  * handler ainda precisa checar se há `Order` PAGO da arte (ou se a arte é grátis).
  * FASE/ADMIN baixam qualquer arte publicada sem pagar.
  */
-export async function protectDownloadRoute() {
+export async function protectDownloadRoute(): Promise<
+  | { authorized: false; response: NextResponse }
+  | { authorized: true; user: User }
+> {
   const session = await auth()
 
   if (!session || !session.user) {
@@ -68,7 +75,10 @@ export async function protectDownloadRoute() {
   }
 }
 
-export async function protectFaseRoute() {
+export async function protectFaseRoute(): Promise<
+  | { authorized: false; response: NextResponse }
+  | { authorized: true; user: User }
+> {
   const session = await auth()
 
   if (!session || !session.user) {
