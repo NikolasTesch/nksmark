@@ -1,0 +1,96 @@
+Task 16: Financial charts with Recharts
+==========================================
+
+Deliverables:
+- src/components/admin/charts/RevenueLineChart.tsx        (NEW)
+- src/components/admin/charts/PaymentDistributionChart.tsx (NEW)
+- src/components/admin/charts/PeakHoursHeatmap.tsx         (NEW)
+- src/app/admin/vendas/page.tsx                            (UPDATED — integrated charts + period filter)
+- src/app/api/admin/financeiro/route.ts                    (UPDATED — added "month-to-date" period)
+
+Chart design follows the existing NKS Art design system:
+- Background: bg-white + border-nks-gray-200 + shadow-nks-sm
+- Section eyebrow: text-[10px] font-bold uppercase tracking-[0.12em] text-nks-gray-400
+- Brand red: var(--color-nks-red) for primary line + heatmap base
+- Recharts text colors driven by var(--color-nks-gray-700) / var(--color-nks-gray-400)
+- Recharts tooltip styled with var(--color-nks-black) for editorial contrast
+- No hardcoded hex values in chart markup (payment-method colors are a documented
+  semantic palette kept inside the component, since the design system has no
+  green/blue tokens and Pix/Cartão follow industry conventions)
+
+Components:
+
+1) RevenueLineChart
+   - Recharts: LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend
+   - Props: data: { date, revenueCents, orderCount }[]
+   - Converts cents → R$ for the line, formats tooltip with formatBRL()
+   - X-axis tick formatter: pt-BR dd/MM
+   - Y-axis tick formatter: "R$" prefix
+
+2) PaymentDistributionChart
+   - Recharts: PieChart, Pie, Cell, Legend, Tooltip (custom)
+   - Props: data: { method, count, totalCents, percentage }[]
+   - Donut (innerRadius 55, outerRadius 85)
+   - Payment-method palette: Pix #10B981, credit_card #3B82F6,
+     debit_card #6366F1, boleto #F59E0B, fallback #9CA3AF
+   - Custom tooltip shows method label, BRL value, % and sale count
+   - Legend formatter renders "Label — XX%"
+   - Center total summary below chart
+
+3) PeakHoursHeatmap
+   - CSS grid 7×24 (Mon-Sun rows, 0-23h columns)
+   - Cell intensity = sqrt(count/max) — flattens peaks for legibility
+   - Brand red as heat color with alpha from 0.12 → 0.90
+   - Day label order: Seg → Sáb → Dom (Brazilian convention)
+   - Hover state tracked in React state → summary line shows day/hour,
+     sale count and BRL revenue
+   - Header legend: "Menos — heat strip — Mais"
+
+Vendas page integration:
+- Existing month/year filter kept untouched (controls main sales data)
+- New "Período dos gráficos" select: 7d | 30d | Este mês
+- 3 parallel fetches on chart-period change:
+    /api/admin/financeiro?period={chartPeriod}            → timeline
+    /api/admin/financeiro?period=payment-distribution     → donut
+    /api/admin/financeiro?period=peak-hours               → heatmap
+- Loading: <ChartSkeleton /> pulse placeholders matching chart heights
+- Empty state: dashed-border card with LineChartIcon + "Nenhum dado para o período selecionado."
+- Layout: chart section sits between stats cards and "Nichos mais vendidos"
+  (above top-artworks as required)
+
+API extension (non-breaking):
+- Added case 'month-to-date' to /api/admin/financeiro
+- Returns daily timeline from first day of current month → now
+- Existing 7d / 30d / monthly / payment-distribution / peak-hours untouched
+
+Build Output:
+----------------------------------------
+> nksmark@0.1.0 build
+> next build
+
+▲ Next.js 16.2.6 (Turbopack)
+- Environments: .env.local, .env
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 20.6s
+  Running TypeScript ...
+  Finished TypeScript in 19.6s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/54) ...
+  Generating static pages using 11 workers (13/54)
+  Generating static pages using 11 workers (26/54)
+  Generating static pages using 11 workers (40/54)
+✓ Generating static pages using 11 workers (54/54) in 1569ms
+  Finalizing page optimization ...
+
+Route (app)
+├ ○ /admin/vendas
+├ ƒ /api/admin/financeiro
+
+Build: SUCCESS
+TypeScript: PASS
+Pages generated: 54/54
+
+No new dependencies added (recharts was already installed in T1).
+Existing sales page functionality (month/year filter, stats cards,
+nichos/clientes tables, top-artworks grid, recent-orders table) is preserved.

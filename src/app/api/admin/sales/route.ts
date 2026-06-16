@@ -27,25 +27,31 @@ export async function GET(req: Request) {
       paidAt: { gte, lte },
     })
 
+    // Busca os pedidos com items para contabilizar vendas individuais.
     const orders = await prisma.order.findMany({
       where: paidWhere(startDate, endDate),
       include: {
         artwork: { select: { id: true, title: true, category: { select: { id: true, name: true, color: true } } } },
+        items: {
+          include: { artwork: { select: { id: true, title: true, category: { select: { id: true, name: true, color: true } } } } },
+        },
         user: { select: { id: true, name: true, email: true } },
       },
       orderBy: { paidAt: 'desc' },
     })
 
-    const totalSales = orders.length
-    const totalRevenueCents = orders.reduce((sum, o) => sum + o.amountCents, 0)
+    // totalSales = número de itens individuais vendidos (não de pedidos).
+    const totalSales = orders.reduce((sum, o) => sum + o.items.length, 0)
+    // totalRevenueCents = soma dos valores dos itens (preço bruto de cada arte).
+    const totalRevenueCents = orders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.amountCents, 0), 0)
     const avgTicketCents = totalSales > 0 ? Math.round(totalRevenueCents / totalSales) : 0
 
     // Receita do mês anterior, para variação percentual.
     const prevOrders = await prisma.order.findMany({
       where: paidWhere(prevStart, prevEnd),
-      select: { amountCents: true },
+      include: { items: { select: { amountCents: true } } },
     })
-    const prevRevenue = prevOrders.reduce((sum, o) => sum + o.amountCents, 0)
+    const prevRevenue = prevOrders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.amountCents, 0), 0)
     let percentChangeFromPrevMonth = 0
     if (prevRevenue > 0) {
       percentChangeFromPrevMonth = Math.round(((totalRevenueCents - prevRevenue) / prevRevenue) * 100)
@@ -53,33 +59,39 @@ export async function GET(req: Request) {
       percentChangeFromPrevMonth = 100
     }
 
-    // Top artes vendidas (por nº de vendas e receita).
+    // Top artes vendidas (por nº de vendas e receita) — através dos OrderItems.
     const artworkMap = new Map<string, { title: string; categoryName: string; count: number; revenueCents: number }>()
     for (const o of orders) {
-      const key = o.artwork.id
-      const entry = artworkMap.get(key) || {
-        title: o.artwork.title,
-        categoryName: o.artwork.category.name,
-        count: 0,
-        revenueCents: 0,
+      for (const item of o.items) {
+        if (!item.artwork) continue
+        const key = item.artwork.id
+        const entry = artworkMap.get(key) || {
+          title: item.artwork.title,
+          categoryName: item.artwork.category.name,
+          count: 0,
+          revenueCents: 0,
+        }
+        entry.count += 1
+        entry.revenueCents += item.amountCents
+        artworkMap.set(key, entry)
       }
-      entry.count += 1
-      entry.revenueCents += o.amountCents
-      artworkMap.set(key, entry)
     }
     const topArtworks = Array.from(artworkMap.entries())
       .map(([id, v]) => ({ id, ...v }))
       .sort((a, b) => b.count - a.count || b.revenueCents - a.revenueCents)
       .slice(0, 8)
 
-    // Nichos (categorias) mais vendidos.
+    // Nichos (categorias) mais vendidos — através dos OrderItems.
     const categoryMap = new Map<string, { name: string; color: string | null; count: number; revenueCents: number }>()
     for (const o of orders) {
-      const cat = o.artwork.category
-      const entry = categoryMap.get(cat.id) || { name: cat.name, color: cat.color, count: 0, revenueCents: 0 }
-      entry.count += 1
-      entry.revenueCents += o.amountCents
-      categoryMap.set(cat.id, entry)
+      for (const item of o.items) {
+        if (!item.artwork) continue
+        const cat = item.artwork.category
+        const entry = categoryMap.get(cat.id) || { name: cat.name, color: cat.color, count: 0, revenueCents: 0 }
+        entry.count += 1
+        entry.revenueCents += item.amountCents
+        categoryMap.set(cat.id, entry)
+      }
     }
     const categoryDistribution = Array.from(categoryMap.entries())
       .map(([id, v]) => ({
@@ -92,7 +104,7 @@ export async function GET(req: Request) {
       }))
       .sort((a, b) => b.count - a.count)
 
-    // Clientes que mais compraram.
+    // Clientes que mais compraram (agrupados por usuário, considerando múltiplos itens por pedido).
     const clientMap = new Map<string, { name: string | null; email: string; count: number; revenueCents: number }>()
     for (const o of orders) {
       const entry = clientMap.get(o.user.id) || {
@@ -101,8 +113,8 @@ export async function GET(req: Request) {
         count: 0,
         revenueCents: 0,
       }
-      entry.count += 1
-      entry.revenueCents += o.amountCents
+      entry.count += o.items.length
+      entry.revenueCents += o.items.reduce((s, i) => s + i.amountCents, 0)
       clientMap.set(o.user.id, entry)
     }
     const topClients = Array.from(clientMap.entries())
@@ -110,15 +122,18 @@ export async function GET(req: Request) {
       .sort((a, b) => b.revenueCents - a.revenueCents || b.count - a.count)
       .slice(0, 8)
 
-    // Pedidos recentes (para a tabela).
-    const recentOrders = orders.slice(0, 12).map((o) => ({
-      id: o.id,
-      artworkTitle: o.artwork.title,
-      categoryName: o.artwork.category.name,
-      clientName: o.user.name || o.user.email,
-      amountCents: o.amountCents,
-      paidAt: o.paidAt ? o.paidAt.toISOString() : null,
-    }))
+    // Pedidos recentes (para a tabela) — usa o primeiro item para exibição.
+    const recentOrders = orders
+      .filter((o) => o.items.length > 0)
+      .slice(0, 12)
+      .map((o) => ({
+        id: o.id,
+        artworkTitle: o.items[0].artwork?.title ?? o.artwork?.title ?? 'Arte',
+        categoryName: o.items[0].artwork?.category.name ?? o.artwork?.category.name ?? '',
+        clientName: o.user.name || o.user.email,
+        amountCents: o.amountCents,
+        paidAt: o.paidAt ? o.paidAt.toISOString() : null,
+      }))
 
     return NextResponse.json({
       success: true,

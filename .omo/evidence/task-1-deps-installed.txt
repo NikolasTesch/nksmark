@@ -1,0 +1,11 @@
+TASK-1: Dependencies Installed
+==============================
+Date: 2026-06-16
+
+sharp  : 0.35.1 (direct) / 0.34.5 (via next@16.2.6)
+recharts: 3.8.1
+
+src/lib/watermark/ directory: EXISTS
+
+next.config.ts updated with:
+  outputFileTracingIncludes: { '**/*': ['./node_modules/sharp/**/*'] }

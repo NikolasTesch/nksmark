@@ -1,0 +1,89 @@
+▲ Next.js 16.2.6 (Turbopack)
+- Environments: .env.local, .env
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 19.3s
+  Running TypeScript ...
+  Finished TypeScript in 17.5s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/54) ...
+  Generating static pages using 11 workers (13/54) 
+  Generating static pages using 11 workers (26/54) 
+  Generating static pages using 11 workers (40/54) 
+✓ Generating static pages using 11 workers (54/54) in 1119ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /admin
+├ ○ /admin/artes
+├ ƒ /admin/artes/[id]
+├ ○ /admin/artes/nova
+├ ○ /admin/chamados
+├ ○ /admin/colecoes
+├ ƒ /admin/colecoes/[slug]
+├ ○ /admin/conteudo
+├ ○ /admin/cupons
+├ ○ /admin/downloads
+├ ○ /admin/metricas
+├ ○ /admin/usuarios
+├ ○ /admin/vendas
+├ ƒ /api/admin/coupons
+├ ƒ /api/admin/coupons/[id]
+├ ƒ /api/admin/downloads
+├ ƒ /api/admin/financeiro
+├ ƒ /api/admin/metrics
+├ ƒ /api/admin/sales
+├ ƒ /api/admin/stats
+├ ƒ /api/admin/support
+├ ƒ /api/admin/support/[id]
+├ ƒ /api/admin/upload
+├ ƒ /api/admin/users
+├ ƒ /api/admin/users/[id]
+├ ƒ /api/artworks
+├ ƒ /api/artworks/[id]
+├ ƒ /api/artworks/search
+├ ƒ /api/auth/[...nextauth]
+├ ƒ /api/auth/register
+├ ƒ /api/cart
+├ ƒ /api/cart/[itemId]
+├ ƒ /api/cart/apply-coupon
+├ ƒ /api/categories
+├ ƒ /api/categories/[id]
+├ ƒ /api/categories/reorder
+├ ƒ /api/collections
+├ ƒ /api/collections/[slug]
+├ ƒ /api/collections/[slug]/items
+├ ƒ /api/downloads
+├ ƒ /api/downloads/zip
+├ ƒ /api/orders
+├ ƒ /api/orders/[id]
+├ ƒ /api/payments/webhook
+├ ƒ /api/public/collections
+├ ƒ /api/suggestions
+├ ƒ /api/support
+├ ƒ /api/tags
+├ ƒ /api/tags/[id]
+├ ○ /cadastro
+├ ○ /carrinho
+├ ○ /compra/falha
+├ ○ /compra/pendente
+├ ○ /compra/sucesso
+├ ○ /faq
+├ ○ /icon.png
+├ ○ /login
+├ ○ /loja
+├ ƒ /loja/[slug]
+├ ○ /meus-downloads
+├ ○ /minhas-compras
+├ ○ /quem-somos
+├ ○ /sugerir-arte
+└ ○ /suporte
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

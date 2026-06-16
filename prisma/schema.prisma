@@ -15,6 +15,7 @@ model User {
   role         Role       @default(VISITOR)
   downloads    Download[]
   orders       Order[]
+  cart         Cart?
   createdAt    DateTime   @default(now())
 }
 
@@ -38,9 +39,12 @@ model Artwork {
   category    Category   @relation(fields: [categoryId], references: [id])
   categoryId  String
   tags        Tag[]
-  downloads   Download[]
-  orders      Order[]
-  createdAt   DateTime   @default(now())
+  downloads          Download[]
+  orders             Order[]
+  cartItems          CartItem[]
+  orderItems         OrderItem[]
+  collectionEntries  CollectionArtwork[]
+  createdAt          DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 }
 
@@ -114,13 +118,16 @@ model Order {
   id             String      @id @default(cuid())
   user           User        @relation(fields: [userId], references: [id])
   userId         String
-  artwork        Artwork     @relation(fields: [artworkId], references: [id])
-  artworkId      String
-  amountCents    Int // snapshot do preço da arte no momento da compra
+  artworkId      String?
+  artwork        Artwork?    @relation(fields: [artworkId], references: [id])
+  items          OrderItem[]
+  couponId       String?
+  coupon         Coupon?     @relation(fields: [couponId], references: [id])
+  amountCents    Int
   status         OrderStatus @default(PENDING)
-  mpPreferenceId String? // id da preference do Mercado Pago
-  mpPaymentId    String?     @unique // id do pagamento aprovado — garante idempotência
-  paymentMethod  String? // pix | credit_card | boleto (informativo)
+  mpPreferenceId String?
+  mpPaymentId    String?     @unique
+  paymentMethod  String?
   createdAt      DateTime    @default(now())
   paidAt         DateTime?
   updatedAt      DateTime    @updatedAt
@@ -138,5 +145,76 @@ model SupportTicket {
   status    String   @default("PENDING") // PENDING, RESOLVED
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Cart {
+  id           String     @id @default(cuid())
+  userId       String     @unique
+  user         User       @relation(fields: [userId], references: [id])
+  items        CartItem[]
+  couponCode   String?
+  discountCents Int       @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  artworkId String
+  artwork   Artwork  @relation(fields: [artworkId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+model Coupon {
+  id              String        @id @default(cuid())
+  code            String        @unique
+  description     String?
+  discountType    DiscountType
+  discountValue   Int
+  minPurchaseCents Int?
+  maxUses         Int?
+  usedCount       Int           @default(0)
+  expiresAt       DateTime?
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  orders          Order[]
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id])
+  artworkId   String
+  artwork     Artwork @relation(fields: [artworkId], references: [id])
+  amountCents Int
+}
+
+model Collection {
+  id          String               @id @default(cuid())
+  title       String
+  slug        String               @unique
+  description String?
+  artworks    CollectionArtwork[]
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+}
+
+model CollectionArtwork {
+  collectionId String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  artworkId    String
+  artwork      Artwork    @relation(fields: [artworkId], references: [id])
+  order        Int        @default(0)
+
+  @@id([collectionId, artworkId])
+  @@index([artworkId])
 }
 

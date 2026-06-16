@@ -29,9 +29,8 @@ function getAccessToken(): string {
 export interface CreatePreferenceInput {
   /** Referência interna do pedido — volta no webhook como `external_reference`. */
   orderId: string
-  title: string
-  /** Valor unitário em reais (não centavos). */
-  unitPrice: number
+  /** Itens do pedido para exibição no checkout do Mercado Pago. */
+  items: { id: string; title: string; unitPrice: number; quantity: number }[]
   /** E-mail do comprador, exibido no checkout. */
   payerEmail: string
   successUrl: string
@@ -48,15 +47,13 @@ export interface CreatePreferenceResult {
 
 export async function createPreference(input: CreatePreferenceInput): Promise<CreatePreferenceResult> {
   const body = {
-    items: [
-      {
-        id: input.orderId,
-        title: input.title,
-        quantity: 1,
-        currency_id: 'BRL',
-        unit_price: input.unitPrice,
-      },
-    ],
+    items: input.items.map((item) => ({
+      id: item.id,
+      title: item.title,
+      quantity: item.quantity,
+      currency_id: 'BRL',
+      unit_price: item.unitPrice,
+    })),
     payer: { email: input.payerEmail },
     external_reference: input.orderId,
     back_urls: {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { OrderStatus, Role, Status } from '@prisma/client'
+import { DiscountType, OrderStatus, Role, Status } from '@prisma/client'
 import { auth } from '@/lib/auth/auth'
 import { createOrderSchema } from '@/lib/validations/order'
 import prisma from '@/lib/prisma'
@@ -13,7 +13,7 @@ function appUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 }
 
-/** Cria um pedido de compra de uma arte e a preference do Mercado Pago. */
+/** Cria um pedido de compra (single, multi-item ou carrinho) e a preference do Mercado Pago. */
 export async function POST(req: Request) {
   try {
     const session = await auth()
@@ -51,48 +51,136 @@ export async function POST(req: Request) {
       )
     }
 
-    const { artworkId } = result.data
+    const { artworkId, artworkIds, couponCode } = result.data
 
-    const artwork = await prisma.artwork.findUnique({ where: { id: artworkId } })
-    if (!artwork || artwork.status !== Status.PUBLISHED) {
-      return NextResponse.json(
-        { success: false, error: 'Arte não disponível para compra.' },
-        { status: 404 }
-      )
+    // Normaliza para uma lista de IDs — suporta ambos os formatos.
+    let ids: string[] = artworkIds || (artworkId ? [artworkId] : [])
+
+    // Se nenhum ID foi informado, carrega os itens do carrinho do usuário.
+    if (ids.length === 0) {
+      const cart = await prisma.cart.findUnique({
+        where: { userId: user.id },
+        include: { items: true },
+      })
+      if (!cart || cart.items.length === 0) {
+        return NextResponse.json(
+          { success: false, error: 'Carrinho vazio.' },
+          { status: 400 }
+        )
+      }
+      ids = cart.items.map((i) => i.artworkId)
     }
 
-    if (artwork.isFree) {
-      return NextResponse.json(
-        { success: false, error: 'Esta arte é gratuita — não é necessário comprar.' },
-        { status: 400 }
-      )
-    }
-
-    // Bloqueia recompra: se já existe um pedido PAGO, o download já está liberado.
-    const alreadyPaid = await prisma.order.findFirst({
-      where: { userId: user.id, artworkId, status: OrderStatus.PAID },
-      select: { id: true },
+    // Busca todas as artes de uma vez.
+    const artworks = await prisma.artwork.findMany({
+      where: { id: { in: ids } },
     })
-    if (alreadyPaid) {
-      return NextResponse.json(
-        { success: false, error: 'Você já comprou esta arte. Acesse "Minhas Compras" para baixar.' },
-        { status: 409 }
-      )
+
+    const artworkMap = new Map(artworks.map((a) => [a.id, a]))
+
+    // Valida cada arte individualmente.
+    for (const id of ids) {
+      const art = artworkMap.get(id)
+      if (!art || art.status !== Status.PUBLISHED) {
+        return NextResponse.json(
+          { success: false, error: 'Uma ou mais artes não estão disponíveis para compra.' },
+          { status: 404 }
+        )
+      }
+
+      if (art.isFree) {
+        return NextResponse.json(
+          { success: false, error: `A arte "${art.title}" é gratuita — não é necessário comprar.` },
+          { status: 400 }
+        )
+      }
+
+      // Verifica recompra via OrderItem (cobre tanto pedidos novos quanto legados migrados).
+      const alreadyPaid = await prisma.orderItem.findFirst({
+        where: {
+          artworkId: id,
+          order: { userId: user.id, status: OrderStatus.PAID },
+        },
+        select: { id: true },
+      })
+      if (alreadyPaid) {
+        return NextResponse.json(
+          { success: false, error: `Você já comprou "${art.title}". Acesse "Minhas Compras" para baixar.` },
+          { status: 409 }
+        )
+      }
     }
 
-    // Preço lido sempre do servidor — nunca confiar em valor vindo do cliente.
-    const amountCents = artwork.priceCents
+    // Preços lidos sempre do servidor — nunca confiar em valor vindo do cliente.
+    const totalCents = artworks.reduce((sum, a) => sum + a.priceCents, 0)
+    let amountCents = totalCents
+    let couponId: string | null = null
 
+    // Valida cupom de desconto no servidor.
+    if (couponCode) {
+      const coupon = await prisma.coupon.findUnique({ where: { code: couponCode } })
+      if (!coupon || !coupon.isActive) {
+        return NextResponse.json(
+          { success: false, error: 'Cupom inválido ou inativo.' },
+          { status: 400 }
+        )
+      }
+      if (coupon.expiresAt && coupon.expiresAt < new Date()) {
+        return NextResponse.json(
+          { success: false, error: 'Este cupom expirou.' },
+          { status: 400 }
+        )
+      }
+      if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) {
+        return NextResponse.json(
+          { success: false, error: 'Este cupom já atingiu o limite de usos.' },
+          { status: 400 }
+        )
+      }
+      if (coupon.minPurchaseCents && totalCents < coupon.minPurchaseCents) {
+        return NextResponse.json(
+          { success: false, error: `Valor mínimo de compra não atingido (R$ ${(coupon.minPurchaseCents / 100).toFixed(2)}).` },
+          { status: 400 }
+        )
+      }
+
+      // Aplica o desconto.
+      if (coupon.discountType === DiscountType.PERCENTAGE) {
+        amountCents = totalCents - Math.round((totalCents * coupon.discountValue) / 100)
+      } else {
+        // FIXED em centavos
+        amountCents = Math.max(0, totalCents - coupon.discountValue)
+      }
+      couponId = coupon.id
+    }
+
+    // Cria o pedido com os itens. Para legado, mantém artworkId na ordem se for single item.
     const order = await prisma.order.create({
-      data: { userId: user.id, artworkId, amountCents, status: OrderStatus.PENDING },
+      data: {
+        userId: user.id,
+        artworkId: ids.length === 1 ? ids[0] : undefined,
+        amountCents,
+        status: OrderStatus.PENDING,
+        couponId,
+        items: {
+          create: artworks.map((a) => ({
+            artworkId: a.id,
+            amountCents: a.priceCents,
+          })),
+        },
+      },
     })
 
     try {
       const base = appUrl()
       const { preferenceId, initPoint } = await createPreference({
         orderId: order.id,
-        title: artwork.title,
-        unitPrice: amountCents / 100,
+        items: artworks.map((a) => ({
+          id: a.id,
+          title: a.title,
+          unitPrice: a.priceCents / 100,
+          quantity: 1,
+        })),
         payerEmail: user.email || 'comprador@nksart.com.br',
         successUrl: `${base}/compra/sucesso?order=${order.id}`,
         pendingUrl: `${base}/compra/pendente?order=${order.id}`,
@@ -103,6 +191,11 @@ export async function POST(req: Request) {
       await prisma.order.update({
         where: { id: order.id },
         data: { mpPreferenceId: preferenceId },
+      })
+
+      // Limpa o carrinho do usuário após checkout bem-sucedido.
+      await prisma.cartItem.deleteMany({
+        where: { cart: { userId: user.id }, artworkId: { in: ids } },
       })
 
       return NextResponse.json(
@@ -144,6 +237,9 @@ export async function GET() {
       where: { userId: user.id },
       include: {
         artwork: { select: { id: true, title: true, slug: true, previewUrl: true } },
+        items: {
+          include: { artwork: { select: { id: true, title: true, slug: true, previewUrl: true } } },
+        },
       },
       orderBy: { createdAt: 'desc' },
     })
@@ -154,7 +250,8 @@ export async function GET() {
       amountCents: o.amountCents,
       createdAt: o.createdAt.toISOString(),
       paidAt: o.paidAt ? o.paidAt.toISOString() : null,
-      artwork: o.artwork,
+      artwork: o.artwork, // legacy compat
+      items: o.items, // multi-item
     }))
 
     return NextResponse.json({ success: true, data })

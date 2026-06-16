@@ -1,0 +1,21 @@
+T2 — Prisma schema sync: new models + Order migration
+=====================================================
+
+Date: 2026-06-16 16:02
+
+Command: npx prisma db push
+Output:
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": PostgreSQL database "neondb", schema "public" at "ep-wandering-bread-acq21fs1-pooler.sa-east-1.aws.neon.tech"
+
+Your database is now in sync with your Prisma schema. Done in 3.85s
+
+Changes applied:
+- Added models: Cart, CartItem, Coupon, OrderItem, Collection, CollectionArtwork
+- Added enums: DiscountType
+- Modified Order: artworkId nullable, added items[], couponId, coupon relation
+- Modified User: added cart relation
+- Modified Artwork: added cartItems, orderItems, collectionEntries relations
+
+Status: ✅ Synced

@@ -49,7 +49,7 @@ function LojaFallback() {
 }
 
 function LojaContent() {
-  const { filters, setCategory, setTag, setSearch, setIsFree, setOnlyFavorites, setSort, resetFilters } = useArtworkFilters()
+  const { filters, searchInput, setCategory, setTag, setSearch, setIsFree, setOnlyFavorites, setSort, resetFilters } = useArtworkFilters()
   const { favoriteIds, favoritesCount } = useFavorites()
   const { data: session } = useSession()
   const [categories, setCategories] = React.useState<Category[]>([])
@@ -57,8 +57,16 @@ function LojaContent() {
   const [purchasedArtworkIds, setPurchasedArtworkIds] = React.useState<Set<string>>(new Set())
   const [isFiltersOpen, setIsFiltersOpen] = React.useState(false)
 
-  // Buscamos todas as artes de uma vez para realizar a contagem e filtragem responsiva no client
-  const { artworks: dbArtworks, loading } = useArtworks()
+  // FTS (Full-Text Search) é ativado quando o termo de busca tem 2+ caracteres.
+  // O resultado FTS já vem ranqueado e filtrado pelo backend PostgreSQL tsvector.
+  const isFtsActive = (filters.search?.length ?? 0) >= 2
+
+  // Buscamos artes: usa o endpoint FTS dedicado quando a busca inteligente está ativa,
+  // ou carrega o catálogo completo para filtragem client-side nos demais casos.
+  const { artworks: dbArtworks, loading } = useArtworks({
+    search: isFtsActive ? filters.search : undefined,
+    fts: isFtsActive ? true : undefined,
+  })
 
   React.useEffect(() => {
     fetch('/api/categories')
@@ -89,15 +97,20 @@ function LojaContent() {
 
   const totalCount = artworks.length
 
-  // Filtragem reativa do lado do cliente
+  // Filtragem reativa do lado do cliente.
+  // Quando o FTS está ativo, o servidor já retorna apenas resultados da busca textual,
+  // então o filtro client-side de search é pulado (evita descartar resultados de stemming).
+  // Category, tag, free e favorites continuam sendo aplicados client-side em ambos os modos.
   const favoriteSet = React.useMemo(() => new Set(favoriteIds), [favoriteIds])
   const filteredArtworks = React.useMemo(() => {
+    const ftsActive = (filters.search?.length ?? 0) >= 2
     return artworks.filter((art) => {
       if (filters.categoryId && art.categoryId !== filters.categoryId) return false
       if (filters.tagId && !art.tags.some((t) => t.id === filters.tagId)) return false
       if (filters.isFree !== undefined && art.isFree !== filters.isFree) return false
       if (filters.onlyFavorites && !favoriteSet.has(art.id)) return false
-      if (filters.search) {
+      // Fallback client-side search (apenas quando FTS não está ativo)
+      if (!ftsActive && filters.search) {
         const query = filters.search.toLowerCase()
         const matchTitle = art.title.toLowerCase().includes(query)
         const matchDesc = art.description?.toLowerCase().includes(query) || false
@@ -152,11 +165,17 @@ function LojaContent() {
       .then((r) => r.json())
       .then((res) => {
         if (!res.success) return
-        const ids = new Set<string>(
-          (res.data as { status: string; artwork: { id: string } }[])
-            .filter((o) => o.status === 'PAID')
-            .map((o) => o.artwork.id)
-        )
+        type OrderData = { status: string; artwork: { id: string } | null; items: { artwork: { id: string } }[] }
+        const paidOrders = (res.data as OrderData[]).filter((o) => o.status === 'PAID')
+        const ids = new Set<string>()
+        for (const o of paidOrders) {
+          // Legacy: artwork diretamente na ordem
+          if (o.artwork?.id) ids.add(o.artwork.id)
+          // Multi-item: através dos OrderItems
+          for (const item of o.items || []) {
+            if (item.artwork?.id) ids.add(item.artwork.id)
+          }
+        }
         setPurchasedArtworkIds(ids)
       })
       .catch(() => {})
@@ -338,8 +357,8 @@ function LojaContent() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Buscar por título, descrição ou tag…"
-                value={filters.search || ''}
+                placeholder="Busca inteligente — título, descrição ou tag…"
+                value={searchInput}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9 pr-8 h-10 w-full rounded border border-white/20 bg-white/10 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-nks-red focus:bg-white/15 transition-colors"
               />

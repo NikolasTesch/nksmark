@@ -1,0 +1,68 @@
+[FTS Search Error] Error [PrismaClientKnownRequestError]: 
+Invalid `prisma.$queryRaw()` invocation:
+
+
+Raw query failed. Code: `42703`. Message: `column a.search_vector does not exist`
+    at async GET (src\app\api\artworks\search\route.ts:14:21)
+  12 |
+  13 |     // Search via FTS with ranking
+> 14 |     const results = await prisma.$queryRaw<Array<{
+     |                     ^
+  15 |       id: string; title: string; slug: string; description: string | null;
+  16 |       previewUrl: string; priceCents: number; isFree: boolean;
+  17 |       categoryId: string; createdAt: Date; rank: number; {
+  code: 'P2010',
+  clientVersion: '5.22.0',
+  meta: { code: '42703', message: 'column a.search_vector does not exist' }
+}
+[FTS Search Error] Error [PrismaClientKnownRequestError]: 
+Invalid `prisma.$queryRaw()` invocation:
+
+
+Raw query failed. Code: `42703`. Message: `column a.search_vector does not exist`
+    at async GET (src\app\api\artworks\search\route.ts:14:21)
+  12 |
+  13 |     // Search via FTS with ranking
+> 14 |     const results = await prisma.$queryRaw<Array<{
+     |                     ^
+  15 |       id: string; title: string; slug: string; description: string | null;
+  16 |       previewUrl: string; priceCents: number; isFree: boolean;
+  17 |       categoryId: string; createdAt: Date; rank: number; {
+  code: 'P2010',
+  clientVersion: '5.22.0',
+  meta: { code: '42703', message: 'column a.search_vector does not exist' }
+}
+[FTS Search Error] Error [PrismaClientKnownRequestError]: 
+Invalid `prisma.$queryRaw()` invocation:
+
+
+Raw query failed. Code: `42703`. Message: `column a.search_vector does not exist`
+    at async GET (src\app\api\artworks\search\route.ts:14:21)
+  12 |
+  13 |     // Search via FTS with ranking
+> 14 |     const results = await prisma.$queryRaw<Array<{
+     |                     ^
+  15 |       id: string; title: string; slug: string; description: string | null;
+  16 |       previewUrl: string; priceCents: number; isFree: boolean;
+  17 |       categoryId: string; createdAt: Date; rank: number; {
+  code: 'P2010',
+  clientVersion: '5.22.0',
+  meta: { code: '42703', message: 'column a.search_vector does not exist' }
+}
+Error fetching artworks: Error [PrismaClientKnownRequestError]: 
+Invalid `prisma.$queryRaw()` invocation:
+
+
+Raw query failed. Code: `42703`. Message: `column a.search_vector does not exist`
+    at async GET (src\app\api\artworks\route.ts:21:23)
+  19 |     // When ?fts=true&q=termo is present, delegate to the dedicated FTS search
+  20 |     if (fts && ftsQuery && ftsQuery.length >= 2) {
+> 21 |       const results = await prisma.$queryRaw<Array<{
+     |                       ^
+  22 |         id: string; title: string; slug: string; description: string | null;
+  23 |         previewUrl: string; priceCents: number; isFree: boolean;
+  24 |         categoryId: string; createdAt: Date; rank: number; {
+  code: 'P2010',
+  clientVersion: '5.22.0',
+  meta: { code: '42703', message: 'column a.search_vector does not exist' }
+}

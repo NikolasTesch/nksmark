@@ -12,9 +12,13 @@ import {
   Loader2,
   Trophy,
   Layers,
+  LineChart as LineChartIcon,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { formatBRL, formatDate } from '@/lib/utils/format'
+import { RevenueLineChart } from '@/components/admin/charts/RevenueLineChart'
+import { PaymentDistributionChart } from '@/components/admin/charts/PaymentDistributionChart'
+import { PeakHoursHeatmap } from '@/components/admin/charts/PeakHoursHeatmap'
 
 interface SalesData {
   selectedFilters: { month: number; year: number }
@@ -31,11 +35,45 @@ interface SalesData {
   recentOrders: { id: string; artworkTitle: string; categoryName: string; clientName: string; amountCents: number; paidAt: string | null }[]
 }
 
+interface TimelinePoint {
+  date: string
+  revenueCents: number
+  orderCount: number
+}
+
+interface PaymentMethodStat {
+  method: string
+  count: number
+  totalCents: number
+  percentage: number
+}
+
+interface PeakHourPoint {
+  dayOfWeek: number
+  hour: number
+  count: number
+  revenueCents: number
+}
+
+interface ChartData {
+  timeline: TimelinePoint[]
+  paymentDistribution: PaymentMethodStat[]
+  peakHours: PeakHourPoint[]
+}
+
 const months = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ]
 const years = [2026, 2025, 2024]
+
+type ChartPeriod = '7d' | '30d' | 'month-to-date'
+
+const CHART_PERIODS: { value: ChartPeriod; label: string }[] = [
+  { value: '7d', label: 'Últimos 7 dias' },
+  { value: '30d', label: 'Últimos 30 dias' },
+  { value: 'month-to-date', label: 'Este mês' },
+]
 
 export default function AdminSalesPage() {
   const now = new Date()
@@ -44,6 +82,11 @@ export default function AdminSalesPage() {
   const [data, setData] = React.useState<SalesData | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState('')
+
+  const [chartPeriod, setChartPeriod] = React.useState<ChartPeriod>('30d')
+  const [chartData, setChartData] = React.useState<ChartData | null>(null)
+  const [chartsLoading, setChartsLoading] = React.useState(true)
+  const [chartsError, setChartsError] = React.useState('')
 
   React.useEffect(() => {
     let active = true
@@ -63,8 +106,45 @@ export default function AdminSalesPage() {
     }
   }, [month, year])
 
+  React.useEffect(() => {
+    let active = true
+    setChartsLoading(true)
+    setChartsError('')
+    Promise.all([
+      fetch(`/api/admin/financeiro?period=${chartPeriod}`).then((r) => r.json()),
+      fetch('/api/admin/financeiro?period=payment-distribution').then((r) => r.json()),
+      fetch('/api/admin/financeiro?period=peak-hours').then((r) => r.json()),
+    ])
+      .then(([timelineRes, paymentRes, peakRes]) => {
+        if (!active) return
+        const failed = [timelineRes, paymentRes, peakRes].find(
+          (r: { success?: boolean; error?: string }) => r && r.success === false
+        )
+        if (failed) {
+          setChartsError(failed.error || 'Erro ao carregar gráficos.')
+          setChartData(null)
+          return
+        }
+        setChartData({
+          timeline: timelineRes?.data?.timeline || [],
+          paymentDistribution: paymentRes?.data?.paymentDistribution || [],
+          peakHours: peakRes?.data?.peakHours || [],
+        })
+      })
+      .catch(() => active && setChartsError('Falha na comunicação com o servidor.'))
+      .finally(() => active && setChartsLoading(false))
+    return () => {
+      active = false
+    }
+  }, [chartPeriod])
+
   const stats = data?.stats
   const maxCategory = Math.max(...(data?.categoryDistribution.map((c) => c.count) || [1]), 1)
+  const chartsEmpty =
+    !chartsLoading &&
+    (chartData?.timeline.length ?? 0) === 0 &&
+    (chartData?.paymentDistribution.length ?? 0) === 0 &&
+    (chartData?.peakHours.length ?? 0) === 0
 
   return (
     <div className="flex flex-col gap-8 animate-in fade-in duration-300">
@@ -146,6 +226,80 @@ export default function AdminSalesPage() {
             <StatCard title="Ticket Médio" value={formatBRL(stats?.avgTicketCents || 0)} description="Por venda" icon={<ShoppingBag className="h-4.5 w-4.5" />} />
             <StatCard title="Clientes" value={String(stats?.totalClients ?? 0)} description="Compraram no mês" icon={<Users className="h-4.5 w-4.5" />} />
           </div>
+
+          {/* Charts section */}
+          <section className="flex flex-col gap-5" aria-labelledby="charts-heading">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+              <div>
+                <h2
+                  id="charts-heading"
+                  className="font-display text-[18px] font-extrabold uppercase tracking-tight text-nks-black flex items-center gap-2"
+                >
+                  <LineChartIcon className="h-5 w-5 text-nks-red" /> Análise Financeira
+                </h2>
+                <p className="text-[11px] font-semibold text-nks-gray-700 mt-0.5">
+                  Receita ao longo do tempo, métodos de pagamento e picos de compra.
+                </p>
+              </div>
+              <div className="flex flex-col gap-1.5 sm:items-end">
+                <label
+                  htmlFor="chart-period"
+                  className="text-[10px] font-bold text-nks-gray-700 uppercase tracking-wider"
+                >
+                  Período dos gráficos
+                </label>
+                <select
+                  id="chart-period"
+                  value={chartPeriod}
+                  onChange={(e) => setChartPeriod(e.target.value as ChartPeriod)}
+                  className="text-xs font-semibold text-nks-black bg-nks-gray-100/50 border border-nks-gray-200 rounded-sm px-3 py-2 focus:outline-none focus:border-nks-red transition-colors min-w-[200px]"
+                >
+                  {CHART_PERIODS.map((p) => (
+                    <option key={p.value} value={p.value}>{p.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {chartsError && (
+              <div className="bg-nks-red-subtle/30 border border-nks-red/20 text-nks-red text-xs font-semibold p-4 rounded-sm">
+                {chartsError}
+              </div>
+            )}
+
+            {chartsEmpty ? (
+              <div className="bg-white border border-dashed border-nks-gray-200 rounded-sm p-12 flex flex-col items-center justify-center gap-2">
+                <LineChartIcon className="h-10 w-10 text-nks-gray-400 stroke-[1.2]" />
+                <span className="text-xs font-semibold text-nks-gray-400">
+                  Nenhum dado para o período selecionado.
+                </span>
+              </div>
+            ) : (
+              <>
+                {/* Line chart full width */}
+                {chartsLoading ? (
+                  <ChartSkeleton height={348} />
+                ) : (
+                  <RevenueLineChart data={chartData?.timeline || []} />
+                )}
+
+                {/* Pie + Heatmap row */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {chartsLoading ? (
+                    <>
+                      <ChartSkeleton height={380} />
+                      <ChartSkeleton height={380} />
+                    </>
+                  ) : (
+                    <>
+                      <PaymentDistributionChart data={chartData?.paymentDistribution || []} />
+                      <PeakHoursHeatmap data={chartData?.peakHours || []} />
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </section>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Nichos mais vendidos */}
@@ -293,6 +447,18 @@ function EmptyHint({ text }: { text: string }) {
   return (
     <div className="text-center text-xs text-nks-gray-400 py-10 border border-dashed border-nks-gray-200 rounded-sm bg-nks-gray-100/10 col-span-full">
       {text}
+    </div>
+  )
+}
+
+function ChartSkeleton({ height }: { height: number }) {
+  return (
+    <div
+      className="bg-white border border-nks-gray-200 rounded-sm p-6 shadow-nks-sm flex flex-col gap-4 animate-pulse"
+      style={{ minHeight: height }}
+    >
+      <div className="h-3 w-32 bg-nks-gray-100 rounded-sm" />
+      <div className="flex-1 bg-nks-gray-100/60 rounded-sm" />
     </div>
   )
 }

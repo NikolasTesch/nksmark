@@ -8,6 +8,7 @@ interface UseArtworksOptions {
   isFree?: boolean
   lazy?: boolean
   admin?: boolean
+  fts?: boolean
 }
 
 export function useArtworks(options: UseArtworksOptions = {}) {
@@ -19,20 +20,33 @@ export function useArtworks(options: UseArtworksOptions = {}) {
     setLoading(true)
     setError(null)
     try {
-      const params = new URLSearchParams()
-      if (options.categoryId) params.append('categoryId', options.categoryId)
-      if (options.tagId) params.append('tagId', options.tagId)
-      if (options.search) params.append('search', options.search)
-      if (options.isFree !== undefined) params.append('isFree', String(options.isFree))
-      if (options.admin) params.append('admin', 'true')
+      // Modo FTS (Full-Text Search): usa o endpoint dedicado de busca textual
+      // que retorna resultados ranqueados por relevância via PostgreSQL tsvector.
+      if (options.fts && options.search && options.search.length >= 2) {
+        const res = await fetch(`/api/artworks/search?q=${encodeURIComponent(options.search)}`)
+        const result = await res.json()
 
-      const res = await fetch(`/api/artworks?${params.toString()}`)
-      const result = await res.json()
-
-      if (result.success) {
-        setArtworks(result.data)
+        if (result.success) {
+          setArtworks(result.data)
+        } else {
+          setError(result.error || 'Erro na busca inteligente.')
+        }
       } else {
-        setError(result.error || 'Erro ao carregar catálogo.')
+        const params = new URLSearchParams()
+        if (options.categoryId) params.append('categoryId', options.categoryId)
+        if (options.tagId) params.append('tagId', options.tagId)
+        if (options.search) params.append('search', options.search)
+        if (options.isFree !== undefined) params.append('isFree', String(options.isFree))
+        if (options.admin) params.append('admin', 'true')
+
+        const res = await fetch(`/api/artworks?${params.toString()}`)
+        const result = await res.json()
+
+        if (result.success) {
+          setArtworks(result.data)
+        } else {
+          setError(result.error || 'Erro ao carregar catálogo.')
+        }
       }
     } catch (err) {
       console.error(err)
@@ -40,7 +54,7 @@ export function useArtworks(options: UseArtworksOptions = {}) {
     } finally {
       setLoading(false)
     }
-  }, [options.categoryId, options.tagId, options.search, options.isFree, options.admin])
+  }, [options.categoryId, options.tagId, options.search, options.isFree, options.admin, options.fts])
 
   useEffect(() => {
     if (!options.lazy) {

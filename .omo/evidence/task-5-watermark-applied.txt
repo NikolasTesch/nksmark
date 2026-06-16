@@ -1,0 +1,30 @@
+Task 5: Watermark Build Fix - Evidence
+=========================================
+
+Fix Applied:
+- src/app/api/admin/upload/route.ts (line 57): Cast applyWatermark() result as unknown as typeof buffer
+  to resolve Buffer<ArrayBufferLike> vs Buffer<ArrayBuffer> type mismatch.
+- src/lib/watermark/index.ts: Verified return is already `return result as unknown as Buffer`.
+
+Build Output:
+-------------
+▲ Next.js 16.2.6 (Turbopack)
+  Creating an optimized production build ...
+✓ Compiled successfully in 7.6s
+  Running TypeScript ...
+  Finished TypeScript in 11.0s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/51) ...
+  Generating static pages using 11 workers (51/51) in 1704ms
+  Finalizing page optimization ...
+
+✓ Build completed successfully (exit code 0)
+
+Watermark Tests:
+----------------
+npx vitest run src/lib/watermark/index.test.ts
+✓ 2 tests passed (114ms)
+
+Test Files: 1 passed (1)
+     Tests: 2 passed (2)
+  Duration: 571ms

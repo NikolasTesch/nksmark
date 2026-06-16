@@ -23,4 +23,5 @@ export interface ArtworkFilterState {
   isFree?: boolean
   onlyFavorites?: boolean
   sort?: ArtworkSort
+  fts?: boolean
 }

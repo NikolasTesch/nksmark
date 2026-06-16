@@ -10,8 +10,11 @@ const idSchema = z
 
 // O cliente só informa qual arte quer comprar; o preço é sempre lido do banco
 // no servidor (nunca confiar em valor vindo do cliente).
+// Se nenhum ID for informado, a rota carrega os itens do carrinho.
 export const createOrderSchema = z.object({
-  artworkId: idSchema,
+  artworkId: idSchema.optional(),
+  artworkIds: z.array(idSchema).min(1).optional(),
+  couponCode: z.string().optional(),
 })
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>

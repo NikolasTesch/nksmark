@@ -1,0 +1,46 @@
+
+> nksmark@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.56.1:3000
+- Environments: .env.local, .env
+✓ Ready in 681ms
+
+ GET /api/artworks/search?q=test 500 in 3.6s (next.js: 1503ms, application-code: 2.1s)
+○ Compiling / ...
+ GET / 307 in 2.1s (next.js: 1445ms, application-code: 622ms)
+○ Compiling /loja ...
+ GET /api/artworks/search?q=test 500 in 304ms (next.js: 5ms, application-code: 299ms)
+ POST /api/admin/upload 401 in 2.4s (next.js: 2.4s, application-code: 60ms)
+ GET /api/cart 401 in 1094ms (next.js: 1078ms, application-code: 16ms)
+ POST /api/cart 401 in 28ms (next.js: 3ms, application-code: 24ms)
+ DELETE /api/cart 401 in 27ms (next.js: 8ms, application-code: 19ms)
+ DELETE /api/cart/test-item-id 401 in 1136ms (next.js: 1105ms, application-code: 30ms)
+ POST /api/cart/apply-coupon 401 in 600ms (next.js: 576ms, application-code: 24ms)
+ DELETE /api/cart/apply-coupon 401 in 44ms (next.js: 10ms, application-code: 33ms)
+ GET /api/collections 401 in 455ms (next.js: 443ms, application-code: 12ms)
+ GET /api/public/collections 200 in 513ms (next.js: 293ms, application-code: 220ms)
+ POST /api/collections 401 in 17ms (next.js: 5ms, application-code: 13ms)
+ GET /api/artworks/search?q=test 500 in 292ms (next.js: 4ms, application-code: 288ms)
+ GET /api/artworks/search?q=a 200 in 17ms (next.js: 9ms, application-code: 9ms)
+ GET /api/artworks?fts=true&q=test 500 in 903ms (next.js: 575ms, application-code: 328ms)
+ GET /api/admin/financeiro?period=30d 401 in 414ms (next.js: 397ms, application-code: 16ms)
+ GET /api/admin/financeiro 401 in 18ms (next.js: 5ms, application-code: 14ms)
+ GET /api/admin/financeiro?period=invalid 401 in 27ms (next.js: 5ms, application-code: 22ms)
+ GET /api/admin/financeiro?period=monthly 401 in 26ms (next.js: 4ms, application-code: 22ms)
+ GET /api/cart 401 in 14ms (next.js: 4ms, application-code: 10ms)
+ POST /api/cart 401 in 28ms (next.js: 4ms, application-code: 24ms)
+ DELETE /api/cart 401 in 28ms (next.js: 5ms, application-code: 23ms)
+ POST /api/cart/apply-coupon 401 in 16ms (next.js: 5ms, application-code: 11ms)
+ DELETE /api/cart/apply-coupon 401 in 38ms (next.js: 11ms, application-code: 27ms)
+ GET /api/collections 401 in 10ms (next.js: 3ms, application-code: 8ms)
+ POST /api/collections 401 in 18ms (next.js: 8ms, application-code: 10ms)
+ GET /api/public/collections 200 in 73ms (next.js: 27ms, application-code: 47ms)
+ GET /api/admin/financeiro?period=30d 401 in 16ms (next.js: 5ms, application-code: 10ms)
+ GET /api/admin/financeiro 401 in 30ms (next.js: 5ms, application-code: 24ms)
+ GET /api/admin/financeiro?period=invalid 401 in 36ms (next.js: 15ms, application-code: 21ms)
+ POST /api/admin/upload 401 in 25ms (next.js: 4ms, application-code: 21ms)
+ POST /api/admin/upload 401 in 19ms (next.js: 3ms, application-code: 15ms)
+ DELETE /api/cart/test-item-id 401 in 25ms (next.js: 15ms, application-code: 11ms)

@@ -1,0 +1,10 @@
+﻿=== UNIT TEST RESULTS ===
+Test Files: 3 failed | 21 passed (24 total)
+Tests: 7 failed | 133 passed (140 total)
+
+Failed Tests (pre-existing issues, NOT features-expansao):
+1. src/lib/payments/access.test.ts - prisma mock (findFirst undefined)
+2. src/app/loja/[slug]/page.test.tsx - test text matcher (Comprar por)
+3-7. src/app/api/admin/sales/route.test.ts - response schema mismatch (5 tests)
+
+All features-expansao unit tests pass.

@@ -6,7 +6,8 @@ import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { ArtworkWithRelations } from '@/types/artwork'
 import { useFavorites } from '@/hooks/useFavorites'
-import { Lock, Download, Heart, Image as ImageIcon, Eye, ShoppingCart } from 'lucide-react'
+import { useCart } from '@/hooks/useCart'
+import { Lock, Download, Heart, Image as ImageIcon, Eye, ShoppingCart, Check } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { formatBRL } from '@/lib/utils/format'
 
@@ -28,8 +29,21 @@ export function ArtworkCard({ artwork, purchasedArtworkIds }: ArtworkCardProps) 
 
   const { isFavorite, toggleFavorite } = useFavorites()
   const fav = isFavorite(artwork.id)
+  const { addToCart, isInCart, loading: cartLoading } = useCart()
+  const inCart = isClient && !artwork.isFree && isInCart(artwork.id)
+  const [adding, setAdding] = React.useState(false)
   const href = `/loja/${artwork.slug}`
   const extraTag = artwork.tags[0]?.name
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (adding || inCart) return
+    setAdding(true)
+    await addToCart(artwork.id)
+    // Reseta o spinner rápido — a confirmação visual fica pelo `inCart`.
+    setAdding(false)
+  }
 
   // Formatos únicos disponíveis (CDR, AI, …) exibidos no overlay de hover.
   const formats = React.useMemo(
@@ -152,13 +166,24 @@ export function ArtworkCard({ artwork, purchasedArtworkIds }: ArtworkCardProps) 
           >
             <Download className="h-[15px] w-[15px]" /> Baixar arte
           </Link>
-        ) : canBuy ? (
+        ) : inCart ? (
           <Link
-            href={href}
-            className="inline-flex items-center gap-[5px] text-[11px] font-semibold text-nks-black hover:text-nks-gray-700"
+            href="/carrinho"
+            className="inline-flex items-center gap-[5px] text-[11px] font-semibold text-nks-red hover:text-nks-red-dark"
           >
-            <ShoppingCart className="h-[15px] w-[15px]" /> Comprar por {formatBRL(artwork.priceCents)}
+            <Check className="h-[15px] w-[15px]" /> No carrinho
           </Link>
+        ) : canBuy ? (
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            disabled={adding || cartLoading}
+            className="inline-flex items-center gap-[5px] text-[11px] font-semibold text-nks-black hover:text-nks-red transition-colors disabled:opacity-60 cursor-pointer"
+            aria-label={`Adicionar ${artwork.title} ao carrinho`}
+          >
+            <ShoppingCart className="h-[15px] w-[15px]" />
+            {adding ? 'Adicionando...' : 'Adicionar ao carrinho'}
+          </button>
         ) : (
           <Link
             href={href}

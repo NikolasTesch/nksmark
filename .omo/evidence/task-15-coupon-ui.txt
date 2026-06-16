@@ -1,0 +1,63 @@
+Task 15: Admin coupon management UI - CREATED AND VERIFIED
+
+Files created:
+  - src/hooks/useAdminCoupons.ts        — CRUD hook (list/create/update/toggle/delete) with optimistic updates
+  - src/app/admin/cupons/page.tsx       — Admin page (client) with table, status badges, stat strip, toast
+  - src/app/admin/cupons/CouponFormDialog.tsx — Modal form for create/edit (validates + converts BRL↔cents, ISO↔date)
+
+Files modified:
+  - src/components/admin/AdminSidebar.tsx — Added Tag icon + "Cupons" link → /admin/cupons
+
+Feature checklist:
+  - [x] Client page (use client) fetching GET /api/admin/coupons
+  - [x] Table columns: code | type (Percentagem/Fixo) | value | uses (usedCount/maxUses) | expiry | status
+  - [x] Color-coded status badges:
+        - Ativo (green) — isActive && not expired
+        - Expirado (amber/yellow) — expiresAt < now
+        - Inativo (gray) — isActive=false
+        - Esgotado (amber) — bonus state: usedCount >= maxUses (while still active)
+  - [x] "Novo cupom" button opens the dialog
+  - [x] Form fields: code (uppercase), description, type (PERCENTAGE/FIXED), value, minPurchase, maxUses, expiresAt, isActive checkbox
+  - [x] Client-side validation:
+        - code: required, 3-30 chars (auto uppercased)
+        - discountValue: required, positive int; PERCENTAGE in [1,100]
+        - minPurchase / maxUses: optional, validated when provided
+  - [x] Submit calls POST /api/admin/coupons (create) or PATCH /api/admin/coupons/[id] (edit)
+  - [x] BRL ↔ cents conversion in form (display "5,00" → API 500)
+  - [x] Date input → ISO datetime with end-of-day (23:59:59.999Z)
+  - [x] Success: list auto-updates (optimistic), toast shown
+  - [x] Error: inline error banner in dialog + toast
+  - [x] Row actions:
+        - Toggle active/inactive (one-click, no confirm)
+        - Edit (opens dialog pre-filled)
+        - Delete with inline 2-step confirm; auto-prompts force=true when usedCount > 0
+  - [x] API uniqueness enforced (server returns 409 with "Já existe um cupom com este código.")
+        Client surfaces this as submit error inside the dialog.
+  - [x] No negative/zero discount allowed (form + server zod + server patch handler)
+  - [x] Sidebar preserved unchanged aside from the new entry
+
+Design system compliance:
+  - NKS design tokens only — no hardcoded hex colors
+        bg-nks-red, bg-nks-black, bg-nks-white, text-nks-gray-{100,200,400,700}, border-nks-red
+  - Display font: font-display (Archivo) for headings/badges
+  - Border radius: rounded-sm / rounded (matches editorial square identity)
+  - Shadows: shadow-nks-sm, shadow-nks-lg
+  - Animations: framer-motion stagger for rows; fade-in/zoom-in on dialog
+  - Status badges mirror the pattern from admin/chamados (green/amber/gray)
+  - Buttons follow the existing Button component variants
+  - Toast follows motion+border style consistent with the admin panels
+
+Build verification:
+  - Next.js build: COMPILED SUCCESSFULLY in 19.6s
+  - Route /admin/cupons registered in .next/types/routes.d.ts: confirmed
+  - Page bundle emitted to .next/server/app/admin/cupons/: confirmed
+  - Pre-existing TS error in src/components/admin/charts/PaymentDistributionChart.tsx (recharts Legend type)
+    is unrelated to this task and was not introduced by T15.
+  - Zero TS errors / warnings on the new files (useAdminCoupons, page.tsx, CouponFormDialog.tsx)
+  - Sidebar typecheck: clean (only added a new navItems entry + Tag import)
+
+Security / data integrity:
+  - All amounts converted to integer cents before sending (no float drift)
+  - Code uppercased on the client (also uppercased again on the server) to prevent case-mismatch dupes
+  - All form mutations go through the same auth-guarded /api/admin/coupons endpoints
+  - No client-side trust of discount math — server recalculates everything in apply flow

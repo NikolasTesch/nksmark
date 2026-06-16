@@ -12,6 +12,7 @@ import { FormatBadge } from '@/components/artwork/FormatBadge'
 import { CategoryBadge } from '@/components/shared/CategoryBadge'
 import { TagBadge } from '@/components/shared/TagBadge'
 import { Button } from '@/components/ui/button'
+import { useCart } from '@/hooks/useCart'
 import { ArtworkWithRelations } from '@/types/artwork'
 import { File as PrismaFile } from '@prisma/client'
 import { Download, Lock, ChevronRight, Calendar, FileType, Sparkles, Loader2, ShoppingCart, CheckCircle2, FileCheck, ShieldCheck, RefreshCw } from 'lucide-react'
@@ -22,13 +23,16 @@ export default function ArtworkDetailsPage() {
   const { slug } = useParams()
   const router = useRouter()
   const { data: session } = useSession()
+  const { addToCart, isInCart } = useCart()
   const [downloadModalOpen, setDownloadModalOpen] = React.useState(false)
   const [artwork, setArtwork] = React.useState<ArtworkWithRelations | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [hasPurchased, setHasPurchased] = React.useState(false)
-  const [buying, setBuying] = React.useState(false)
-  const [buyError, setBuyError] = React.useState('')
+  const [adding, setAdding] = React.useState(false)
+  const [addError, setAddError] = React.useState('')
   const [related, setRelated] = React.useState<ArtworkWithRelations[]>([])
+  const [collectionArtworks, setCollectionArtworks] = React.useState<ArtworkWithRelations[]>([])
+  const [collectionTitle, setCollectionTitle] = React.useState<string>('')
 
   React.useEffect(() => {
     fetch(`/api/artworks?slug=${slug}`)
@@ -50,6 +54,7 @@ export default function ArtworkDetailsPage() {
   const isClient = userRole === 'CLIENT'
 
   // Cliente: verifica se já comprou esta arte (pedido PAGO) para liberar download.
+  // Verifica tanto via artworkId legado quanto via OrderItems (multi-item).
   React.useEffect(() => {
     if (!artwork || !isClient || artwork.isFree) {
       setHasPurchased(false)
@@ -60,9 +65,14 @@ export default function ArtworkDetailsPage() {
       .then((r) => r.json())
       .then((res) => {
         if (!active || !res.success) return
-        const paid = (res.data as { status: string; artwork: { id: string } }[]).some(
-          (o) => o.artwork.id === artwork.id && o.status === 'PAID'
-        )
+        type OrderData = { status: string; artwork: { id: string } | null; items: { artwork: { id: string } }[] }
+        const paid = (res.data as OrderData[]).some((o) => {
+          if (o.status !== 'PAID') return false
+          // Legacy: artwork diretamente na ordem
+          if (o.artwork?.id === artwork.id) return true
+          // Multi-item: através dos OrderItems
+          return (o.items || []).some((item) => item.artwork?.id === artwork.id)
+        })
         setHasPurchased(paid)
       })
       .catch(() => {})
@@ -84,6 +94,52 @@ export default function ArtworkDetailsPage() {
         )
       })
       .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [artwork])
+
+  // Artes das coleções que incluem esta arte (máx. 5, apenas PUBLISHED).
+  // O endpoint público filtra DRAFT/ARCHIVED — confere com a regra do projeto.
+  React.useEffect(() => {
+    if (!artwork) return
+    let active = true
+    fetch(`/api/public/collections?artworkId=${artwork.id}`)
+      .then((r) => r.json())
+      .then((res) => {
+        if (!active || !res.success) return
+        type PublicCollection = {
+          id: string
+          title: string
+          slug: string
+          description: string | null
+          artworks: ArtworkWithRelations[]
+        }
+        const collections: PublicCollection[] = res.data?.collections ?? []
+        // Concatena até 5 artes de todas as coleções que contêm esta arte,
+        // removendo a arte atual para não duplicar com a vitrine principal.
+        const seen = new Set<string>([artwork.id])
+        const merged: ArtworkWithRelations[] = []
+        let firstTitle = ''
+        for (const col of collections) {
+          if (!firstTitle && col.title) firstTitle = col.title
+          for (const a of col.artworks) {
+            if (seen.has(a.id)) continue
+            seen.add(a.id)
+            merged.push(a)
+            if (merged.length >= 5) break
+          }
+          if (merged.length >= 5) break
+        }
+        setCollectionArtworks(merged)
+        setCollectionTitle(firstTitle)
+      })
+      .catch(() => {
+        if (active) {
+          setCollectionArtworks([])
+          setCollectionTitle('')
+        }
+      })
     return () => {
       active = false
     }
@@ -119,27 +175,17 @@ export default function ArtworkDetailsPage() {
       return
     }
 
-    // Cliente logado sem compra → inicia o checkout do Mercado Pago.
+    // Cliente logado sem compra → adiciona ao carrinho e leva para /carrinho.
     if (isClient && !artwork.isFree) {
-      setBuying(true)
-      setBuyError('')
-      try {
-        const res = await fetch('/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ artworkId: artwork.id }),
-        })
-        const result = await res.json()
-        if (result.success && result.data?.initPoint) {
-          window.location.href = result.data.initPoint
-          return
-        }
-        setBuyError(result.error || 'Não foi possível iniciar o pagamento.')
-      } catch {
-        setBuyError('Falha na comunicação com o servidor.')
-      } finally {
-        setBuying(false)
+      setAdding(true)
+      setAddError('')
+      const result = await addToCart(artwork.id)
+      setAdding(false)
+      if (result.success) {
+        router.push('/carrinho')
+        return
       }
+      setAddError(result.error ?? 'Não foi possível adicionar ao carrinho.')
     }
   }
 
@@ -230,6 +276,7 @@ export default function ArtworkDetailsPage() {
 
   // Estado do botão de ação principal conforme role + situação de compra.
   // Computado uma vez e reutilizado no painel lateral e na barra fixa do mobile.
+  const artworkInCart = !!artwork && isInCart(artwork.id)
   const primary: { label: React.ReactNode; icon: React.ReactNode; variant: 'default' | 'secondary' } = (() => {
     if (canDownload) {
       return {
@@ -250,9 +297,17 @@ export default function ArtworkDetailsPage() {
       }
     }
     if (isClient && !artwork.isFree) {
+      // Se já está no carrinho, CTA leva para o checkout.
+      if (artworkInCart) {
+        return {
+          icon: <ShoppingCart className="h-5 w-5" />,
+          label: 'Ir para o carrinho',
+          variant: 'default',
+        }
+      }
       return {
-        icon: buying ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShoppingCart className="h-5 w-5" />,
-        label: buying ? 'Redirecionando ao pagamento...' : `Comprar por ${formatBRL(artwork.priceCents)}`,
+        icon: adding ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShoppingCart className="h-5 w-5" />,
+        label: adding ? 'Adicionando ao carrinho...' : `Adicionar ao carrinho — ${formatBRL(artwork.priceCents)}`,
         variant: 'default',
       }
     }
@@ -349,7 +404,7 @@ export default function ArtworkDetailsPage() {
               <Button
                 onClick={handlePrimaryClick}
                 size="lg"
-                disabled={buying}
+                disabled={adding}
                 className="w-full gap-2 font-bold h-12"
                 variant={primary.variant}
               >
@@ -363,9 +418,9 @@ export default function ArtworkDetailsPage() {
                 </p>
               )}
 
-              {buyError && (
+              {addError && (
                 <p className="text-[11px] text-nks-red text-center font-semibold leading-normal mt-2.5">
-                  {buyError}
+                  {addError}
                 </p>
               )}
 
@@ -374,7 +429,9 @@ export default function ArtworkDetailsPage() {
                   ? 'Downloads diretos a partir do nosso Cloudflare R2 privado.'
                   : artwork.isFree
                     ? 'Arte gratuita — faça login para baixar os arquivos originais.'
-                    : 'Pagamento seguro via Mercado Pago (Pix ou cartão). Download liberado após a confirmação.'}
+                    : artworkInCart
+                      ? 'Esta arte já está no seu carrinho. Vá para o carrinho para finalizar a compra.'
+                      : 'Adicione ao carrinho e finalize a compra para liberar o download. Pagamento via Mercado Pago (Pix ou cartão).'}
               </p>
 
               {/* Trust badges */}
@@ -411,6 +468,31 @@ export default function ArtworkDetailsPage() {
           </section>
         )}
 
+        {/* Outras artes desta coleção (apenas quando a arte atual pertence a
+            ao menos uma coleção). O endpoint já filtra DRAFT/ARCHIVED. */}
+        {collectionArtworks.length > 0 && (
+          <section className="border-t border-nks-gray-200 pt-8 mt-2">
+            <h2 className="font-display font-bold uppercase tracking-[-0.015em] text-lg md:text-xl text-nks-black mb-1">
+              Outras artes desta coleção
+            </h2>
+            <p className="text-[12px] text-nks-gray-400 font-semibold mb-5">
+              {collectionTitle ? (
+                <>
+                  Veja mais da coleção{' '}
+                  <span className="text-nks-red">{collectionTitle}</span>
+                </>
+              ) : (
+                <>Mais obras que combinam com esta arte</>
+              )}
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-[18px]">
+              {collectionArtworks.map((art) => (
+                <ArtworkCard key={art.id} artwork={art} />
+              ))}
+            </div>
+          </section>
+        )}
+
         <DownloadModal
           open={downloadModalOpen}
           onOpenChange={setDownloadModalOpen}
@@ -435,7 +517,7 @@ export default function ArtworkDetailsPage() {
         </div>
         <Button
           onClick={handlePrimaryClick}
-          disabled={buying}
+          disabled={adding}
           className="flex-1 gap-2 font-bold h-11"
           variant={primary.variant}
         >

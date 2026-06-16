@@ -19,6 +19,9 @@ const cspHeader = [
 ].join('; ')
 
 const nextConfig: NextConfig = {
+  outputFileTracingIncludes: {
+    '**/*': ['./node_modules/sharp/**/*'],
+  },
   images: {
     remotePatterns: [
       {

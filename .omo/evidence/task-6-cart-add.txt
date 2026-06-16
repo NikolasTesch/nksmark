@@ -1,0 +1,27 @@
+# Task 6 — Cart API (CRUD endpoints) ✓
+
+## Files created
+
+| File | Method | Description |
+|------|--------|-------------|
+| `src/lib/validations/cart.ts` | — | `addToCartSchema` (Zod) for POST payload validation |
+| `src/app/api/cart/route.ts` | GET | List authenticated CLIENT's cart items + totalCents |
+| `src/app/api/cart/route.ts` | POST | Add artwork to cart (validates published, non-free, no duplicate) |
+| `src/app/api/cart/route.ts` | DELETE | Clear entire cart |
+| `src/app/api/cart/[itemId]/route.ts` | DELETE | Remove single item from cart (ownership check) |
+
+## Build result
+
+Next.js 16.2.6 — Compiled successfully in 24.9s — Zero TypeScript errors.
+
+## Guards implemented
+
+- [x] Authentication required (401 if no session)
+- [x] Role check — only CLIENT allowed (403 for VISITOR/FASE/ADMIN)
+- [x] Artwork must exist and be PUBLISHED (404 otherwise)
+- [x] Free artworks cannot be added to cart (400)
+- [x] Duplicate artwork rejection (409 if already in cart)
+- [x] Item ownership validation (404 if item doesn't belong to user's cart)
+- [x] Empty cart returns `{ items: [], totalCents: 0 }` instead of 404
+- [x] No guest cart support
+- [x] All errors return `{ success: false, error: '...' }` with appropriate HTTP status

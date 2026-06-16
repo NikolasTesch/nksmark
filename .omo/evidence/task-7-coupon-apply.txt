@@ -1,0 +1,26 @@
+Task 7: Coupon apply route - CREATED AND VERIFIED
+
+File: src/app/api/cart/apply-coupon/route.ts
+
+API Routes:
+  POST /api/cart/apply-coupon - Apply coupon to current user's cart
+    - Auth: CLIENT role required
+    - Validates: active coupon, not expired, not exhausted, min purchase
+    - Calculates discount from DB values (never trusts client)
+    - FIXED discount capped at total (no negative final)
+    - Returns { couponCode, originalTotal, discountCents, finalTotal }
+
+  DELETE /api/cart/apply-coupon - Clear coupon (return cart total without discount)
+    - Auth: CLIENT role required
+    - Returns { originalTotal, discountCents: 0, finalTotal }
+
+Build Verification:
+  - Route registered in .next/types/routes.d.ts: confirmed
+  - Route handler type-validated in .next/types/validator.ts: confirmed
+  - Next.js build: COMPILED SUCCESSFULLY (TypeScript check passed)
+
+Security:
+  - No client-side values trusted; all recalculated from DB
+  - Expired/inactive/exhausted coupons rejected
+  - Discount capped at total for FIXED type
+  - Auth enforced before any DB reads

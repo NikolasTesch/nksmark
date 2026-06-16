@@ -6,13 +6,15 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { Menu, X, LogIn, LogOut, User as UserIcon, ShieldAlert } from 'lucide-react'
+import { Menu, X, LogIn, LogOut, User as UserIcon, ShieldAlert, ShoppingCart } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useCart } from '@/hooks/useCart'
 import { MobileMenu } from './MobileMenu'
 
 export function Header() {
   const pathname = usePathname()
   const { data: session } = useSession()
+  const { itemCount } = useCart()
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
 
   const isLinkActive = (path: string) => pathname === path
@@ -32,6 +34,9 @@ export function Header() {
   if (userRole === 'CLIENT') {
     menuItems.push({ name: 'Minhas Compras', path: '/minhas-compras' })
   }
+
+  // Carrinho é exclusivo do cliente — equipe interna baixa direto.
+  const showCartLink = userRole === 'CLIENT'
 
   return (
     <header className="sticky top-0 z-40 w-full bg-nks-black">
@@ -80,6 +85,22 @@ export function Header() {
 
         {/* Authentication Actions */}
         <div className="hidden md:flex items-center gap-4">
+          {/* Carrinho — só cliente vê (equipe interna baixa direto, sem checkout). */}
+          {showCartLink && (
+            <Link
+              href="/carrinho"
+              aria-label={`Carrinho (${itemCount} ${itemCount === 1 ? 'item' : 'itens'})`}
+              className="relative inline-flex items-center justify-center h-9 w-9 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <ShoppingCart className="h-[18px] w-[18px]" />
+              {itemCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 inline-flex items-center justify-center rounded-full bg-nks-red text-white text-[10px] font-extrabold leading-none border-2 border-nks-black">
+                  {itemCount > 99 ? '99+' : itemCount}
+                </span>
+              )}
+            </Link>
+          )}
+
           {session ? (
             <div className="flex items-center gap-2.5">
               {userRole === 'ADMIN' ? (
@@ -112,13 +133,30 @@ export function Header() {
           )}
         </div>
 
-        {/* Mobile Toggle Button */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-2 rounded text-white/80 hover:bg-white/10 transition-colors"
-        >
-          {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        {/* Mobile Cart + Toggle */}
+        <div className="md:hidden flex items-center gap-1">
+          {showCartLink && (
+            <Link
+              href="/carrinho"
+              aria-label={`Carrinho (${itemCount} ${itemCount === 1 ? 'item' : 'itens'})`}
+              className="relative inline-flex items-center justify-center h-9 w-9 rounded text-white/80 hover:bg-white/10 transition-colors"
+            >
+              <ShoppingCart className="h-[18px] w-[18px]" />
+              {itemCount > 0 && (
+                <span className="absolute top-0.5 right-0.5 min-w-[16px] h-[16px] px-1 inline-flex items-center justify-center rounded-full bg-nks-red text-white text-[9px] font-extrabold leading-none">
+                  {itemCount > 99 ? '99+' : itemCount}
+                </span>
+              )}
+            </Link>
+          )}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 rounded text-white/80 hover:bg-white/10 transition-colors"
+            aria-label="Abrir menu"
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       <MobileMenu
@@ -127,6 +165,7 @@ export function Header() {
         menuItems={menuItems}
         session={session}
         userRole={userRole}
+        cartCount={showCartLink ? itemCount : 0}
       />
     </header>
   )

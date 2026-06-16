@@ -1,0 +1,45 @@
+T12: Multi-item checkout — Implementation Summary
+==================================================
+
+Changes made:
+
+1. src/lib/validations/order.ts
+   - Removed .refine() from createOrderSchema so both artworkId and artworkIds are fully optional.
+   - This allows the route to receive an empty body and use the user's cart.
+
+2. src/app/api/orders/route.ts
+   - Added cart-based checkout logic: when neither artworkId nor artworkIds is provided,
+     loads artwork IDs from the user's Cart (via prisma.cart.findUnique).
+   - Returns 400 "Carrinho vazio." if cart is empty or doesn't exist.
+   - Cart clearing (deleteMany) already existed after successful checkout.
+
+3. src/app/(public)/carrinho/page.tsx (NEW)
+   - Client component that:
+     - Fetches cart items from GET /api/cart
+     - Displays items with image, title, price, remove button
+     - Shows coupon input that calls /api/cart/apply-coupon
+     - "Finalizar compra" button POSTs to /api/orders (no artworkId → uses cart)
+     - Redirects to Mercado Pago initPoint on success
+     - Shows loading spinner and error messages
+     - Handles empty cart, removes items, applies/removes coupon
+
+4. src/app/api/orders/route.test.ts
+   - Fixed all existing tests: added findMany mock (route uses findMany, not findUnique)
+   - Added orderItem.findFirst mock (route checks re-purchase via OrderItem model)
+   - Added 6 new test cases:
+     - Multi-item checkout via artworkIds
+     - Cart-based checkout (empty body with cart items)
+     - Cart-based checkout with coupon (10% discount)
+     - Empty cart rejection (items: [])
+     - Missing cart rejection (null)
+
+5. Fixed pre-existing type errors to make build pass:
+   - CouponFormDialog.tsx: null→undefined coercion
+   - PaymentDistributionChart.tsx: Recharts formatter types
+   - RevenueLineChart.tsx: Recharts tooltip formatter types
+
+Verification:
+- npm run build: PASS
+- npm run test (orders route): 12/12 PASS
+- MP createPreference: verified it accepts items[] array (not single item)
+- Cart-clearing: deleteMany with artworkId: { in: ids } removes all checked-out items

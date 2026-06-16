@@ -1,0 +1,30 @@
+Task 10: Financial aggregation API for charts
+===============================================
+File: src/app/api/admin/financeiro/route.ts
+
+Build Output:
+----------------------------------------
+> nksmark@0.1.0 build
+> next build
+
+▲ Next.js 16.2.6 (Turbopack)
+- Environments: .env.local, .env
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 10.1s
+  Running TypeScript ...
+  Finished TypeScript in 12.9s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/51) ...
+  Generating static pages using 11 workers (12/51)
+  Generating static pages using 11 workers (25/51)
+  Generating static pages using 11 workers (38/51)
+✓ Generating static pages using 11 workers (51/51) in 2.4s
+  Finalizing page optimization ...
+
+Route (app)
+├ ƒ /api/admin/financeiro    <-- NEW ROUTE
+
+Build: SUCCESS
+TypeScript: PASS
+Pages generated: 51/51

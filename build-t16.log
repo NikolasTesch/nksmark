@@ -1,0 +1,93 @@
+﻿
+> nksmark@0.1.0 build
+> next build
+
+Ôû▓ Next.js 16.2.6 (Turbopack)
+- Environments: .env.local, .env
+
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 20.6s
+  Running TypeScript ...
+  Finished TypeScript in 19.6s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/54) ...
+  Generating static pages using 11 workers (13/54) 
+  Generating static pages using 11 workers (26/54) 
+  Generating static pages using 11 workers (40/54) 
+Ô£ô Generating static pages using 11 workers (54/54) in 1569ms
+  Finalizing page optimization ...
+
+Route (app)
+Ôöî Ôùï /
+Ôö£ Ôùï /_not-found
+Ôö£ Ôùï /admin
+Ôö£ Ôùï /admin/artes
+Ôö£ ãÆ /admin/artes/[id]
+Ôö£ Ôùï /admin/artes/nova
+Ôö£ Ôùï /admin/chamados
+Ôö£ Ôùï /admin/colecoes
+Ôö£ ãÆ /admin/colecoes/[slug]
+Ôö£ Ôùï /admin/conteudo
+Ôö£ Ôùï /admin/cupons
+Ôö£ Ôùï /admin/downloads
+Ôö£ Ôùï /admin/metricas
+Ôö£ Ôùï /admin/usuarios
+Ôö£ Ôùï /admin/vendas
+Ôö£ ãÆ /api/admin/coupons
+Ôö£ ãÆ /api/admin/coupons/[id]
+Ôö£ ãÆ /api/admin/downloads
+Ôö£ ãÆ /api/admin/financeiro
+Ôö£ ãÆ /api/admin/metrics
+Ôö£ ãÆ /api/admin/sales
+Ôö£ ãÆ /api/admin/stats
+Ôö£ ãÆ /api/admin/support
+Ôö£ ãÆ /api/admin/support/[id]
+Ôö£ ãÆ /api/admin/upload
+Ôö£ ãÆ /api/admin/users
+Ôö£ ãÆ /api/admin/users/[id]
+Ôö£ ãÆ /api/artworks
+Ôö£ ãÆ /api/artworks/[id]
+Ôö£ ãÆ /api/artworks/search
+Ôö£ ãÆ /api/auth/[...nextauth]
+Ôö£ ãÆ /api/auth/register
+Ôö£ ãÆ /api/cart
+Ôö£ ãÆ /api/cart/[itemId]
+Ôö£ ãÆ /api/cart/apply-coupon
+Ôö£ ãÆ /api/categories
+Ôö£ ãÆ /api/categories/[id]
+Ôö£ ãÆ /api/categories/reorder
+Ôö£ ãÆ /api/collections
+Ôö£ ãÆ /api/collections/[slug]
+Ôö£ ãÆ /api/collections/[slug]/items
+Ôö£ ãÆ /api/downloads
+Ôö£ ãÆ /api/downloads/zip
+Ôö£ ãÆ /api/orders
+Ôö£ ãÆ /api/orders/[id]
+Ôö£ ãÆ /api/payments/webhook
+Ôö£ ãÆ /api/public/collections
+Ôö£ ãÆ /api/suggestions
+Ôö£ ãÆ /api/support
+Ôö£ ãÆ /api/tags
+Ôö£ ãÆ /api/tags/[id]
+Ôö£ Ôùï /cadastro
+Ôö£ Ôùï /carrinho
+Ôö£ Ôùï /compra/falha
+Ôö£ Ôùï /compra/pendente
+Ôö£ Ôùï /compra/sucesso
+Ôö£ Ôùï /faq
+Ôö£ Ôùï /icon.png
+Ôö£ Ôùï /login
+Ôö£ Ôùï /loja
+Ôö£ ãÆ /loja/[slug]
+Ôö£ Ôùï /meus-downloads
+Ôö£ Ôùï /minhas-compras
+Ôö£ Ôùï /quem-somos
+Ôö£ Ôùï /sugerir-arte
+Ôöö Ôùï /suporte
+
+
+ãÆ Proxy (Middleware)
+
+Ôùï  (Static)   prerendered as static content
+ãÆ  (Dynamic)  server-rendered on demand
+

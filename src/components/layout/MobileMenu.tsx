@@ -4,7 +4,7 @@ import * as React from 'react'
 import Link from 'next/link'
 import { signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { LogIn, LogOut, User as UserIcon, ShieldAlert, X } from 'lucide-react'
+import { LogIn, LogOut, User as UserIcon, ShieldAlert, ShoppingCart, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface MobileMenuProps {
@@ -13,9 +13,10 @@ interface MobileMenuProps {
   menuItems: { name: string; path: string }[]
   session: { user?: { name?: string | null; email?: string | null } } | null
   userRole?: string
+  cartCount?: number
 }
 
-export function MobileMenu({ open, onClose, menuItems, session, userRole }: MobileMenuProps) {
+export function MobileMenu({ open, onClose, menuItems, session, userRole, cartCount = 0 }: MobileMenuProps) {
   return (
     <AnimatePresence>
       {open && (
@@ -52,6 +53,27 @@ export function MobileMenu({ open, onClose, menuItems, session, userRole }: Mobi
                 </button>
               </div>
 
+              {/* Carrinho — só para CLIENT (equipe interna não compra) */}
+              {userRole === 'CLIENT' && (
+                <Link
+                  href="/carrinho"
+                  onClick={onClose}
+                  className="flex items-center justify-between gap-2 px-2 py-2 rounded-sm border border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all"
+                >
+                  <span className="flex items-center gap-2 text-sm font-semibold">
+                    <ShoppingCart className="h-4 w-4 text-nks-red-light" />
+                    Meu carrinho
+                  </span>
+                  {cartCount > 0 ? (
+                    <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-nks-red text-white text-[11px] font-extrabold">
+                      {cartCount > 99 ? '99+' : cartCount}
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-white/50 font-semibold">vazio</span>
+                  )}
+                </Link>
+              )}
+
               {/* Navigation Items */}
               <nav className="flex flex-col gap-1.5">
                 {menuItems.map((item, idx) => (
@@ -80,7 +102,7 @@ export function MobileMenu({ open, onClose, menuItems, session, userRole }: Mobi
                   <span className="text-[11px] uppercase tracking-[0.05em] text-white/60 flex items-center gap-1.5 px-2">
                     <UserIcon className="h-3.5 w-3.5 text-nks-red" /> {session.user?.name || 'Membro'}
                   </span>
-                  
+
                   {userRole === 'ADMIN' && (
                     <Link href="/admin" onClick={onClose} className="w-full">
                       <Button variant="outline" className="w-full gap-2 font-semibold text-xs border-white/20 text-white hover:bg-white/10 bg-transparent rounded-sm">
@@ -88,7 +110,7 @@ export function MobileMenu({ open, onClose, menuItems, session, userRole }: Mobi
                       </Button>
                     </Link>
                   )}
-                  
+
                   <Button
                     onClick={() => {
                       onClose()

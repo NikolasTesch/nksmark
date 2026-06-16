@@ -1,0 +1,108 @@
+Task-13: Collections UI (admin + public)
+==========================================
+Date: 2026-06-16
+
+## Summary
+Built admin UI for managing collections and a public-facing section on the
+artwork detail page that surfaces other artworks from the same collection.
+Also extended the items API with a PATCH method to support reordering and
+added a "Coleções" entry to the admin sidebar.
+
+## Files Created
+
+### 1. src/app/admin/colecoes/page.tsx
+Admin collection list page (`'use client'`):
+- Fetches from GET /api/collections (admin-protected, server already enforces)
+- Table with columns: Coleção (title + description), Slug, Artes (count badge),
+  Criada em, Ação
+- "Nova coleção" button toggles an inline create form
+- Inline create form: title, slug (auto-generated from title, editable), description
+- Slug auto-sync logic: re-derives from title while user hasn't manually edited
+- Per-row actions: Edit (inline edit of title/description), Delete (with confirm),
+  Navigate to detail page
+- Search filter by title or slug (client-side, instant)
+- Empty state messaging differentiates "no collections" vs "no search results"
+- Loading + error states follow the admin/artes pattern
+
+### 2. src/app/admin/colecoes/[slug]/page.tsx
+Admin collection detail page (`'use client'`):
+- Fetches from GET /api/collections/[slug]
+- Header: title, slug, artwork count, created date, description
+- Breadcrumb "Voltar para Coleções" link
+- "Adicionar arte" button opens a modal with search/select
+  - Fetches all artworks via /api/artworks?admin=true on first open
+  - Filters out artworks already in the collection
+  - Filters by title, category, or slug (max 50 rendered for perf)
+  - POSTs to /api/collections/[slug]/items; closes modal and refreshes on success
+- Artworks table: order number, thumbnail + title + slug, category badge,
+  status badge (PUBLISHED/DRAFT/ARCHIVED), actions column
+- Per-row actions: ArrowUp (disabled at top), ArrowDown (disabled at bottom),
+  Trash (with confirm)
+- Reorder uses PATCH /api/collections/[slug]/items (new endpoint)
+- Remove uses DELETE /api/collections/[slug]/items and locally re-sequences
+  `order` to keep the UI consistent
+
+## Files Modified
+
+### 3. src/app/api/collections/[slug]/items/route.ts
+Added PATCH handler to support reordering:
+- Body: { artworkId: string, order: number (int >= 0) }
+- Validates collection + item exist (admin-protected, 401/404 otherwise)
+- Swap-aware reorder: pulls all items, removes the moving one, splices it
+  at the new index, and re-numbers every row 0..n-1 in a single transaction
+- This guarantees a contiguous, gap-free order sequence after every move
+- Existing POST/DELETE behavior unchanged
+
+### 4. src/app/loja/[slug]/page.tsx
+Added a "Outras artes desta coleção" section AFTER "Você também pode gostar":
+- New state: `collectionArtworks: ArtworkWithRelations[]` and `collectionTitle: string`
+- New effect: fetches /api/public/collections?artworkId={artwork.id}
+- Backend already filters artworks to PUBLISHED only — DRAFT/ARCHIVED never leak
+- Merges up to 5 artworks from all collections containing the current artwork
+- Deduplicates via a Set seeded with the current artwork's id
+- Section only renders when `collectionArtworks.length > 0`
+- Layout mirrors the existing "Você também pode gostar" section
+  (border-top, same heading scale, same responsive grid 2/3/5 cols)
+- Subtitle shows the first collection title found: "Veja mais da coleção X"
+  (falls back to "Mais obras que combinam com esta arte" if no title)
+- Reuses the existing <ArtworkCard /> component for visual consistency
+
+### 5. src/components/admin/AdminSidebar.tsx
+- Imported `FolderOpen` from lucide-react
+- Added new nav item `{ name: 'Coleções', path: '/admin/colecoes', icon: <FolderOpen /> }`
+- Placed right after "Artes" (both relate to artwork organization)
+- Existing active-link logic handles /admin/colecoes via default
+  `pathname.startsWith(path)` rule — works for both the index and
+  /admin/colecoes/[slug] detail page
+- All other existing links preserved
+
+## Design System Compliance
+- All colors via semantic Tailwind tokens (nks-red, nks-gray-*, nks-black)
+- No hardcoded hex values
+- All spacing uses the existing Tailwind scale (p-3.5, gap-1.5, h-10, etc.)
+- Border-radius, shadows, typography all follow the existing NKS Art system
+  (rounded-lg, rounded-sm, rounded-xl, shadow-nks-sm, font-display, etc.)
+- Button component used for all CTAs (no raw <button> with ad-hoc styles)
+- Status badges match the admin/artes page (same color coding, same border)
+- "Nova coleção" button uses the same red CTA style as "Nova arte" in /admin/artes
+
+## Build Status
+- `npm run build` — SUCCESS
+- Compiled (Turbopack): 23.2s
+- TypeScript check: 16.0s (passed)
+- Static pages generated: 54/54 in 1806ms
+- New routes registered:
+  - ○ /admin/colecoes
+  - ƒ /admin/colecoes/[slug]
+  - ƒ /api/collections/[slug]/items (now with PATCH)
+- No new type errors introduced
+
+## Safety / Rule Compliance
+- DRAFT/ARCHIVED artworks: NOT exposed in the public collection section
+  (the /api/public/collections?artworkId= filter does this server-side)
+- Admin sidebar links: all 9 previous entries preserved, "Coleções" added
+- Inline styles: NONE — all styling via Tailwind classes
+- Admin auth: both new pages rely on the existing /api/collections* endpoints
+  which call protectAdminRoute() — UI does not need its own checks
+- Idempotent operations: the swap-aware PATCH re-numbers all items in a
+  single transaction; no orphaned orders or duplicates possible

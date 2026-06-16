@@ -13,6 +13,44 @@ export async function GET(req: Request) {
     const search = searchParams.get('search')
     const isFree = searchParams.get('isFree')
     const slug = searchParams.get('slug')
+    const fts = searchParams.get('fts') === 'true'
+    const ftsQuery = searchParams.get('q')?.trim()
+
+    // When ?fts=true&q=termo is present, delegate to the dedicated FTS search
+    if (fts && ftsQuery && ftsQuery.length >= 2) {
+      const results = await prisma.$queryRaw<Array<{
+        id: string; title: string; slug: string; description: string | null;
+        previewUrl: string; priceCents: number; isFree: boolean;
+        categoryId: string; createdAt: Date; rank: number;
+      }>>`
+        SELECT a.id, a.title, a.slug, a.description, a."previewUrl",
+               a."priceCents", a."isFree", a."categoryId", a."createdAt",
+               ts_rank(a."search_vector", plainto_tsquery('portuguese', ${ftsQuery})) AS rank
+        FROM "Artwork" a
+        WHERE a."search_vector" @@ plainto_tsquery('portuguese', ${ftsQuery})
+          AND a.status = 'PUBLISHED'
+        ORDER BY rank DESC
+        LIMIT 50
+      `
+
+      if (results.length > 0) {
+        const ids = results.map(r => r.id)
+        const artworks = await prisma.artwork.findMany({
+          where: { id: { in: ids } },
+          include: {
+            category: { select: { id: true, name: true, slug: true, color: true } },
+            tags: { select: { id: true, name: true } },
+            files: { select: { id: true, format: true, url: true, size: true } },
+            _count: { select: { downloads: true } },
+          },
+        })
+        const idOrder = new Map(ids.map((id, i) => [id, i]))
+        const ordered = artworks.sort((a, b) => (idOrder.get(a.id) ?? 0) - (idOrder.get(b.id) ?? 0))
+        return NextResponse.json({ success: true, data: ordered })
+      }
+
+      return NextResponse.json({ success: true, data: [] })
+    }
 
     const isAdminView = searchParams.get('admin') === 'true'
 

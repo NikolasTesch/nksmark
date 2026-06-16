@@ -57,7 +57,11 @@ export async function POST(req: Request) {
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: { artwork: { select: { title: true } }, user: { select: { email: true, name: true } } },
+      include: {
+        artwork: { select: { title: true } },
+        items: { select: { artwork: { select: { title: true } } } },
+        user: { select: { email: true, name: true } },
+      },
     })
     if (!order) {
       return NextResponse.json({ success: true })
@@ -100,7 +104,7 @@ export async function POST(req: Request) {
             subject: 'Pagamento confirmado — NKS Art',
             react: React.createElement(PaymentConfirmedEmailTemplate, {
               customerName: order.user.name,
-              artworkTitle: order.artwork.title,
+              artworkTitle: order.artwork?.title ?? order.items[0]?.artwork.title ?? 'Arte',
               amountFormatted: formatBRL(order.amountCents),
               downloadsUrl: `${appUrl()}/minhas-compras`,
             }),

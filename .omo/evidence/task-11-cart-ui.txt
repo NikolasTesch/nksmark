@@ -1,0 +1,83 @@
+Task 11: Cart UI - CREATED AND VERIFIED
+
+Files created:
+  - src/hooks/useCart.ts                              — React hook: cart state + add/remove/clear/refresh + isInCart helper
+  - src/app/(public)/carrinho/page.tsx                — Full cart page (auth-gated, items, coupon, checkout)
+
+Files modified:
+  - src/components/artwork/ArtworkCard.tsx            — Footer CTA: Adicionar ao carrinho / No carrinho ✓
+  - src/app/loja/[slug]/page.tsx                      — Primary CTA: Adicionar ao carrinho (was Comprar por R$ XX)
+  - src/components/layout/Header.tsx                  — Cart icon + badge (CLIENT-only) next to auth actions + mobile
+  - src/components/layout/MobileMenu.tsx              — Added cartCount prop; CLIENT-only cart link in drawer
+
+Feature checklist:
+  - [x] useCart() hook: refreshCart (GET /api/cart), addToCart (POST /api/cart),
+        removeFromCart (DELETE /api/cart/:itemId), clearCart (DELETE /api/cart),
+        isInCart(artworkId), exposes {cart, loading, itemCount, ...}
+  - [x] Cart page: 'use client' + useCart()
+  - [x] Items list: thumbnail (Image), title, price (formatBRL), remove button per item
+  - [x] Coupon input + apply button (validation delegated to /api/orders server-side)
+  - [x] Summary: subtotal, "Desconto — aplicado no checkout", total
+  - [x] Finalizar compra button → POST /api/orders with { artworkIds, couponCode }
+  - [x] Empty state: "Seu carrinho está vazio" + link to /loja
+  - [x] Loading state with Loader2 spinner
+  - [x] Auth gating: redirect message for VISITOR and FASE/ADMIN
+  - [x] ArtworkCard: Adicionar ao carrinho button for CLIENT (não free, não purchased)
+  - [x] ArtworkCard: "No carrinho ✓" link to /carrinho when item already added
+  - [x] ArtworkCard: hidden for FASE/ADMIN and for free artworks
+  - [x] Header: ShoppingCart icon (lucide-react) with itemCount badge (red, 99+ cap)
+  - [x] Header: cart link only shown when userRole === 'CLIENT'
+  - [x] Mobile: cart icon button in header + cart row in MobileMenu drawer (CLIENT only)
+  - [x] Loja slug page: primary CTA calls addToCart + navigates to /carrinho
+  - [x] Loja slug page: download logic preserved for FASE/ADMIN, free (logged in), purchased client
+  - [x] Loja slug page: "Ir para o carrinho" CTA when artwork is already in cart
+
+Constraints honored (Must NOT do):
+  - [x] Free items are never added to cart (server rejects in /api/cart POST;
+        UI also never offers the button for isFree)
+  - [x] Cart link is hidden for non-CLIENT roles (Header + MobileMenu gated by userRole === 'CLIENT')
+  - [x] ArtworkCard and Header layouts preserved (no other markup changed,
+        only the footer CTA + cart icon added)
+
+Design system compliance:
+  - NKS design tokens only — no hardcoded hex colors
+        bg-nks-red, bg-nks-red-dark, bg-nks-red-subtle, bg-nks-black,
+        text-nks-{red, black, gray-{100,200,400,700}}, border-nks-gray-200
+  - Display font: font-display (Archivo) for h1
+  - Border radius: rounded (4px), rounded-sm (2px), rounded-lg (8px) — matches editorial
+  - Shadows: shadow-nks-sm, shadow-nks
+  - Icons: lucide-react (ShoppingCart, Trash2, Tag, Check, Lock, ShieldCheck, etc.)
+  - Color feedback: green-50/700 for success states (coupon applied),
+                    nks-red for errors and destructive actions,
+                    nks-gray-400 for disabled/inactive
+  - Spacing follows Tailwind 4/8 grid (gap-2, gap-3, p-2.5, p-3, p-5)
+  - Eyebrow style (nks-eyebrow) used on cart page header
+  - Reuses existing Button + Input + Input components from src/components/ui/
+
+Build verification:
+  - Next.js build: COMPILED SUCCESSFULLY in 19.5s (Turbopack, Next 16.2.6)
+  - TypeScript: PASSED in 18.3s
+  - Static pages generated: 54/54 in 1183ms
+  - Build exit code: 0
+  - Route /carrinho: registered as static (○) — confirmed in build output
+  - Route /loja/[slug]: ƒ Dynamic — confirmed (cart state from useCart)
+  - Page bundle for /carrinho emitted: .next/server/app/carrinho.html, .rsc, .meta, .segments
+  - No new TS errors / warnings introduced
+  - Note: A pre-existing /api/cart/apply-coupon route (not added by T11) remains in the
+    route table; this task does not call it (coupon is applied server-side at checkout
+    via /api/orders which is the documented contract).
+
+Security / data integrity:
+  - All cart mutations go through /api/cart (server validates role=CLIENT, isFree, dupes)
+  - Checkout uses /api/orders (server recalculates total + applies coupon — never trusts client math)
+  - The cart hook's addToCart surfaces the server's error message (e.g. "Esta arte já está
+    no seu carrinho.", "Artes gratuitas não precisam ser adicionadas ao carrinho.")
+  - Empty/partial states: not-logged-in and non-CLIENT users see a guidance panel,
+    no API call is made until the user authenticates
+  - Image src, alt, and sizes are set explicitly (no unconstrained external images)
+
+Route table excerpt (from build output):
+  ├ ƒ /api/cart
+  ├ ƒ /api/cart/[itemId]
+  ├ ○ /carrinho              ← new
+  ├ ƒ /loja/[slug]            ← modified

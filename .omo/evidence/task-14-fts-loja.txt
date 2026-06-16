@@ -1,0 +1,49 @@
+Task-14: Integrate Full-Text Search in the loja page
+====================================================
+
+Date: 2026-06-16
+
+## Changes Made
+
+### 1. src/types/artwork.ts
+- Added `fts?: boolean` to `ArtworkFilterState` interface
+- Enables the filter state to carry the FTS flag
+
+### 2. src/hooks/useArtworkFilters.ts
+- Added local `searchInput` state for instant input responsiveness
+- Added 350ms debounce on search URL updates to avoid excessive API calls
+- `setSearch()` updates local state immediately, debounces URL sync
+- When search has 2+ chars, `fts=true` is added to URL params
+- When search is cleared or < 2 chars, `fts` is removed from URL
+- `searchInput` returned from hook for input binding
+- Cleanup timer on unmount via useEffect
+- Sync effect keeps searchInput up-to-date with external navigation (back/forward)
+
+### 3. src/hooks/useArtworks.ts
+- Added `fts?: boolean` to `UseArtworksOptions`
+- When `options.fts === true` AND `options.search` has 2+ chars:
+  - Fetches from `/api/artworks/search?q=...` (dedicated FTS endpoint)
+  - Returns ranked results from PostgreSQL tsvector search
+- Otherwise: falls back to default `/api/artworks` endpoint with all existing params
+- `options.fts` added to useCallback dependency array
+
+### 4. src/app/loja/page.tsx
+- Destructures `searchInput` from `useArtworkFilters()`
+- Computes `isFtsActive = (filters.search?.length ?? 0) >= 2`
+- Passes `{ search, fts }` to `useArtworks()` conditionally
+- Client-side search filter is skipped when FTS is active (avoids discarding stemming results)
+- Category/tag/free/favorites filters still apply client-side in both modes
+- Search input `value` bound to `searchInput` (instant local state)
+- Placeholder updated: "Busca inteligente — título, descrição ou tag…"
+
+## Build Status
+- `npm run build` — compilation succeeded (Turbopack)
+- Pre-existing type error in `src/app/admin/cupons/CouponFormDialog.tsx` (unrelated to this task)
+- No type errors in any of the 4 changed files (verified via `tsc --noEmit`)
+
+## Design Decisions
+- Debounce of 350ms balances responsiveness vs API call frequency
+- FTS flag (`fts=true`) is stored in URL params for shareability and page refresh survival
+- Client-side search retained as fallback for queries < 2 chars
+- Category/tag filtering still applied client-side on FTS results (as specified)
+- PAGE_SIZE of 40 is compatible with FTS max 50 results (at most 2 pages)

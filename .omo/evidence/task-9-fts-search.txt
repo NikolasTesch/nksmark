@@ -1,0 +1,16 @@
+T9 - PostgreSQL Full-Text Search
+
+Files created:
+- prisma/fts-setup.sql: SQL script adding search_vector tsvector column,
+  trigger function, GIN index, and population of existing records.
+- src/app/api/artworks/search/route.ts: Dedicated FTS search endpoint at
+  GET /api/artworks/search?q=termo, uses plainto_tsquery('portuguese', ...)
+  with ts_rank ordering, fetches full relations, restores rank order.
+
+Files modified:
+- src/app/api/artworks/route.ts: Added support for ?fts=true&q=termo.
+  When the fts flag is true and q has 2+ chars, the endpoint delegates
+  to PostgreSQL FTS (plainto_tsquery/ts_rank) instead of the standard
+  ILIKE/contains search. Falls back to existing behavior otherwise.
+
+Portuguese text search configuration is used throughout (not 'simple').
