@@ -1,6 +1,6 @@
 # NKS Art — Project Spec (v3)
 
-> **Última atualização:** 2026-06-02 → revisado 2026-06-02  
+> **Última atualização:** 2026-06-16 → revisado 2026-06-16  
 > Stack real: Next.js **16.2.6** (não 14 como indicado abaixo). Consulte `CLAUDE.md` para a tabela de stack atual.
 
 ## Visão geral

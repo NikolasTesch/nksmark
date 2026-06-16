@@ -74,7 +74,7 @@ describe('GET /api/admin/sales', () => {
     const orders = [
       makeOrder({ id: 'o1', amountCents: 1500, userId: 'u1', user: { id: 'u1', name: 'A', email: 'a@x.com' } }),
       makeOrder({ id: 'o2', amountCents: 2000, userId: 'u2', user: { id: 'u2', name: 'B', email: 'b@x.com' } }),
-      makeOrder({ id: 'o3', amountCents: 1500, userId: 'u1', user: { id: 'u1', name: 'A', email: 'a@x.com' }, artwork: { id: 'art-2', title: 'Arte B', category: { id: 'cat-1', name: 'Categoria X', color: '#ff0000' } } }),
+      makeOrder({ id: 'o3', amountCents: 1500, userId: 'u1', user: { id: 'u1', name: 'A', email: 'a@x.com' }, artwork: { id: 'art-2', title: 'Arte B', category: { id: 'cat-2', name: 'Categoria Y', color: '#00ff00' } } }),
     ]
     prismaMock.order.findMany
       .mockResolvedValueOnce(orders)
@@ -87,6 +87,42 @@ describe('GET /api/admin/sales', () => {
     expect(json.data.stats.totalSales).toBe(3)
     expect(json.data.stats.avgTicketCents).toBe(Math.round(5000 / 3))
     expect(json.data.stats.totalClients).toBe(2)
+
+    // Agregações de categorias
+    expect(json.data.categoryDistribution).toHaveLength(2)
+    expect(json.data.categoryDistribution[0]).toEqual({
+      id: 'cat-1',
+      name: 'Categoria X',
+      color: '#ff0000',
+      count: 2,
+      revenueCents: 3500,
+      percentage: 67
+    })
+    expect(json.data.categoryDistribution[1]).toEqual({
+      id: 'cat-2',
+      name: 'Categoria Y',
+      color: '#00ff00',
+      count: 1,
+      revenueCents: 1500,
+      percentage: 33
+    })
+
+    // Agregações de clientes
+    expect(json.data.topClients).toHaveLength(2)
+    expect(json.data.topClients[0]).toEqual({
+      id: 'u1',
+      name: 'A',
+      email: 'a@x.com',
+      count: 2,
+      revenueCents: 3000
+    })
+    expect(json.data.topClients[1]).toEqual({
+      id: 'u2',
+      name: 'B',
+      email: 'b@x.com',
+      count: 1,
+      revenueCents: 2000
+    })
   })
 
   it('calcula percentChangeFromPrevMonth corretamente', async () => {

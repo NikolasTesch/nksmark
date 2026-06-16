@@ -142,7 +142,18 @@ export function verifyWebhookSignature(
   dataId: string | null,
   secret: string | undefined,
 ): boolean {
-  if (!signatureHeader || !secret || !dataId) return false
+  if (!signatureHeader) {
+    console.error('[MP Webhook] signatureHeader is null or empty')
+    return false
+  }
+  if (!secret) {
+    console.error('[MP Webhook] secret (MP_WEBHOOK_SECRET) is undefined or empty')
+    return false
+  }
+  if (!dataId) {
+    console.error('[MP Webhook] dataId is null or empty')
+    return false
+  }
 
   const parts = signatureHeader.split(',').reduce<Record<string, string>>((acc, part) => {
     const [rawKey, rawValue] = part.split('=')
@@ -152,7 +163,10 @@ export function verifyWebhookSignature(
 
   const ts = parts['ts']
   const v1 = parts['v1']
-  if (!ts || !v1) return false
+  if (!ts || !v1) {
+    console.error('[MP Webhook] ts or v1 missing in signatureHeader:', signatureHeader)
+    return false
+  }
 
   // O Mercado Pago usa o id em minúsculas quando alfanumérico.
   const manifest = `id:${dataId.toLowerCase()};request-id:${requestId ?? ''};ts:${ts};`
@@ -160,6 +174,21 @@ export function verifyWebhookSignature(
 
   const expectedBuf = Buffer.from(expected, 'hex')
   const receivedBuf = Buffer.from(v1, 'hex')
-  if (expectedBuf.length !== receivedBuf.length) return false
-  return timingSafeEqual(expectedBuf, receivedBuf)
+  
+  if (expectedBuf.length !== receivedBuf.length) {
+    console.error('[MP Webhook] Signature length mismatch:', { expectedLength: expectedBuf.length, receivedLength: receivedBuf.length })
+    return false
+  }
+  
+  const match = timingSafeEqual(expectedBuf, receivedBuf)
+  if (!match) {
+    console.error('[MP Webhook] Signature mismatch.', {
+      manifest,
+      expectedHash: expected,
+      receivedHash: v1,
+      secretLength: secret.length,
+      secretHint: secret.length > 8 ? `${secret.substring(0, 4)}...${secret.substring(secret.length - 4)}` : 'too short'
+    })
+  }
+  return match
 }

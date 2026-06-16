@@ -1,8 +1,8 @@
 # NKS Art — Product Requirements Document (PRD)
 
 **Versão:** 1.1  
-**Data:** 2026-06-13  
-**Status:** MVP implementado — Fase 2 (Marketplace/Pagamentos) implementada e em homologação
+**Data:** 2026-06-16  
+**Status:** Fase 2 concluída — Marketplace/Pagamentos 100% implementado e testado.
 
 ---
 
