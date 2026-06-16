@@ -1,9 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-const { clientIp } = vi.hoisted(() => ({
+const { prismaMock, clientIp } = vi.hoisted(() => ({
+  prismaMock: {
+    supportTicket: {
+      create: vi.fn(),
+    },
+  },
   clientIp: { value: '203.0.113.1' },
 }))
 
+vi.mock('@/lib/prisma', () => ({ default: prismaMock }))
 vi.mock('@/lib/email/resend', () => ({
   resend: {
     emails: {
@@ -35,7 +41,9 @@ beforeEach(() => {
   vi.clearAllMocks()
   __resetRateLimitStore()
   process.env.RESEND_API_KEY = 're_testkey'
+  prismaMock.supportTicket.create.mockResolvedValue({ id: 'ticket-1' })
 })
+
 
 describe('POST /api/support — validation and email sending', () => {
   it('envia email com sucesso se os campos forem válidos', async () => {

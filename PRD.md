@@ -87,6 +87,8 @@ NKS Art é um catálogo digital de artes para sublimação. O produto resolve o 
 - `/admin/usuarios` — Listagem e criação de usuários FASE
 - `/admin/downloads` — Log de todos os downloads com filtros
 - `/admin/metricas` — Analytics com gráficos de uso
+- `/admin/chamados` — Visualização e controle de status de chamados de suporte técnico
+
 
 #### Segurança
 - Rate limiting nas APIs
@@ -218,6 +220,8 @@ Browser
 | `/admin/usuarios` | Usuários FASE |
 | `/admin/downloads` | Log de downloads |
 | `/admin/metricas` | Analytics |
+| `/admin/chamados` | Listagem e status de chamados de suporte |
+
 
 ### API
 | Endpoint | Método | Acesso |
@@ -242,6 +246,9 @@ Browser
 | `/api/admin/downloads` | GET | ADMIN |
 | `/api/admin/metrics` | GET | ADMIN |
 | `/api/admin/stats` | GET | ADMIN |
+| `/api/admin/support` | GET | ADMIN |
+| `/api/admin/support/[id]` | PATCH | ADMIN |
+
 
 ---
 

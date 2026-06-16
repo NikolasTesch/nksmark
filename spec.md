@@ -91,6 +91,8 @@ Loja | FAQ | Suporte | Sugerir Arte | Quem Somos | Grátis | Meus Downloads
 | `/admin/conteudo` | **Gestão de categorias, tags e filtros** | Admin |
 | `/admin/usuarios` | Listagem e gestão de usuários fase | Admin |
 | `/admin/vendas` | **Análise de vendas** (receita, top artes/nichos/clientes) | Admin |
+| `/admin/chamados` | Listagem e gestão de chamados de suporte técnico | Admin |
+
 
 ---
 
@@ -211,6 +213,17 @@ model Suggestion {
   createdAt   DateTime @default(now())
 }
 
+model SupportTicket {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  status    String   @default("PENDING") // PENDING, RESOLVED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
 enum OrderStatus { PENDING PAID FAILED EXPIRED REFUNDED }
 
 model Order {
@@ -294,7 +307,9 @@ model Order {
 - [x] Admin: gestão de categorias e tags
 - [ ] Admin: aba Filtros (ordenar/ativar categorias no menu da loja)
 - [x] Admin: gestão de usuários FASE
-- [x] FAQ, Suporte (Resend), Sugerir Arte, Quem Somos
+- [x] FAQ, Suporte (Resend, salvo no BD), Sugerir Arte, Quem Somos
+- [x] Admin: visualização e gestão de chamados de suporte em /admin/chamados
+
 - [x] Admin: log de downloads com filtros
 - [x] Admin: dashboard de métricas com gráficos
 

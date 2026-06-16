@@ -129,3 +129,14 @@ model Order {
   @@index([artworkId])
   @@index([status])
 }
+
+model SupportTicket {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  status    String   @default("PENDING") // PENDING, RESOLVED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+

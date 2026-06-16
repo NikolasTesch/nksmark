@@ -3,6 +3,7 @@ import { supportSchema } from '@/lib/validations/support'
 import { resend, EMAIL_FROM } from '@/lib/email/resend'
 import { SupportEmailTemplate } from '@/lib/email/templates/support'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
+import prisma from '@/lib/prisma'
 import * as React from 'react'
 
 export async function POST(req: Request) {
@@ -28,7 +29,17 @@ export async function POST(req: Request) {
 
     const { name, email, message } = result.data
 
+    // Persiste o chamado de suporte no banco de dados
+    await prisma.supportTicket.create({
+      data: {
+        name,
+        email,
+        message,
+      },
+    })
+
     if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 're_placeholder') {
+
       try {
         const { error } = await resend.emails.send({
           from: EMAIL_FROM,

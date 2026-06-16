@@ -3,7 +3,7 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, LayoutGrid, Upload, Sliders, Users, LogOut, History, Menu, X, ShoppingBag } from 'lucide-react'
+import { LayoutDashboard, LayoutGrid, Upload, Sliders, Users, LogOut, History, Menu, X, ShoppingBag, LifeBuoy } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 
 const navItems = [
@@ -14,6 +14,7 @@ const navItems = [
   { name: 'Usuários Fase', path: '/admin/usuarios', icon: <Users className="h-4 w-4" /> },
   { name: 'Vendas', path: '/admin/vendas', icon: <ShoppingBag className="h-4 w-4" /> },
   { name: 'Log de downloads', path: '/admin/downloads', icon: <History className="h-4 w-4" /> },
+  { name: 'Chamados', path: '/admin/chamados', icon: <LifeBuoy className="h-4 w-4" /> },
 ]
 
 function NavLinks({ pathname, onLinkClick }: { pathname: string; onLinkClick?: () => void }) {
