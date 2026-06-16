@@ -105,7 +105,7 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, data: { id: suggestion.id } }, { status: 201 })
+    return NextResponse.json({ success: true, data: { id: suggestion.id, imageUrl: suggestion.imageUrl } }, { status: 201 })
   } catch (error) {
     console.error('Error in suggestions API:', error)
     return NextResponse.json({ success: false, error: 'Erro interno no servidor' }, { status: 500 })

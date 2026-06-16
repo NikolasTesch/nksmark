@@ -82,7 +82,7 @@ Loja | FAQ | Suporte | Sugerir Arte | Quem Somos | Grátis | Meus Downloads
 | `/meus-downloads` | Histórico de downloads do usuário logado | Fase |
 | `/sugerir-arte` | Formulário de sugestão de tema | Público |
 | `/faq` | Perguntas frequentes em accordion | Público |
-| `/suporte` | Formulário de contato via Resend | Público |
+| `/suporte` | Formulário de contato via Resend (envia para `POST /api/support`) | Público |
 | `/quem-somos` | Sobre o estúdio e o designer | Público |
 | `/admin` | Dashboard: métricas de downloads | Admin |
 | `/admin/artes` | Listagem de artes (tabela com ações) | Admin |

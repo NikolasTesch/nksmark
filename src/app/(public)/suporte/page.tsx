@@ -37,7 +37,8 @@ export default function SuportePage() {
         setEmail('')
         setMessage('')
       } else {
-        setError('Ocorreu um erro ao enviar sua mensagem. Tente novamente.')
+        const data = await res.json()
+        setError(data.error || 'Ocorreu um erro ao enviar sua mensagem. Tente novamente.')
       }
     } catch {
       setError('Falha ao conectar com o servidor de suporte.')

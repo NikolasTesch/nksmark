@@ -19,8 +19,9 @@ export default function SugerirArtePage() {
   const [loading, setLoading] = React.useState(false)
   const [success, setSuccess] = React.useState(false)
   const [error, setError] = React.useState('')
+  const [whatsappUrl, setWhatsappUrl] = React.useState('')
 
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999'
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '557399960129'
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
@@ -73,6 +74,24 @@ export default function SugerirArtePage() {
       })
 
       if (res.ok) {
+        const result = await res.json()
+        const savedSuggestion = result.data
+
+        let whatsappMessage = `Olá! Gostaria de sugerir uma arte:\n\n`
+        whatsappMessage += `*Descrição:* ${description}\n`
+        if (email) {
+          whatsappMessage += `*E-mail:* ${email}\n`
+        }
+        if (savedSuggestion?.imageUrl) {
+          whatsappMessage += `*Imagem de referência:* ${savedSuggestion.imageUrl}\n`
+        }
+
+        const waUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`
+        setWhatsappUrl(waUrl)
+
+        // Tenta abrir o WhatsApp em uma nova aba
+        window.open(waUrl, '_blank', 'noopener,noreferrer')
+
         setSuccess(true)
         setEmail('')
         setDescription('')
@@ -109,9 +128,21 @@ export default function SugerirArtePage() {
               <CheckCircle2 className="h-12 w-12 text-nks-black shrink-0" />
               <h3 className="text-lg font-semibold text-nks-black">Sugestão enviada com sucesso!</h3>
               <p className="text-sm text-nks-gray-700 max-w-xs">
-                Agradecemos a sua contribuição. Fique de olho no catálogo, pois novas artes são adicionadas semanalmente.
+                Agradecemos a sua contribuição. O WhatsApp deverá abrir automaticamente com a sua mensagem pronta. Caso não abra, clique no botão abaixo para enviar:
               </p>
-              <Button onClick={() => setSuccess(false)} variant="outline" className="mt-2">
+              {whatsappUrl && (
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full mt-1"
+                >
+                  <Button className="w-full bg-[#25D366] hover:bg-[#20BA5A] text-white gap-2 font-semibold">
+                    <WhatsAppIcon className="h-4 w-4 shrink-0" /> Enviar pelo WhatsApp
+                  </Button>
+                </a>
+              )}
+              <Button onClick={() => setSuccess(false)} variant="outline" className="mt-2 w-full">
                 Enviar outra sugestão
               </Button>
             </div>
