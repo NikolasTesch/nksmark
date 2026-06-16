@@ -18,7 +18,12 @@ function getAccessToken(): string {
   if (!token) {
     throw new Error('MP_ACCESS_TOKEN não configurado no ambiente.')
   }
-  return token.trim().replace(/^["']|["']$/g, '')
+  const cleanToken = token.trim().replace(/^["']|["']$/g, '')
+  const maskedToken = cleanToken.length > 20
+    ? `${cleanToken.substring(0, 10)}...${cleanToken.substring(cleanToken.length - 10)} (len: ${cleanToken.length})`
+    : `(len: ${cleanToken.length})`
+  console.log(`[Mercado Pago] Usando token: ${maskedToken}`)
+  return cleanToken
 }
 
 export interface CreatePreferenceInput {
@@ -74,6 +79,7 @@ export async function createPreference(input: CreatePreferenceInput): Promise<Cr
 
   if (!res.ok) {
     const detail = await res.text().catch(() => '')
+    console.error(`[Mercado Pago Error] Falha ao criar preference (${res.status}):`, detail, 'Body enviado:', JSON.stringify(body))
     throw new Error(`Falha ao criar preference no Mercado Pago (${res.status}): ${detail}`)
   }
 
