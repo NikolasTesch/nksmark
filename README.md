@@ -133,7 +133,7 @@ Abra o arquivo `.env.local` e configure as credenciais:
 | `MP_WEBHOOK_SECRET` | Segredo de webhook do Mercado Pago | `sua-assinatura-webhook` |
 | `NEXT_PUBLIC_APP_URL` | URL pública da aplicação (API URL) | `http://localhost:3000` |
 | `NEXT_PUBLIC_APP_NAME` | Nome de exibição da aplicação | `NKS Art` |
-| `NEXT_PUBLIC_WHATSAPP_NUMBER`| Telefone para suporte rápido via WhatsApp | `557399960129` |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER`| Telefone para suporte rápido via WhatsApp | `0000000000` |
 
 #### Gerando o `ADMIN_PASSWORD_HASH`
 Você pode gerar o hash de senha do admin localmente utilizando o script de utilidade executando:
