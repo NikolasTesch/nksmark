@@ -18,7 +18,7 @@ function getAccessToken(): string {
   if (!token) {
     throw new Error('MP_ACCESS_TOKEN não configurado no ambiente.')
   }
-  return token
+  return token.trim().replace(/^["']|["']$/g, '')
 }
 
 export interface CreatePreferenceInput {
@@ -146,7 +146,9 @@ export function verifyWebhookSignature(
     console.error('[MP Webhook] signatureHeader is null or empty')
     return false
   }
-  if (!secret) {
+  
+  const cleanSecret = secret ? secret.trim().replace(/^["']|["']$/g, '') : ''
+  if (!cleanSecret) {
     console.error('[MP Webhook] secret (MP_WEBHOOK_SECRET) is undefined or empty')
     return false
   }
@@ -170,7 +172,7 @@ export function verifyWebhookSignature(
 
   // O Mercado Pago usa o id em minúsculas quando alfanumérico.
   const manifest = `id:${dataId.toLowerCase()};request-id:${requestId ?? ''};ts:${ts};`
-  const expected = createHmac('sha256', secret).update(manifest).digest('hex')
+  const expected = createHmac('sha256', cleanSecret).update(manifest).digest('hex')
 
   const expectedBuf = Buffer.from(expected, 'hex')
   const receivedBuf = Buffer.from(v1, 'hex')
@@ -186,8 +188,8 @@ export function verifyWebhookSignature(
       manifest,
       expectedHash: expected,
       receivedHash: v1,
-      secretLength: secret.length,
-      secretHint: secret.length > 8 ? `${secret.substring(0, 4)}...${secret.substring(secret.length - 4)}` : 'too short'
+      secretLength: cleanSecret.length,
+      secretHint: cleanSecret.length > 8 ? `${cleanSecret.substring(0, 4)}...${cleanSecret.substring(cleanSecret.length - 4)}` : 'too short'
     })
   }
   return match
