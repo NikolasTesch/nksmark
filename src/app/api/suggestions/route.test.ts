@@ -69,3 +69,30 @@ describe('POST /api/suggestions — rate limit', () => {
     expect((await POST(jsonReq(validBody))).status).toBe(201)
   })
 })
+
+describe('POST /api/suggestions — validações de e-mail', () => {
+  it('aceita e-mail nulo', async () => {
+    const res = await POST(jsonReq({ ...validBody, email: null }))
+    expect(res.status).toBe(201)
+  })
+
+  it('aceita e-mail vazio', async () => {
+    const res = await POST(jsonReq({ ...validBody, email: '' }))
+    expect(res.status).toBe(201)
+  })
+
+  it('aceita sem o campo e-mail', async () => {
+    const { email, ...bodyWithoutEmail } = validBody
+    const res = await POST(jsonReq(bodyWithoutEmail))
+    expect(res.status).toBe(201)
+  })
+
+  it('rejeita e-mail inválido', async () => {
+    const res = await POST(jsonReq({ ...validBody, email: 'invalido' }))
+    expect(res.status).toBe(400)
+    const json = await res.json()
+    expect(json.success).toBe(false)
+    expect(json.error).toBe('Email inválido')
+  })
+})
+
