@@ -8,7 +8,7 @@ import { generateWatermarkSVG } from './svg-template'
  * @returns Buffer com watermark aplicado
  * @throws Se sharp falhar, propaga o erro para o handler (que faz graceful degradation)
  */
-export async function applyWatermark(buffer: Buffer, mimeType: string): Promise<Buffer> {
+export async function applyWatermark(buffer: Buffer, _mimeType: string): Promise<Buffer> {
   const metadata = await sharp(buffer).metadata()
   const svgWidth = metadata.width ?? 400
   const svgHeight = metadata.height ?? 400
