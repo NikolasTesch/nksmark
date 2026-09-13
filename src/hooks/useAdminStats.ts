@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { logger as log } from "@/lib/utils/logger";
 
 export interface AdminStatsData {
   stats: {
@@ -33,7 +34,7 @@ export function useAdminStats() {
         setError(result.error || 'Erro ao carregar estatísticas do painel.')
       }
     } catch (err) {
-      console.error(err)
+      log.error(err)
       setError('Erro de conexão ao carregar dados do admin.')
     } finally {
       setLoading(false)

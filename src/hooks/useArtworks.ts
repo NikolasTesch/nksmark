@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ArtworkWithRelations } from '@/types/artwork'
+import { logger as log } from "@/lib/utils/logger";
 
 interface UseArtworksOptions {
   categoryId?: string
@@ -8,9 +9,11 @@ interface UseArtworksOptions {
   isFree?: boolean
   lazy?: boolean
   admin?: boolean
-  fts?: boolean
 }
 
+// Consome GET /api/artworks (contrato: admin/slug → {success,data}; catálogo
+// público → {items,total,page,pageSize}). A busca textual FTS saiu da rota
+// dedicada /api/artworks/search e passou a ser resolvida server-side pela loja.
 export function useArtworks(options: UseArtworksOptions = {}) {
   const [artworks, setArtworks] = useState<ArtworkWithRelations[]>([])
   const [loading, setLoading] = useState(false)
@@ -20,41 +23,31 @@ export function useArtworks(options: UseArtworksOptions = {}) {
     setLoading(true)
     setError(null)
     try {
-      // Modo FTS (Full-Text Search): usa o endpoint dedicado de busca textual
-      // que retorna resultados ranqueados por relevância via PostgreSQL tsvector.
-      if (options.fts && options.search && options.search.length >= 2) {
-        const res = await fetch(`/api/artworks/search?q=${encodeURIComponent(options.search)}`)
-        const result = await res.json()
+      const params = new URLSearchParams()
+      if (options.categoryId) params.append('categoryId', options.categoryId)
+      if (options.tagId) params.append('tagId', options.tagId)
+      if (options.search) params.append('search', options.search)
+      if (options.isFree !== undefined) params.append('isFree', String(options.isFree))
+      if (options.admin) params.append('admin', 'true')
 
-        if (result.success) {
-          setArtworks(result.data)
-        } else {
-          setError(result.error || 'Erro na busca inteligente.')
-        }
+      const res = await fetch(`/api/artworks?${params.toString()}`)
+      const result = await res.json()
+
+      if (result.items) {
+        // Catálogo público (novo contrato).
+        setArtworks(result.items)
+      } else if (result.success) {
+        setArtworks(result.data)
       } else {
-        const params = new URLSearchParams()
-        if (options.categoryId) params.append('categoryId', options.categoryId)
-        if (options.tagId) params.append('tagId', options.tagId)
-        if (options.search) params.append('search', options.search)
-        if (options.isFree !== undefined) params.append('isFree', String(options.isFree))
-        if (options.admin) params.append('admin', 'true')
-
-        const res = await fetch(`/api/artworks?${params.toString()}`)
-        const result = await res.json()
-
-        if (result.success) {
-          setArtworks(result.data)
-        } else {
-          setError(result.error || 'Erro ao carregar catálogo.')
-        }
+        setError(result.error || 'Erro ao carregar catálogo.')
       }
     } catch (err) {
-      console.error(err)
+      log.error(err)
       setError('Erro ao se conectar ao servidor.')
     } finally {
       setLoading(false)
     }
-  }, [options.categoryId, options.tagId, options.search, options.isFree, options.admin, options.fts])
+  }, [options.categoryId, options.tagId, options.search, options.isFree, options.admin])
 
   useEffect(() => {
     if (!options.lazy) {
@@ -78,7 +71,7 @@ export function useArtworks(options: UseArtworksOptions = {}) {
         return { success: false, error: result.error }
       }
     } catch (err) {
-      console.error(err)
+      log.error(err)
       setError('Erro de conexão ao excluir arte.')
       return { success: false, error: 'Erro de conexão' }
     }

@@ -1,7 +1,7 @@
 # NKS Art — Project Spec (v3)
 
-> **Última atualização:** 2026-06-16 → revisado 2026-06-16  
-> Stack real: Next.js **16.2.6** (não 14 como indicado abaixo). Consulte `CLAUDE.md` para a tabela de stack atual.
+> **Última atualização:** 2026-09-13 → revisado 2026-09-13  
+> Stack corrigida: o projeto roda **Next.js 16.2.6** (a tabela abaixo foi corrigida; antes dizia 14). Veja também `CLAUDE.md` para a tabela de stack atual.
 
 ## Visão geral
 
@@ -13,7 +13,7 @@ Catálogo digital de artes para sublimação e afins. Área pública para navega
 
 | Camada | Tecnologia | Observação |
 |---|---|---|
-| Framework | Next.js 14 (App Router) | SSR + SSG para SEO e performance |
+| Framework | Next.js 16.2.6 (App Router) | SSR + SSG para SEO e performance |
 | Estilização | Tailwind CSS + shadcn/ui | Componentes acessíveis prontos |
 | Animações | Framer Motion | Transições de página, hover nas artes |
 | ORM | Prisma | Type-safe, migrations versionadas |

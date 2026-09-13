@@ -17,8 +17,10 @@ import {
   Lock,
   ShieldCheck,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { EmptyState } from '@/components/shared/EmptyState'
 import { useCart } from '@/hooks/useCart'
 import { formatBRL } from '@/lib/utils/format'
 import type { CartItemWithArtwork } from '@/types/cart'
@@ -40,29 +42,47 @@ export default function CartPage() {
   const [checkoutLoading, setCheckoutLoading] = React.useState(false)
   const [checkoutError, setCheckoutError] = React.useState<string | null>(null)
   const [removingId, setRemovingId] = React.useState<string | null>(null)
-  const [couponFeedback, setCouponFeedback] = React.useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [couponLoading, setCouponLoading] = React.useState(false)
 
-  /** Aplica o cupom (validação leve no cliente — a regra real vive no /api/orders). */
-  const handleApplyCoupon = () => {
+  /** Valida o cupom em /api/cart/apply-coupon; o input permanece se a API recusar. */
+  const handleApplyCoupon = async () => {
     const trimmed = couponCode.trim().toUpperCase()
     if (!trimmed) {
-      setCouponFeedback({ type: 'error', message: 'Informe um código de cupom.' })
+      toast.error('Informe um código de cupom.', { duration: 6000 })
       return
     }
-    setAppliedCoupon(trimmed)
-    setCouponFeedback({ type: 'success', message: `Cupom "${trimmed}" será aplicado no checkout.` })
+    setCouponLoading(true)
+    try {
+      const res = await fetch('/api/cart/apply-coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: trimmed }),
+      })
+      const result = await res.json()
+      if (result.success) {
+        setAppliedCoupon(result.data?.couponCode ?? trimmed)
+        toast.success(`Cupom "${trimmed}" será aplicado no checkout.`)
+      } else {
+        toast.error(result.error || 'Cupom inválido.', { duration: 6000 })
+      }
+    } catch {
+      toast.error('Falha na comunicação com o servidor.', { duration: 6000 })
+    } finally {
+      setCouponLoading(false)
+    }
   }
 
   const handleRemoveCoupon = () => {
     setAppliedCoupon(null)
     setCouponCode('')
-    setCouponFeedback(null)
+    toast.success('Cupom removido.')
   }
 
   const handleRemoveItem = async (itemId: string) => {
     setRemovingId(itemId)
     await removeFromCart(itemId)
     setRemovingId(null)
+    toast.success('Item removido do carrinho')
   }
 
   /**
@@ -151,7 +171,13 @@ export default function CartPage() {
       </div>
 
       {items.length === 0 ? (
-        <EmptyCart />
+        <EmptyState
+          icon={ShoppingCart}
+          title="Seu carrinho está vazio"
+          description="Explore o catálogo e adicione artes à sua sacola para finalizar a compra em poucos cliques."
+          actionHref="/loja"
+          actionLabel="Ver a loja"
+        />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Lista de itens */}
@@ -189,7 +215,7 @@ export default function CartPage() {
               onApply={handleApplyCoupon}
               onRemove={handleRemoveCoupon}
               appliedCoupon={appliedCoupon}
-              feedback={couponFeedback}
+              loading={couponLoading}
             />
 
             <SummaryPanel
@@ -220,6 +246,7 @@ function CartItemRow({
   onRemove: () => void
 }) {
   const { artwork } = item
+  const [imgFailed, setImgFailed] = React.useState(false)
   return (
     <li className="group flex gap-3 p-3 border border-nks-gray-200 bg-white rounded-lg shadow-nks-sm hover:shadow-nks transition-shadow">
       <Link
@@ -228,11 +255,12 @@ function CartItemRow({
       >
         {artwork.previewUrl ? (
           <Image
-            src={artwork.previewUrl}
+            src={imgFailed ? '/placeholder.svg' : artwork.previewUrl}
             alt={artwork.title}
             fill
             sizes="(max-width: 640px) 80px, 96px"
             className="object-cover"
+            onError={() => setImgFailed(true)}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
@@ -284,14 +312,14 @@ function CouponPanel({
   onApply,
   onRemove,
   appliedCoupon,
-  feedback,
+  loading,
 }: {
   couponCode: string
   onChange: (v: string) => void
   onApply: () => void
   onRemove: () => void
   appliedCoupon: string | null
-  feedback: { type: 'success' | 'error'; message: string } | null
+  loading: boolean
 }) {
   return (
     <div className="flex flex-col gap-2 p-4 border border-nks-gray-200 bg-white rounded-lg">
@@ -334,25 +362,11 @@ function CouponPanel({
             variant="secondary"
             size="default"
             className="shrink-0 px-3"
+            disabled={loading}
           >
-            Aplicar
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Aplicar'}
           </Button>
         </div>
-      )}
-
-      {feedback && (
-        <p
-          className={`text-[11px] font-semibold leading-normal flex items-center gap-1 mt-1 ${
-            feedback.type === 'success' ? 'text-green-700' : 'text-nks-red'
-          }`}
-        >
-          {feedback.type === 'success' ? (
-            <CheckCircle2 className="h-3 w-3 shrink-0" />
-          ) : (
-            <AlertTriangle className="h-3 w-3 shrink-0" />
-          )}
-          {feedback.message}
-        </p>
       )}
     </div>
   )
@@ -422,25 +436,6 @@ function SummaryPanel({
       <div className="flex items-center gap-1.5 text-[10px] text-nks-gray-400 font-semibold justify-center mt-1">
         <ShieldCheck className="h-3 w-3" /> Pagamento seguro · Mercado Pago
       </div>
-    </div>
-  )
-}
-
-function EmptyCart() {
-  return (
-    <div className="flex flex-col items-center justify-center text-center p-12 border-2 border-dashed border-nks-gray-200 bg-nks-gray-100 rounded-lg max-w-lg mx-auto my-8">
-      <div className="flex h-12 w-12 items-center justify-center rounded bg-nks-black text-white mb-4">
-        <ShoppingCart className="h-6 w-6" />
-      </div>
-      <h3 className="font-semibold text-lg text-nks-black mb-1.5">Seu carrinho está vazio</h3>
-      <p className="text-sm text-nks-gray-700 mb-6 max-w-xs leading-normal">
-        Explore o catálogo e adicione artes à sua sacola para finalizar a compra em poucos cliques.
-      </p>
-      <Link href="/loja">
-        <Button className="gap-2 px-5 h-9">
-          Explorar catálogo <ArrowRight className="h-4 w-4" />
-        </Button>
-      </Link>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { protectAdminRoute } from '@/lib/auth/middleware'
+import { logger as log } from "@/lib/utils/logger";
 
 export async function PATCH(
   req: Request,
@@ -26,7 +27,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, data: ticket })
   } catch (error) {
-    console.error('Error updating support ticket:', error)
+    log.error('Error updating support ticket:', error)
     return NextResponse.json({ success: false, error: 'Erro ao atualizar o chamado.' }, { status: 500 })
   }
 }

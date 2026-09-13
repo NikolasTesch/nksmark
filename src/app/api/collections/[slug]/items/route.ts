@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { protectAdminRoute } from '@/lib/auth/middleware'
 import { addArtworkToCollectionSchema } from '@/validations/collection'
+import { logger as log } from "@/lib/utils/logger";
 
 export async function POST(
   req: Request,
@@ -89,7 +90,7 @@ export async function POST(
       )
     }
 
-    console.error('Error adding artwork to collection:', error)
+    log.error('Error adding artwork to collection:', error)
     return NextResponse.json(
       { success: false, error: 'Erro interno no servidor' },
       { status: 500 },
@@ -185,7 +186,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, data: { message: 'Ordem atualizada' } })
   } catch (error) {
-    console.error('Error reordering collection artwork:', error)
+    log.error('Error reordering collection artwork:', error)
     return NextResponse.json(
       { success: false, error: 'Erro interno no servidor' },
       { status: 500 },
@@ -256,7 +257,7 @@ export async function DELETE(
       data: { message: 'Arte removida da coleção' },
     })
   } catch (error) {
-    console.error('Error removing artwork from collection:', error)
+    log.error('Error removing artwork from collection:', error)
     return NextResponse.json(
       { success: false, error: 'Erro interno no servidor' },
       { status: 500 },

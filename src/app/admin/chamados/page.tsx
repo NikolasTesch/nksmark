@@ -18,6 +18,7 @@ import { useAdminSupport, SupportTicket } from '@/hooks/useAdminSupport'
 import { formatRelativeTime } from '@/lib/utils/format'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/shared/EmptyState'
 
 export default function AdminSupportPage() {
   const { tickets, loading, error, refresh, updateStatus } = useAdminSupport()
@@ -111,17 +112,11 @@ export default function AdminSupportPage() {
             </span>
           </div>
         ) : tickets.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-4 text-center px-6 bg-white border border-nks-gray-200 rounded-lg shadow-nks-sm">
-            <div className="h-12 w-12 rounded-full bg-nks-gray-100 flex items-center justify-center text-nks-gray-400">
-              <MessageSquare className="h-6 w-6 stroke-[1.5]" />
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-sm font-bold text-nks-black">Nenhum chamado registrado</span>
-              <span className="text-xs text-nks-gray-400 font-semibold max-w-[280px]">
-                Parabéns! Nenhum chamado de suporte pendente no banco de dados.
-              </span>
-            </div>
-          </div>
+          <EmptyState
+            icon={MessageSquare}
+            title="Nenhum chamado registrado"
+            description="Parabéns! Nenhum chamado de suporte pendente no banco de dados."
+          />
         ) : (
           tickets.map((ticket, index) => {
             const isExpanded = expandedId === ticket.id

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { User } from '@prisma/client'
+import { logger as log } from "@/lib/utils/logger";
 
 export function useAdminUsers() {
   const [users, setUsers] = useState<User[]>([])
@@ -18,7 +19,7 @@ export function useAdminUsers() {
         setError(result.error || 'Erro ao carregar lista de usuários.')
       }
     } catch (err) {
-      console.error(err)
+      log.error(err)
       setError('Erro de conexão ao carregar usuários.')
     } finally {
       setLoading(false)
@@ -47,7 +48,7 @@ export function useAdminUsers() {
         return { success: false, error: result.error }
       }
     } catch (err) {
-      console.error(err)
+      log.error(err)
       setError('Erro de conexão ao cadastrar usuário.')
       return { success: false, error: 'Erro de conexão' }
     }
@@ -68,7 +69,7 @@ export function useAdminUsers() {
         return { success: false, error: result.error }
       }
     } catch (err) {
-      console.error(err)
+      log.error(err)
       setError('Erro de conexão ao excluir usuário.')
       return { success: false, error: 'Erro de conexão' }
     }

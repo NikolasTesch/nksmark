@@ -4,6 +4,7 @@ import { protectAdminRoute } from '@/lib/auth/middleware'
 import { createCollectionSchema } from '@/validations/collection'
 import { generateSlug } from '@/lib/utils/slug'
 import { z } from 'zod'
+import { logger as log } from "@/lib/utils/logger";
 
 export async function GET() {
   try {
@@ -21,7 +22,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: collections })
   } catch (error) {
-    console.error('Error fetching collections:', error)
+    log.error('Error fetching collections:', error)
     return NextResponse.json({ success: false, error: 'Erro ao buscar coleções' }, { status: 500 })
   }
 }
@@ -74,7 +75,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: collection }, { status: 201 })
   } catch (error) {
-    console.error('Error creating collection:', error)
+    log.error('Error creating collection:', error)
     return NextResponse.json({ success: false, error: 'Erro interno no servidor' }, { status: 500 })
   }
 }

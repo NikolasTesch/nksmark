@@ -90,3 +90,20 @@
     color: var(--color-nks-red);
   }
 }
+
+/* Sonner — tokens NKS (fundo grafite, raio pequeno, erro #B31217) */
+[data-sonner-toaster] {
+  --normal-bg: var(--color-nks-gray-900);
+  --normal-border: var(--color-nks-gray-700);
+  --normal-text: var(--color-nks-white);
+  --success-bg: var(--color-nks-gray-900);
+  --success-border: var(--color-nks-gray-700);
+  --success-text: var(--color-nks-white);
+  --error-bg: var(--color-nks-gray-900);
+  --error-border: #B31217;
+  --error-text: var(--color-nks-white);
+  font-family: var(--font-sans);
+}
+[data-sonner-toaster] [data-sonner-toast] {
+  border-radius: 4px;
+}

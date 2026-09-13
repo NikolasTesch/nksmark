@@ -8,15 +8,27 @@ generator client {
 }
 
 model User {
-  id           String     @id @default(cuid())
-  email        String     @unique
+  id           String       @id @default(cuid())
+  email        String       @unique
   name         String?
   passwordHash String?
-  role         Role       @default(VISITOR)
+  role         Role         @default(VISITOR)
   downloads    Download[]
   orders       Order[]
   cart         Cart?
-  createdAt    DateTime   @default(now())
+  subscription Subscription?
+  createdAt    DateTime     @default(now())
+}
+
+model Subscription {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id])
+  mpPreapprovalId String?  @unique
+  status          String   @default("pending") // 'pending'|'authorized'|'paused'|'cancelled'
+  currentPeriodEnd DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 enum Role {
@@ -127,10 +139,14 @@ model Order {
   status         OrderStatus @default(PENDING)
   mpPreferenceId String?
   mpPaymentId    String?     @unique
+  mpRefundId     String?     @unique
+  refundPending  Boolean     @default(false)
+  refundedById   String?
+  refundedAt     DateTime?
   paymentMethod  String?
-  createdAt      DateTime    @default(now())
+  createdAt      DateTime   @default(now())
   paidAt         DateTime?
-  updatedAt      DateTime    @updatedAt
+  updatedAt      DateTime   @updatedAt
 
   @@index([userId])
   @@index([artworkId])

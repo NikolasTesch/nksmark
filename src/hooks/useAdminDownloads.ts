@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { logger as log } from "@/lib/utils/logger";
 
 export interface AdminDownloadLog {
   id: string
@@ -26,7 +27,7 @@ export function useAdminDownloads() {
         setError(result.error || 'Erro ao carregar o log de downloads.')
       }
     } catch (err) {
-      console.error(err)
+      log.error(err)
       setError('Erro de conexão ao carregar o log de downloads.')
     } finally {
       setLoading(false)

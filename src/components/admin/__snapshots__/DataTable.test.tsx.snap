@@ -1,0 +1,89 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`DataTable > snapshot da tabela com uma linha 1`] = `
+<div
+  class="overflow-x-auto"
+>
+  <div
+    class="md:hidden divide-y divide-nks-gray-200"
+  >
+    <div
+      class="p-4 flex flex-col gap-3"
+    >
+      <div
+        class=""
+      >
+        <div
+          class="w-full"
+        >
+          Alpha
+        </div>
+      </div>
+      <div
+        class="flex items-start justify-between gap-3"
+      >
+        <span
+          class="text-[10px] font-bold uppercase tracking-wider text-nks-gray-400 shrink-0 pt-0.5"
+        >
+          Valor
+        </span>
+        <div
+          class="min-w-0 text-right"
+        >
+          10
+        </div>
+      </div>
+    </div>
+  </div>
+  <table
+    class="hidden md:table w-full text-left text-sm border-collapse"
+  >
+    <thead>
+      <tr
+        class="bg-nks-black text-white border-b border-nks-gray-200 font-display font-extrabold text-[11px] uppercase tracking-[0.08em]"
+      >
+        <th
+          class="py-3.5 px-4 text-left"
+        >
+          Nome
+        </th>
+        <th
+          class="py-3.5 px-4 text-left hidden md:table-cell"
+          data-hide-on-mobile="true"
+        >
+          Extra
+        </th>
+        <th
+          class="py-3.5 px-4 text-left"
+        >
+          Valor
+        </th>
+      </tr>
+    </thead>
+    <tbody
+      class="divide-y divide-nks-gray-200"
+    >
+      <tr
+        class="hover:bg-nks-gray-100/30 transition-colors"
+      >
+        <td
+          class="py-3.5 px-4 text-left"
+        >
+          Alpha
+        </td>
+        <td
+          class="py-3.5 px-4 text-left hidden md:table-cell"
+          data-hide-on-mobile="true"
+        >
+          oculto-no-mobile
+        </td>
+        <td
+          class="py-3.5 px-4 text-left"
+        >
+          10
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+`;

@@ -33,6 +33,7 @@ import {
 import { formatDate } from '@/lib/utils/format'
 import { ArtworkWithRelations } from '@/types/artwork'
 import Image from 'next/image'
+import { logger as log } from "@/lib/utils/logger";
 
 // Tipagem do item da coleção retornado pelo GET /api/collections/[slug]
 type CollectionItem = CollectionArtwork & {
@@ -85,7 +86,7 @@ export default function ColecaoDetailPage() {
         setError(result.error || 'Coleção não encontrada.')
       }
     } catch (err) {
-      console.error('Error fetching collection:', err)
+      log.error('Error fetching collection:', err)
       setError('Erro de comunicação com o servidor.')
     } finally {
       setLoading(false)
@@ -111,7 +112,7 @@ export default function ColecaoDetailPage() {
           setAllArtworks(result.data as ArtworkWithRelations[])
         }
       } catch (err) {
-        console.error('Error loading artworks:', err)
+        log.error('Error loading artworks:', err)
       } finally {
         setArtworksLoading(false)
       }
@@ -136,7 +137,7 @@ export default function ColecaoDetailPage() {
         setAddError(result.error || 'Erro ao adicionar arte à coleção.')
       }
     } catch (err) {
-      console.error('Error adding artwork:', err)
+      log.error('Error adding artwork:', err)
       setAddError('Erro de comunicação com o servidor.')
     } finally {
       setAddingId(null)
@@ -167,7 +168,7 @@ export default function ColecaoDetailPage() {
         setActionError(result.error || 'Erro ao remover arte.')
       }
     } catch (err) {
-      console.error('Error removing artwork:', err)
+      log.error('Error removing artwork:', err)
       setActionError('Erro de comunicação com o servidor.')
     }
   }
@@ -197,7 +198,7 @@ export default function ColecaoDetailPage() {
         setActionError(result.error || 'Erro ao reordenar.')
       }
     } catch (err) {
-      console.error('Error reordering:', err)
+      log.error('Error reordering:', err)
       setActionError('Erro de comunicação com o servidor.')
     } finally {
       setReorderLoadingId(null)

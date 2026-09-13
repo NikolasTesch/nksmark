@@ -6,6 +6,7 @@ import { Category, Status } from '@prisma/client'
 import { Upload, Check, X, ChevronDown, Loader2, FileText, Images, RotateCcw, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
+import { logger as log } from "@/lib/utils/logger";
 
 type ExistingFile = { id?: string; format: string; size: number; url?: string }
 
@@ -264,7 +265,7 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData }: Art
       router.push('/admin/artes')
       router.refresh()
     } catch (err) {
-      console.error(err)
+      log.error(err)
       setError(err instanceof Error ? err.message : 'Erro ao processar a arte.')
     } finally {
       setSubmitting(false)
@@ -585,7 +586,7 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData }: Art
 
               {existingGalleryFiles.length === 0 && galleryFiles.length === 0 && (
                 <span className="text-[10px] font-semibold text-nks-gray-400 px-1">
-                  Nenhuma imagem adicional. Use "+ adicionar" para incluir fotos do produto na galeria.
+                  Nenhuma imagem adicional. Use &quot;+ adicionar&quot; para incluir fotos do produto na galeria.
                 </span>
               )}
           </div>

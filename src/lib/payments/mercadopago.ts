@@ -1,4 +1,5 @@
-import { createHmac, timingSafeEqual } from 'crypto'
+import { createHmac, randomUUID, timingSafeEqual } from 'crypto'
+import { logger as log } from "@/lib/utils/logger";
 
 /**
  * Cliente fino do Mercado Pago via REST (fetch) — sem dependência de SDK.
@@ -13,16 +14,12 @@ import { createHmac, timingSafeEqual } from 'crypto'
 
 const MP_API_BASE = 'https://api.mercadopago.com'
 
-function getAccessToken(): string {
+export function getAccessToken(): string {
   const token = process.env.MP_ACCESS_TOKEN
   if (!token) {
     throw new Error('MP_ACCESS_TOKEN não configurado no ambiente.')
   }
   const cleanToken = token.trim().replace(/^["']|["']$/g, '')
-  const maskedToken = cleanToken.length > 20
-    ? `${cleanToken.substring(0, 10)}...${cleanToken.substring(cleanToken.length - 10)} (len: ${cleanToken.length})`
-    : `(len: ${cleanToken.length})`
-  console.log(`[Mercado Pago] Usando token: ${maskedToken}`)
   return cleanToken
 }
 
@@ -76,7 +73,7 @@ export async function createPreference(input: CreatePreferenceInput): Promise<Cr
 
   if (!res.ok) {
     const detail = await res.text().catch(() => '')
-    console.error(`[Mercado Pago Error] Falha ao criar preference (${res.status}):`, detail, 'Body enviado:', JSON.stringify(body))
+    log.error(`[Mercado Pago Error] Falha ao criar preference (${res.status}):`, detail, 'Body enviado:', JSON.stringify(body))
     throw new Error(`Falha ao criar preference no Mercado Pago (${res.status}): ${detail}`)
   }
 
@@ -96,6 +93,8 @@ export interface MercadoPagoPayment {
   transactionAmount: number | null
   paymentMethodId: string | null
   paymentTypeId: string | null
+  /** Preenchido em pagamentos de assinatura recorrente (id do preapproval no MP). */
+  subscriptionId: string | null
 }
 
 export async function getPayment(paymentId: string): Promise<MercadoPagoPayment> {
@@ -115,6 +114,7 @@ export async function getPayment(paymentId: string): Promise<MercadoPagoPayment>
     transaction_amount: number | null
     payment_method_id: string | null
     payment_type_id: string | null
+    subscription_id: string | null
   }
 
   return {
@@ -124,7 +124,95 @@ export async function getPayment(paymentId: string): Promise<MercadoPagoPayment>
     transactionAmount: data.transaction_amount,
     paymentMethodId: data.payment_method_id,
     paymentTypeId: data.payment_type_id,
+    subscriptionId: data.subscription_id,
   }
+}
+
+/**
+ * Erro lançado por `createRefund` quando o Mercado Pago responde com status
+ * não-2xx. Carrega o status HTTP e os códigos `cause` da API (ex.: 2063,
+ * 2024, 4296) para o chamador mapear mensagens legíveis sem re-parsear.
+ */
+export class MercadoPagoRefundError extends Error {
+  constructor(
+    public status: number,
+    public causeCodes: number[],
+    public raw: string,
+  ) {
+    super(`Falha ao estornar no Mercado Pago (${status}).`)
+    this.name = 'MercadoPagoRefundError'
+  }
+}
+
+export interface CreateRefundOptions {
+  /** Valor parcial em BRL. Omitir = estorno total. */
+  amount?: number
+  /** Chave de idempotência; gerada via UUID quando ausente. */
+  idempotencyKey?: string
+}
+
+export interface CreateRefundResult {
+  refundId: string
+  status: string // approved | in_process | ...
+}
+
+/**
+ * Solicita estorno total/parcial de um pagamento no Mercado Pago.
+ *
+ * `POST /v1/payments/{id}/refunds` com `X-Idempotency-Key` (sempre) e
+ * `X-Render-In-Process-Refunds: true` (Pix pode responder `201 in_process`
+ * em vez de 400). Timeout de 10s (RFN-2) — sem retry automático, a idempotency
+ * key protege retry manual. Sem SDK npm (RFN-3), como o resto da camada.
+ */
+export async function createRefund(
+  paymentId: string,
+  opts: CreateRefundOptions = {},
+): Promise<CreateRefundResult> {
+  const idempotencyKey = opts.idempotencyKey || randomUUID()
+  const body = opts.amount != null ? { amount: opts.amount } : {}
+
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 10_000)
+
+  let res: Response
+  try {
+    res = await fetch(`${MP_API_BASE}/v1/payments/${encodeURIComponent(paymentId)}/refunds`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${getAccessToken()}`,
+        'Content-Type': 'application/json',
+        'X-Idempotency-Key': idempotencyKey,
+        'X-Render-In-Process-Refunds': 'true',
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    })
+  } finally {
+    clearTimeout(timeout)
+  }
+
+  if (!res.ok) {
+    const raw = await res.text().catch(() => '')
+    const causeCodes: number[] = []
+    try {
+      const parsed = JSON.parse(raw) as { cause?: { code?: number }[] }
+      if (Array.isArray(parsed.cause)) {
+        for (const c of parsed.cause) {
+          if (typeof c.code === 'number') causeCodes.push(c.code)
+        }
+      }
+    } catch {
+      // Corpo não-JSON: mantém causeCodes vazio e repassa o raw.
+    }
+    throw new MercadoPagoRefundError(res.status, causeCodes, raw)
+  }
+
+  const data = (await res.json()) as { id?: number | string; status?: string }
+  if (data.id == null) {
+    throw new Error('Resposta inválida do Mercado Pago ao estornar.')
+  }
+
+  return { refundId: String(data.id), status: data.status ?? '' }
 }
 
 /**
@@ -146,17 +234,17 @@ export function verifyWebhookSignature(
   secret: string | undefined,
 ): boolean {
   if (!signatureHeader) {
-    console.error('[MP Webhook] signatureHeader is null or empty')
+    log.error('[MP Webhook] signatureHeader is null or empty')
     return false
   }
   
   const cleanSecret = secret ? secret.trim().replace(/^["']|["']$/g, '') : ''
   if (!cleanSecret) {
-    console.error('[MP Webhook] secret (MP_WEBHOOK_SECRET) is undefined or empty')
+    log.error('[MP Webhook] secret (MP_WEBHOOK_SECRET) is undefined or empty')
     return false
   }
   if (!dataId) {
-    console.error('[MP Webhook] dataId is null or empty')
+    log.error('[MP Webhook] dataId is null or empty')
     return false
   }
 
@@ -169,7 +257,7 @@ export function verifyWebhookSignature(
   const ts = parts['ts']
   const v1 = parts['v1']
   if (!ts || !v1) {
-    console.error('[MP Webhook] ts or v1 missing in signatureHeader:', signatureHeader)
+    log.error('[MP Webhook] ts or v1 missing in signatureHeader:', signatureHeader)
     return false
   }
 
@@ -181,13 +269,13 @@ export function verifyWebhookSignature(
   const receivedBuf = Buffer.from(v1, 'hex')
   
   if (expectedBuf.length !== receivedBuf.length) {
-    console.error('[MP Webhook] Signature length mismatch:', { expectedLength: expectedBuf.length, receivedLength: receivedBuf.length })
+    log.error('[MP Webhook] Signature length mismatch:', { expectedLength: expectedBuf.length, receivedLength: receivedBuf.length })
     return false
   }
   
   const match = timingSafeEqual(expectedBuf, receivedBuf)
   if (!match) {
-    console.error('[MP Webhook] Signature mismatch.', {
+    log.error('[MP Webhook] Signature mismatch.', {
       manifest,
       expectedHash: expected,
       receivedHash: v1,

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { protectAdminRoute } from '@/lib/auth/middleware'
 import { createCollectionSchema } from '@/validations/collection'
+import { logger as log } from "@/lib/utils/logger";
 
 export async function GET(
   _req: Request,
@@ -50,7 +51,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: collection })
   } catch (error) {
-    console.error('Error fetching collection:', error)
+    log.error('Error fetching collection:', error)
     return NextResponse.json(
       { success: false, error: 'Erro ao buscar coleção' },
       { status: 500 },
@@ -115,7 +116,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, data: updatedCollection })
   } catch (error) {
-    console.error('Error updating collection:', error)
+    log.error('Error updating collection:', error)
     return NextResponse.json(
       { success: false, error: 'Erro ao atualizar coleção' },
       { status: 500 },
@@ -156,7 +157,7 @@ export async function DELETE(
       data: { message: 'Coleção removida com sucesso' },
     })
   } catch (error) {
-    console.error('Error deleting collection:', error)
+    log.error('Error deleting collection:', error)
     return NextResponse.json(
       { success: false, error: 'Erro ao excluir coleção' },
       { status: 500 },

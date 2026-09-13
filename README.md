@@ -73,7 +73,7 @@ nksmark/
 ├── docs/                 # Documentações de infraestrutura e backups
 ├── prisma/               # Schema do banco de dados (schema.prisma) e script de seed.ts
 ├── public/               # Assets estáticos públicos, ícones e manifestos
-├── specs/                # Histórico de especificações de features desenvolvidas
+├── docs/specs/          # Especificações de features (active/ e archive/) — histórico de specs
 ├── src/
 │   ├── app/              # Rotas e layouts divididos em grupos
 │   │   ├── (public)/     # Rotas institucionais e de compras (públicas/clientes)

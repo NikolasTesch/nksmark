@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { protectAdminRoute } from '@/lib/auth/middleware'
 import { Status } from '@prisma/client'
+import { logger as log } from "@/lib/utils/logger";
 
 export async function GET(req: Request) {
   try {
@@ -220,7 +221,7 @@ export async function GET(req: Request) {
       }
     })
   } catch (error) {
-    console.error('Error fetching admin metrics:', error)
+    log.error('Error fetching admin metrics:', error)
     return NextResponse.json(
       { success: false, error: 'Erro ao carregar métricas do painel administrativo' },
       { status: 500 }

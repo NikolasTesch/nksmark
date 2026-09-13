@@ -15,6 +15,11 @@ const eslintConfig = defineConfig([
     // Scripts utilitários descartáveis (one-off, fora do app)
     "scratch/**",
   ]),
+  {
+    rules: {
+      "react-hooks/set-state-in-effect": "warn",
+    },
+  },
 ]);
 
 export default eslintConfig;

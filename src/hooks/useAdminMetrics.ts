@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { logger as log } from "@/lib/utils/logger";
 
 export interface AdminMetricsData {
   categories: Array<{ id: string; name: string }>
@@ -73,7 +74,7 @@ export function useAdminMetrics() {
         setError(result.error || 'Erro ao carregar métricas administrativas.')
       }
     } catch (err) {
-      console.error(err)
+      log.error(err)
       setError('Erro de conexão ao carregar métricas do admin.')
     } finally {
       setLoading(false)

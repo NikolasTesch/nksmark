@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { Role } from '@prisma/client'
 import { auth } from '@/lib/auth/auth'
 import prisma from '@/lib/prisma'
+import { logger as log } from "@/lib/utils/logger";
 
 export const runtime = 'nodejs'
 
@@ -72,7 +73,7 @@ export async function DELETE(
       data: { items: cart?.items ?? [], totalCents },
     })
   } catch (error) {
-    console.error('[Cart Item DELETE]', error)
+    log.error('[Cart Item DELETE]', error)
     return NextResponse.json({ success: false, error: 'Erro ao remover item do carrinho.' }, { status: 500 })
   }
 }

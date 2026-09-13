@@ -31,3 +31,6 @@ jobs:
 
       - name: Type Check Codebase
         run: npx tsc --noEmit
+
+      - name: Run Unit Tests
+        run: npm run test

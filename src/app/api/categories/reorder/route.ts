@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import prisma from '@/lib/prisma'
 import { protectAdminRoute } from '@/lib/auth/middleware'
+import { logger as log } from "@/lib/utils/logger";
 
 const reorderSchema = z.object({
   order: z.array(z.object({ id: z.string(), filterOrder: z.number().int() })).min(1),
@@ -28,7 +29,7 @@ export async function PUT(req: Request) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error reordering categories:', error)
+    log.error('Error reordering categories:', error)
     return NextResponse.json({ success: false, error: 'Erro ao reordenar categorias' }, { status: 500 })
   }
 }

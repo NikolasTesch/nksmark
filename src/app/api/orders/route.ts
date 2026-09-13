@@ -5,6 +5,7 @@ import { createOrderSchema } from '@/lib/validations/order'
 import prisma from '@/lib/prisma'
 import { rateLimit } from '@/lib/rate-limit'
 import { createPreference } from '@/lib/payments/mercadopago'
+import { logger as log } from "@/lib/utils/logger";
 
 // SDK/crypto e chamada externa exigem runtime Node.
 export const runtime = 'nodejs'
@@ -204,7 +205,7 @@ export async function POST(req: Request) {
       )
     } catch (err) {
       // A preference falhou: marca o pedido como FAILED para não deixar lixo PENDING.
-      console.error('Error creating Mercado Pago preference:', err)
+      log.error('Error creating Mercado Pago preference:', err)
       await prisma.order.update({
         where: { id: order.id },
         data: { status: OrderStatus.FAILED },
@@ -215,7 +216,7 @@ export async function POST(req: Request) {
       )
     }
   } catch (error) {
-    console.error('Error in orders API:', error)
+    log.error('Error in orders API:', error)
     return NextResponse.json({ success: false, error: 'Erro interno no servidor' }, { status: 500 })
   }
 }
@@ -256,7 +257,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data })
   } catch (error) {
-    console.error('Error listing orders:', error)
+    log.error('Error listing orders:', error)
     return NextResponse.json({ success: false, error: 'Erro ao buscar pedidos.' }, { status: 500 })
   }
 }

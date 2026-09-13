@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { protectAdminRoute } from '@/lib/auth/middleware'
 import { Role } from '@prisma/client'
+import { logger as log } from "@/lib/utils/logger";
 
 export async function GET() {
   try {
@@ -58,7 +59,7 @@ export async function GET() {
       }
     })
   } catch (error) {
-    console.error('Error fetching admin stats:', error)
+    log.error('Error fetching admin stats:', error)
     return NextResponse.json({ success: false, error: 'Erro ao carregar estatísticas do admin' }, { status: 500 })
   }
 }

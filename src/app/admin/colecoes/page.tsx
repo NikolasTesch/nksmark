@@ -20,6 +20,8 @@ import {
   Search,
 } from 'lucide-react'
 import { formatDate } from '@/lib/utils/format'
+import { logger as log } from "@/lib/utils/logger";
+import { DataTable } from '@/components/admin/DataTable'
 
 // Coleção + contagem de artes (vem do _count do GET /api/collections).
 type CollectionRow = Collection & { _count: { artworks: number } }
@@ -58,7 +60,7 @@ export default function ColecoesAdminPage() {
         setError(result.error || 'Erro ao buscar coleções.')
       }
     } catch (err) {
-      console.error('Error fetching collections:', err)
+      log.error('Error fetching collections:', err)
       setError('Erro de comunicação com o servidor.')
     } finally {
       setLoading(false)
@@ -118,7 +120,7 @@ export default function ColecoesAdminPage() {
         setActionError(result.error || 'Erro ao criar coleção.')
       }
     } catch (err) {
-      console.error('Error creating collection:', err)
+      log.error('Error creating collection:', err)
       setActionError('Erro de comunicação com o servidor.')
     } finally {
       setActionLoading(false)
@@ -138,7 +140,7 @@ export default function ColecoesAdminPage() {
         setActionError(result.error || 'Erro ao excluir coleção.')
       }
     } catch (err) {
-      console.error('Error deleting collection:', err)
+      log.error('Error deleting collection:', err)
       setActionError('Erro de comunicação com o servidor.')
     } finally {
       setActionLoading(false)
@@ -182,7 +184,7 @@ export default function ColecoesAdminPage() {
         setActionError(result.error || 'Erro ao atualizar coleção.')
       }
     } catch (err) {
-      console.error('Error updating collection:', err)
+      log.error('Error updating collection:', err)
       setActionError('Erro de comunicação com o servidor.')
     } finally {
       setActionLoading(false)
@@ -336,188 +338,204 @@ export default function ColecoesAdminPage() {
         </div>
       ) : (
         <div className="border border-nks-gray-200 rounded-xl overflow-hidden bg-white shadow-nks-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse">
-              <thead>
-                <tr className="bg-nks-black text-white border-b border-nks-gray-200 font-display font-extrabold text-[11px] uppercase tracking-[0.08em]">
-                  <th className="py-3.5 px-4">Coleção</th>
-                  <th className="py-3.5 px-4">Slug</th>
-                  <th className="py-3.5 px-4 text-center">Artes</th>
-                  <th className="py-3.5 px-4">Criada em</th>
-                  <th className="py-3.5 px-4 text-right">Ação</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-nks-gray-200">
-                {filtered.map((c) => {
+          <DataTable
+            headerVariant="dark"
+            rows={filtered}
+            getRowKey={(c) => c.id}
+            emptyTitle={
+              searchQuery
+                ? 'Nenhuma coleção encontrada para esta busca.'
+                : 'Nenhuma coleção cadastrada. Crie a primeira usando o botão acima.'
+            }
+            emptyIcon={FolderOpen}
+            columns={[
+              {
+                id: 'colecao',
+                header: 'Coleção',
+                render: (c) => {
+                  const isEditing = editingSlug === c.slug
+                  if (isEditing) {
+                    return (
+                      <div className="flex flex-col gap-2 max-w-md">
+                        <Input
+                          type="text"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          className="rounded-lg h-9 text-xs"
+                          maxLength={100}
+                          required
+                        />
+                        <textarea
+                          value={editDescription}
+                          onChange={(e) => setEditDescription(e.target.value)}
+                          className="w-full rounded-lg border border-nks-gray-200 bg-white px-3 py-2 text-xs text-nks-black focus:outline-none focus:ring-1 focus:ring-nks-red focus:border-nks-red font-semibold resize-none"
+                          rows={2}
+                          maxLength={500}
+                          placeholder="Descrição (opcional)"
+                        />
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            type="button"
+                            onClick={() => handleSaveEdit(c.slug)}
+                            disabled={actionLoading || !editTitle.trim()}
+                            size="sm"
+                            className="h-8 px-2.5 gap-1 text-[10px] font-black bg-nks-red hover:bg-nks-red-dark text-white rounded-lg border-none"
+                          >
+                            {actionLoading ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Check className="h-3 w-3" />
+                            )}{' '}
+                            Salvar
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={handleCancelEdit}
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 px-2.5 gap-1 text-[10px] font-bold border border-nks-gray-200 rounded-lg"
+                          >
+                            <X className="h-3 w-3" /> Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    )
+                  }
+                  return (
+                    <div className="flex flex-col gap-0.5 max-w-md">
+                      <Link
+                        href={`/admin/colecoes/${c.slug}`}
+                        className="font-bold text-nks-black hover:text-nks-red transition-colors flex items-center gap-1.5"
+                      >
+                        <FolderOpen className="h-3.5 w-3.5 text-nks-red shrink-0" />
+                        {c.title}
+                      </Link>
+                      {c.description && (
+                        <p className="text-[11px] text-nks-gray-400 font-medium line-clamp-1 leading-snug">
+                          {c.description}
+                        </p>
+                      )}
+                    </div>
+                  )
+                },
+              },
+              {
+                id: 'slug',
+                header: 'Slug',
+                hideOnMobile: true,
+                cellClassName: 'font-mono text-[11px] text-nks-gray-700 font-semibold',
+                render: (c) => `/${c.slug}`,
+              },
+              {
+                id: 'artes',
+                header: 'Artes',
+                align: 'center',
+                render: (c) => (
+                  <span
+                    className={`inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border font-display tracking-wider ${
+                      c._count.artworks > 0
+                        ? 'bg-nks-red-subtle text-nks-red border-nks-red/20'
+                        : 'bg-nks-gray-100 text-nks-gray-400 border-nks-gray-200'
+                    }`}
+                  >
+                    <Layers className="h-2.5 w-2.5" />
+                    {c._count.artworks}
+                  </span>
+                ),
+              },
+              {
+                id: 'created',
+                header: 'Criada em',
+                hideOnMobile: true,
+                cellClassName: 'text-xs text-nks-gray-700 font-semibold whitespace-nowrap',
+                render: (c) => (
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3 text-nks-gray-400" />
+                    {formatDate(c.createdAt)}
+                  </span>
+                ),
+              },
+              {
+                id: 'actions',
+                header: 'Ação',
+                align: 'right',
+                render: (c) => {
                   const isEditing = editingSlug === c.slug
                   const isDeleting = pendingDeleteId === c.slug
-                  return (
-                    <tr key={c.id} className="hover:bg-nks-gray-100/30 transition-colors align-top">
-                      <td className="py-3.5 px-4">
-                        {isEditing ? (
-                          <div className="flex flex-col gap-2 max-w-md">
-                            <Input
-                              type="text"
-                              value={editTitle}
-                              onChange={(e) => setEditTitle(e.target.value)}
-                              className="rounded-lg h-9 text-xs"
-                              maxLength={100}
-                              required
-                            />
-                            <textarea
-                              value={editDescription}
-                              onChange={(e) => setEditDescription(e.target.value)}
-                              className="w-full rounded-lg border border-nks-gray-200 bg-white px-3 py-2 text-xs text-nks-black focus:outline-none focus:ring-1 focus:ring-nks-red focus:border-nks-red font-semibold resize-none"
-                              rows={2}
-                              maxLength={500}
-                              placeholder="Descrição (opcional)"
-                            />
-                            <div className="flex items-center gap-1.5">
-                              <Button
-                                type="button"
-                                onClick={() => handleSaveEdit(c.slug)}
-                                disabled={actionLoading || !editTitle.trim()}
-                                size="sm"
-                                className="h-8 px-2.5 gap-1 text-[10px] font-black bg-nks-red hover:bg-nks-red-dark text-white rounded-lg border-none"
-                              >
-                                {actionLoading ? (
-                                  <Loader2 className="h-3 w-3 animate-spin" />
-                                ) : (
-                                  <Check className="h-3 w-3" />
-                                )}{' '}
-                                Salvar
-                              </Button>
-                              <Button
-                                type="button"
-                                onClick={handleCancelEdit}
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 px-2.5 gap-1 text-[10px] font-bold border border-nks-gray-200 rounded-lg"
-                              >
-                                <X className="h-3 w-3" /> Cancelar
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex flex-col gap-0.5 max-w-md">
-                            <Link
-                              href={`/admin/colecoes/${c.slug}`}
-                              className="font-bold text-nks-black hover:text-nks-red transition-colors flex items-center gap-1.5"
-                            >
-                              <FolderOpen className="h-3.5 w-3.5 text-nks-red shrink-0" />
-                              {c.title}
-                            </Link>
-                            {c.description && (
-                              <p className="text-[11px] text-nks-gray-400 font-medium line-clamp-1 leading-snug">
-                                {c.description}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-[11px] text-nks-gray-700 font-semibold">
-                        /{c.slug}
-                      </td>
-                      <td className="py-3.5 px-4 text-center">
-                        <span
-                          className={`inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border font-display tracking-wider ${
-                            c._count.artworks > 0
-                              ? 'bg-nks-red-subtle text-nks-red border-nks-red/20'
-                              : 'bg-nks-gray-100 text-nks-gray-400 border-nks-gray-200'
-                          }`}
+                  if (isDeleting) {
+                    return (
+                      <div className="flex items-center justify-end gap-1.5">
+                        <span className="text-[10px] font-bold text-nks-red hidden sm:block">
+                          Excluir?
+                        </span>
+                        <Button
+                          onClick={() => handleDeleteConfirm(c.slug)}
+                          disabled={actionLoading}
+                          size="sm"
+                          aria-label={`Confirmar exclusão de ${c.title}`}
+                          className="h-8 px-2.5 gap-1 text-[10px] font-black bg-nks-red hover:bg-nks-red-dark text-white rounded-lg border-none"
                         >
-                          <Layers className="h-2.5 w-2.5" />
-                          {c._count.artworks}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-xs text-nks-gray-700 font-semibold whitespace-nowrap">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3 text-nks-gray-400" />
-                          {formatDate(c.createdAt)}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        {isDeleting ? (
-                          <div className="flex items-center justify-end gap-1.5">
-                            <span className="text-[10px] font-bold text-nks-red hidden sm:block">
-                              Excluir?
-                            </span>
-                            <Button
-                              onClick={() => handleDeleteConfirm(c.slug)}
-                              disabled={actionLoading}
-                              size="sm"
-                              className="h-8 px-2.5 gap-1 text-[10px] font-black bg-nks-red hover:bg-nks-red-dark text-white rounded-lg border-none"
-                            >
-                              {actionLoading ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : (
-                                <Check className="h-3 w-3" />
-                              )}{' '}
-                              Sim
-                            </Button>
-                            <Button
-                              onClick={() => setPendingDeleteId(null)}
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 px-2.5 border border-nks-gray-200 rounded-lg text-[10px] font-bold"
-                            >
-                              <X className="h-3 w-3" /> Não
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-end gap-1.5">
-                            <Link href={`/admin/colecoes/${c.slug}`}>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                disabled={actionLoading || isEditing}
-                                className="h-8 w-8 border border-nks-gray-200 bg-white text-nks-gray-700 hover:text-nks-black hover:bg-nks-gray-50 hover:border-nks-gray-300 rounded-lg cursor-pointer"
-                                title="Gerenciar artes"
-                              >
-                                <ChevronRight className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                            <Button
-                              onClick={() => handleStartEdit(c)}
-                              variant="ghost"
-                              size="icon"
-                              disabled={actionLoading}
-                              className="h-8 w-8 border border-nks-gray-200 bg-white text-nks-gray-700 hover:text-nks-black hover:bg-nks-gray-50 hover:border-nks-gray-300 rounded-lg cursor-pointer"
-                              title="Editar"
-                            >
-                              <Edit3 className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button
-                              onClick={() => setPendingDeleteId(c.slug)}
-                              variant="ghost"
-                              size="icon"
-                              disabled={actionLoading}
-                              className="h-8 w-8 border border-nks-gray-200 bg-white text-nks-gray-400 hover:text-nks-red hover:bg-nks-red-subtle/40 hover:border-nks-red/20 rounded-lg cursor-pointer"
-                              title="Excluir"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
+                          {actionLoading ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Check className="h-3 w-3" />
+                          )}{' '}
+                          Sim
+                        </Button>
+                        <Button
+                          onClick={() => setPendingDeleteId(null)}
+                          variant="ghost"
+                          size="sm"
+                          aria-label="Cancelar exclusão"
+                          className="h-8 px-2.5 border border-nks-gray-200 rounded-lg text-[10px] font-bold"
+                        >
+                          <X className="h-3 w-3" /> Não
+                        </Button>
+                      </div>
+                    )
+                  }
+                  return (
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Link href={`/admin/colecoes/${c.slug}`}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={actionLoading || isEditing}
+                          className="h-8 w-8 border border-nks-gray-200 bg-white text-nks-gray-700 hover:text-nks-black hover:bg-nks-gray-50 hover:border-nks-gray-300 rounded-lg cursor-pointer"
+                          title="Gerenciar artes"
+                          aria-label={`Gerenciar artes de ${c.title}`}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Button
+                        onClick={() => handleStartEdit(c)}
+                        variant="ghost"
+                        size="icon"
+                        disabled={actionLoading}
+                        className="h-8 w-8 border border-nks-gray-200 bg-white text-nks-gray-700 hover:text-nks-black hover:bg-nks-gray-50 hover:border-nks-gray-300 rounded-lg cursor-pointer"
+                        title="Editar"
+                        aria-label={`Editar ${c.title}`}
+                      >
+                        <Edit3 className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        onClick={() => setPendingDeleteId(c.slug)}
+                        variant="ghost"
+                        size="icon"
+                        disabled={actionLoading}
+                        className="h-8 w-8 border border-nks-gray-200 bg-white text-nks-gray-400 hover:text-nks-red hover:bg-nks-red-subtle/40 hover:border-nks-red/20 rounded-lg cursor-pointer"
+                        title="Excluir"
+                        aria-label={`Excluir ${c.title}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   )
-                })}
-                {filtered.length === 0 && !loading && (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="py-12 text-center text-nks-gray-400 font-semibold text-xs"
-                    >
-                      {searchQuery
-                        ? 'Nenhuma coleção encontrada para esta busca.'
-                        : 'Nenhuma coleção cadastrada. Crie a primeira usando o botão acima.'}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                },
+              },
+            ]}
+          />
         </div>
       )}
     </div>

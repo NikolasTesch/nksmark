@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { File as PrismaFile, Artwork } from '@prisma/client'
 import { FormatBadge } from './FormatBadge'
-import { Download, FileArchive, Mail, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react'
+import { Download, FileArchive, Mail, AlertTriangle, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { formatBytes } from '@/lib/utils/format'
 
 interface DownloadModalProps {
@@ -37,8 +38,6 @@ export function DownloadModal({
   const [email, setEmail] = React.useState('')
   const [loadingFileId, setLoadingFileId] = React.useState<string | null>(null)
   const [zipLoading, setZipLoading] = React.useState(false)
-  const [successMessage, setSuccessMessage] = React.useState('')
-  const [errorMessage, setErrorMessage] = React.useState('')
 
   const isFaseOrAdmin = canDownload ?? (userRole === 'FASE' || userRole === 'ADMIN')
   const hasMultipleFiles = files.length > 1
@@ -46,13 +45,11 @@ export function DownloadModal({
 
   const handleDownload = async (file: PrismaFile) => {
     if (!isFaseOrAdmin) {
-      setErrorMessage('Apenas membros da equipe interna (Fase) podem realizar downloads.')
+      toast.error('Apenas membros da equipe interna (Fase) podem realizar downloads.', { duration: 6000 })
       return
     }
 
     setLoadingFileId(file.id)
-    setErrorMessage('')
-    setSuccessMessage('')
 
     try {
       const signedUrl = await onDownloadRequest(file.id, email || undefined)
@@ -63,13 +60,12 @@ export function DownloadModal({
         document.body.appendChild(a)
         a.click()
         document.body.removeChild(a)
-        
-        setSuccessMessage(`Download do arquivo ${file.format} iniciado com sucesso!`)
+        toast.success(`Download do arquivo ${file.format} iniciado com sucesso!`)
       } else {
-        setErrorMessage('Erro ao gerar URL segura de download. Tente novamente.')
+        toast.error('Erro ao gerar URL segura de download. Tente novamente.', { duration: 6000 })
       }
     } catch {
-      setErrorMessage('Falha na comunicação com o servidor.')
+      toast.error('Falha na comunicação com o servidor.', { duration: 6000 })
     } finally {
       setLoadingFileId(null)
     }
@@ -77,23 +73,21 @@ export function DownloadModal({
 
   const handleZipDownload = async () => {
     if (!isFaseOrAdmin || !onZipDownloadRequest) {
-      setErrorMessage('Apenas membros da equipe interna (Fase) podem realizar downloads.')
+      toast.error('Apenas membros da equipe interna (Fase) podem realizar downloads.', { duration: 6000 })
       return
     }
 
     setZipLoading(true)
-    setErrorMessage('')
-    setSuccessMessage('')
 
     try {
       const ok = await onZipDownloadRequest()
       if (ok) {
-        setSuccessMessage('Download do .zip com todos os arquivos iniciado com sucesso!')
+        toast.success('Download do .zip com todos os arquivos iniciado com sucesso!')
       } else {
-        setErrorMessage('Erro ao gerar o .zip. Tente novamente.')
+        toast.error('Erro ao gerar o .zip. Tente novamente.', { duration: 6000 })
       }
     } catch {
-      setErrorMessage('Falha na comunicação com o servidor.')
+      toast.error('Falha na comunicação com o servidor.', { duration: 6000 })
     } finally {
       setZipLoading(false)
     }
@@ -194,20 +188,6 @@ export function DownloadModal({
             })}
           </div>
         </div>
-
-        {successMessage && (
-          <div className="bg-green-50 border border-green-200 p-3.5 rounded flex items-center gap-2.5 text-xs text-green-800 animate-in fade-in duration-300 font-semibold">
-            <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
-            <span>{successMessage}</span>
-          </div>
-        )}
-
-        {errorMessage && (
-          <div className="bg-nks-red-subtle border border-nks-red/20 p-3.5 rounded flex items-center gap-2.5 text-xs text-nks-red-dark animate-in fade-in duration-300">
-            <AlertTriangle className="h-4 w-4 text-nks-red shrink-0" />
-            <span>{errorMessage}</span>
-          </div>
-        )}
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="rounded h-9">

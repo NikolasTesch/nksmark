@@ -4,6 +4,7 @@ import { protectAdminRoute } from '@/lib/auth/middleware'
 import { hashPassword } from '@/lib/auth/password'
 import { Role } from '@prisma/client'
 import { userCreateSchema } from '@/lib/validations/admin'
+import { logger as log } from "@/lib/utils/logger";
 
 // Campos seguros para retornar ao cliente (nunca expor passwordHash).
 const publicUserSelect = {
@@ -31,7 +32,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: users })
   } catch (error) {
-    console.error('Error fetching admin users:', error)
+    log.error('Error fetching admin users:', error)
     return NextResponse.json({ success: false, error: 'Erro ao buscar equipe.' }, { status: 500 })
   }
 }
@@ -59,7 +60,22 @@ export async function POST(req: Request) {
     })
 
     if (userExists) {
-      return NextResponse.json({ success: false, error: 'Este e-mail já está cadastrado.' }, { status: 400 })
+      if (userExists.role === Role.FASE || userExists.role === Role.ADMIN) {
+        return NextResponse.json({ success: false, error: 'Este e-mail já está cadastrado na equipe.' }, { status: 400 })
+      }
+
+      // Reativa usuário com role VISITOR/CLIENT para a equipe (FASE ou ADMIN) e atualiza credenciais
+      const updatedUser = await prisma.user.update({
+        where: { id: userExists.id },
+        data: {
+          name: name || userExists.name,
+          role: role === 'ADMIN' ? Role.ADMIN : Role.FASE,
+          passwordHash: await hashPassword(password),
+        },
+        select: publicUserSelect,
+      })
+
+      return NextResponse.json({ success: true, data: updatedUser }, { status: 200 })
     }
 
     const user = await prisma.user.create({
@@ -74,7 +90,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: user }, { status: 201 })
   } catch (error) {
-    console.error('Error creating user:', error)
+    log.error('Error creating user:', error)
     return NextResponse.json({ success: false, error: 'Erro interno no servidor.' }, { status: 500 })
   }
 }

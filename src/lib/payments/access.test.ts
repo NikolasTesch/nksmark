@@ -2,7 +2,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { Role } from '@prisma/client'
 
 const { prismaMock } = vi.hoisted(() => ({
-  prismaMock: { order: { findFirst: vi.fn() } },
+  prismaMock: {
+    orderItem: { findFirst: vi.fn() },
+    subscription: { findUnique: vi.fn() },
+  },
 }))
 vi.mock('@/lib/prisma', () => ({ default: prismaMock }))
 
@@ -10,14 +13,15 @@ import { canDownloadArtwork } from './access'
 
 beforeEach(() => {
   vi.clearAllMocks()
-  prismaMock.order.findFirst.mockResolvedValue(null)
+  prismaMock.orderItem.findFirst.mockResolvedValue(null)
+  prismaMock.subscription.findUnique.mockResolvedValue(null)
 })
 
 describe('canDownloadArtwork', () => {
   it('libera FASE e ADMIN sem consultar pedidos', async () => {
     expect(await canDownloadArtwork({ userId: 'u', role: Role.FASE, artworkId: 'a', isFree: false })).toBe(true)
     expect(await canDownloadArtwork({ userId: 'u', role: Role.ADMIN, artworkId: 'a', isFree: false })).toBe(true)
-    expect(prismaMock.order.findFirst).not.toHaveBeenCalled()
+    expect(prismaMock.orderItem.findFirst).not.toHaveBeenCalled()
   })
 
   it('bloqueia visitante / role indefinida', async () => {
@@ -27,13 +31,25 @@ describe('canDownloadArtwork', () => {
 
   it('libera cliente para arte grátis sem consultar pedidos', async () => {
     expect(await canDownloadArtwork({ userId: 'u', role: Role.CLIENT, artworkId: 'a', isFree: true })).toBe(true)
-    expect(prismaMock.order.findFirst).not.toHaveBeenCalled()
+    expect(prismaMock.orderItem.findFirst).not.toHaveBeenCalled()
   })
 
   it('cliente só baixa arte paga quando há pedido PAGO', async () => {
     expect(await canDownloadArtwork({ userId: 'u', role: Role.CLIENT, artworkId: 'a', isFree: false })).toBe(false)
 
-    prismaMock.order.findFirst.mockResolvedValue({ id: 'pago' })
+    prismaMock.orderItem.findFirst.mockResolvedValue({ id: 'pago' })
     expect(await canDownloadArtwork({ userId: 'u', role: Role.CLIENT, artworkId: 'a', isFree: false })).toBe(true)
+  })
+
+  it('revoga download após estorno: pedido REFUNDED bloqueia o cliente (gate de /downloads e /zip)', async () => {
+    // Pedido REFUNDED não casa com a query `status: PAID` do Prisma → findFirst
+    // retorna null → cliente perde o download imediatamente (CA-1).
+    prismaMock.orderItem.findFirst.mockResolvedValue(null)
+    expect(await canDownloadArtwork({ userId: 'u', role: Role.CLIENT, artworkId: 'a', isFree: false })).toBe(false)
+  })
+
+  it('revoga download se o pedido estiver FAILED (não é PAID)', async () => {
+    prismaMock.orderItem.findFirst.mockResolvedValue(null)
+    expect(await canDownloadArtwork({ userId: 'u', role: Role.CLIENT, artworkId: 'a', isFree: false })).toBe(false)
   })
 })

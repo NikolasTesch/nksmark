@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { protectAdminRoute } from '@/lib/auth/middleware'
 import { OrderStatus } from '@prisma/client'
+import { logger as log } from "@/lib/utils/logger";
 
 // Análise de vendas (pedidos PAGOS) por período: receita, top artes, nichos
 // (categorias) mais vendidos e clientes que mais compraram.
@@ -153,7 +154,7 @@ export async function GET(req: Request) {
       },
     })
   } catch (error) {
-    console.error('Error fetching admin sales:', error)
+    log.error('Error fetching admin sales:', error)
     return NextResponse.json(
       { success: false, error: 'Erro ao carregar a análise de vendas.' },
       { status: 500 }

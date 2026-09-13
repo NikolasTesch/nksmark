@@ -5,6 +5,7 @@ import { SupportEmailTemplate } from '@/lib/email/templates/support'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
 import prisma from '@/lib/prisma'
 import * as React from 'react'
+import { logger as log } from "@/lib/utils/logger";
 
 export async function POST(req: Request) {
   try {
@@ -52,30 +53,30 @@ export async function POST(req: Request) {
           }),
         })
         if (error) {
-          console.error('Error sending email via Resend API:', error)
+          log.error('Error sending email via Resend API:', error)
           return NextResponse.json(
             { success: false, error: 'Erro ao enviar o e-mail de suporte.' },
             { status: 500 }
           )
         }
       } catch (err) {
-        console.error('Unexpected error sending email via Resend:', err)
+        log.error('Unexpected error sending email via Resend:', err)
         return NextResponse.json(
           { success: false, error: 'Erro inesperado ao enviar o chamado de suporte.' },
           { status: 500 }
         )
       }
     } else {
-      console.log('--- Suporte Recebido (RESEND_API_KEY não configurada) ---')
-      console.log(`Nome: ${name}`)
-      console.log(`Email: ${email}`)
-      console.log(`Mensagem: ${message}`)
-      console.log('---------------------------------------------------------')
+      log.info('--- Suporte Recebido (RESEND_API_KEY não configurada) ---')
+      log.info(`Nome: ${name}`)
+      log.info(`Email: ${email}`)
+      log.info(`Mensagem: ${message}`)
+      log.info('---------------------------------------------------------')
     }
 
     return NextResponse.json({ success: true }, { status: 200 })
   } catch (error) {
-    console.error('Error in support API:', error)
+    log.error('Error in support API:', error)
     return NextResponse.json({ success: false, error: 'Erro interno no servidor' }, { status: 500 })
   }
 }

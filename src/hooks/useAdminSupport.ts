@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { logger as log } from "@/lib/utils/logger";
 
 export interface SupportTicket {
   id: string
@@ -27,7 +28,7 @@ export function useAdminSupport() {
         setError(result.error || 'Erro ao carregar os chamados de suporte.')
       }
     } catch (err) {
-      console.error(err)
+      log.error(err)
       setError('Erro de conexão ao carregar os chamados.')
     } finally {
       setLoading(false)
@@ -51,7 +52,7 @@ export function useAdminSupport() {
         return { success: false, error: result.error || 'Erro ao atualizar o chamado.' }
       }
     } catch (err) {
-      console.error(err)
+      log.error(err)
       return { success: false, error: 'Erro de conexão ao atualizar o chamado.' }
     }
   }, [])

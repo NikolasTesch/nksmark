@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input'
 import { Plus, Trash2, Loader2, AlertCircle, Mail, Shield, Check, X } from 'lucide-react'
 import { useAdminUsers } from '@/hooks/useAdminUsers'
 import { formatDate } from '@/lib/utils/format'
+import { DataTable } from '@/components/admin/DataTable'
+import { toast } from 'sonner'
 
 export default function UsuariosPage() {
   const { users, loading, error, createUser, deleteUser } = useAdminUsers()
@@ -37,8 +39,10 @@ export default function UsuariosPage() {
       setEmail('')
       setPassword('')
       setRole('FASE')
+      toast.success('Membro cadastrado com sucesso!')
     } else {
       setActionError(result.error || 'Erro ao cadastrar usuário.')
+      toast.error(result.error || 'Erro ao cadastrar usuário.')
     }
   }
 
@@ -50,6 +54,9 @@ export default function UsuariosPage() {
     setActionLoading(false)
     if (!result.success) {
       setActionError(result.error || 'Erro ao excluir usuário.')
+      toast.error(result.error || 'Erro ao excluir usuário.')
+    } else {
+      toast.success('Acesso do usuário revogado com sucesso.')
     }
   }
 
@@ -144,85 +151,89 @@ export default function UsuariosPage() {
               <Loader2 className="h-8 w-8 animate-spin text-nks-red" />
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm border-collapse">
-                <thead>
-                  <tr className="bg-nks-black text-white border-b border-nks-gray-200 font-display font-extrabold text-[11px] uppercase tracking-[0.08em]">
-                    <th className="py-3.5 px-4">Nome / E-mail</th>
-                    <th className="py-3.5 px-4">Nível</th>
-                    <th className="py-3.5 px-4">Cadastrado em</th>
-                    <th className="py-3.5 px-4 text-right">Ação</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-nks-gray-200">
-                  {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-nks-gray-100/30 transition-colors">
-                      <td className="py-3.5 px-4">
-                        <div className="flex flex-col">
-                          <span className="font-bold text-nks-black">
-                            {user.name || 'Sem Nome'}
-                          </span>
-                          <span className="text-[10px] text-nks-gray-400 font-mono flex items-center gap-1 mt-0.5">
-                            <Mail className="h-3 w-3" /> {user.email}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className={`inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-sm border font-display tracking-wider ${
-                          user.role === 'ADMIN'
-                            ? 'bg-nks-black text-white border-nks-black'
-                            : 'bg-nks-red-subtle text-nks-red border-nks-red/20'
-                        }`}>
-                          <Shield className="h-2.5 w-2.5" />
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-xs text-nks-gray-700 font-semibold">
-                        {formatDate(user.createdAt)}
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        {pendingDeleteId === user.id ? (
-                          <div className="flex items-center justify-end gap-1.5">
-                            <span className="text-[10px] font-bold text-nks-red hidden sm:block">Confirmar?</span>
-                            <Button
-                              onClick={() => handleDeleteConfirm(user.id)}
-                              disabled={actionLoading}
-                              size="sm"
-                              className="h-7 px-2.5 gap-1 text-[10px] font-black bg-nks-red hover:bg-nks-red-dark text-white rounded-sm border-none"
-                            >
-                              <Check className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              onClick={() => setPendingDeleteId(null)}
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 px-2.5 border border-nks-gray-200 rounded-sm text-[10px] font-bold"
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button
-                            onClick={() => setPendingDeleteId(user.id)}
-                            variant="ghost"
-                            size="icon"
-                            disabled={actionLoading || user.id === 'admin'}
-                            className="h-8 w-8 text-nks-red hover:text-nks-red-dark hover:bg-nks-red-subtle border border-nks-red/20 rounded-sm cursor-pointer hover:bg-nks-red-subtle/50 disabled:opacity-30"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                  {users.length === 0 && (
-                    <tr>
-                      <td colSpan={4} className="py-8 text-center text-nks-gray-400 font-semibold text-xs">Nenhum membro cadastrado na equipe.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              headerVariant="dark"
+              rows={users}
+              getRowKey={(user) => user.id}
+              emptyTitle="Nenhum membro cadastrado na equipe."
+              columns={[
+                {
+                  id: 'name',
+                  header: 'Nome / E-mail',
+                  render: (user) => (
+                    <div className="flex flex-col">
+                      <span className="font-bold text-nks-black">
+                        {user.name || 'Sem Nome'}
+                      </span>
+                      <span className="text-[10px] text-nks-gray-400 font-mono flex items-center gap-1 mt-0.5">
+                        <Mail className="h-3 w-3" /> {user.email}
+                      </span>
+                    </div>
+                  ),
+                },
+                {
+                  id: 'role',
+                  header: 'Nível',
+                  render: (user) => (
+                    <span className={`inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-sm border font-display tracking-wider ${
+                      user.role === 'ADMIN'
+                        ? 'bg-nks-black text-white border-nks-black'
+                        : 'bg-nks-red-subtle text-nks-red border-nks-red/20'
+                    }`}>
+                      <Shield className="h-2.5 w-2.5" />
+                      {user.role}
+                    </span>
+                  ),
+                },
+                {
+                  id: 'created',
+                  header: 'Cadastrado em',
+                  hideOnMobile: true,
+                  cellClassName: 'text-xs text-nks-gray-700 font-semibold',
+                  render: (user) => formatDate(user.createdAt),
+                },
+                {
+                  id: 'actions',
+                  header: 'Ação',
+                  align: 'right',
+                  render: (user) =>
+                    pendingDeleteId === user.id ? (
+                      <div className="flex items-center justify-end gap-1.5">
+                        <span className="text-[10px] font-bold text-nks-red hidden sm:block">Confirmar?</span>
+                        <Button
+                          onClick={() => handleDeleteConfirm(user.id)}
+                          disabled={actionLoading}
+                          size="sm"
+                          aria-label={`Confirmar exclusão de ${user.name || user.email}`}
+                          className="h-7 px-2.5 gap-1 text-[10px] font-black bg-nks-red hover:bg-nks-red-dark text-white rounded-sm border-none"
+                        >
+                          <Check className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          onClick={() => setPendingDeleteId(null)}
+                          variant="ghost"
+                          size="sm"
+                          aria-label="Cancelar exclusão"
+                          className="h-7 px-2.5 border border-nks-gray-200 rounded-sm text-[10px] font-bold"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        onClick={() => setPendingDeleteId(user.id)}
+                        variant="ghost"
+                        size="icon"
+                        disabled={actionLoading || user.id === 'admin'}
+                        aria-label={`Excluir ${user.name || user.email}`}
+                        className="h-8 w-8 text-nks-red hover:text-nks-red-dark hover:bg-nks-red-subtle border border-nks-red/20 rounded-sm cursor-pointer hover:bg-nks-red-subtle/50 disabled:opacity-30"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    ),
+                },
+              ]}
+            />
           )}
         </div>
       </div>

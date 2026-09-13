@@ -9,6 +9,7 @@ import { useFavorites } from '@/hooks/useFavorites'
 import { useCart } from '@/hooks/useCart'
 import { Lock, Download, Heart, Image as ImageIcon, Eye, ShoppingCart, Check } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { toast } from 'sonner'
 import { formatBRL } from '@/lib/utils/format'
 
 interface ArtworkCardProps {
@@ -32,6 +33,7 @@ export function ArtworkCard({ artwork, purchasedArtworkIds }: ArtworkCardProps) 
   const { addToCart, isInCart, loading: cartLoading } = useCart()
   const inCart = isClient && !artwork.isFree && isInCart(artwork.id)
   const [adding, setAdding] = React.useState(false)
+  const [imgFailed, setImgFailed] = React.useState(false)
   const href = `/loja/${artwork.slug}`
   const extraTag = artwork.tags[0]?.name
 
@@ -40,9 +42,10 @@ export function ArtworkCard({ artwork, purchasedArtworkIds }: ArtworkCardProps) 
     e.stopPropagation()
     if (adding || inCart) return
     setAdding(true)
-    await addToCart(artwork.id)
-    // Reseta o spinner rápido — a confirmação visual fica pelo `inCart`.
+    const res = await addToCart(artwork.id)
     setAdding(false)
+    if (res.success) toast.success('Adicionado ao carrinho')
+    else toast.error(res.error || 'Não foi possível adicionar ao carrinho.', { duration: 6000 })
   }
 
   // Formatos únicos disponíveis (CDR, AI, …) exibidos no overlay de hover.
@@ -64,11 +67,12 @@ export function ArtworkCard({ artwork, purchasedArtworkIds }: ArtworkCardProps) 
       <Link href={href} className="relative block aspect-[4/5] w-full overflow-hidden bg-nks-gray-100">
         {artwork.previewUrl ? (
           <Image
-            src={artwork.previewUrl}
+            src={imgFailed ? '/placeholder.svg' : artwork.previewUrl}
             alt={artwork.title}
             fill
             className="object-cover transition-transform duration-[320ms] group-hover:scale-[1.04]"
             sizes="(max-width: 980px) 50vw, 320px"
+            onError={() => setImgFailed(true)}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
@@ -98,6 +102,7 @@ export function ArtworkCard({ artwork, purchasedArtworkIds }: ArtworkCardProps) 
           onClick={(e) => {
             e.preventDefault()
             toggleFavorite(artwork.id)
+            toast.success(fav ? 'Removido dos favoritos' : 'Adicionado aos favoritos')
           }}
           className="absolute top-[9px] right-[9px] z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/92 shadow-[0_1px_2px_rgba(17,17,17,0.06)] cursor-pointer"
         >

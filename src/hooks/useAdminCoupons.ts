@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { logger as log } from "@/lib/utils/logger";
 
 export type DiscountType = 'PERCENTAGE' | 'FIXED'
 
@@ -72,7 +73,7 @@ export function useAdminCoupons() {
         setError(parsed.error || 'Erro ao carregar cupons.')
       }
     } catch (err) {
-      console.error(err)
+      log.error(err)
       setError('Erro de conexão ao carregar cupons.')
     } finally {
       setLoading(false)
@@ -100,7 +101,7 @@ export function useAdminCoupons() {
         }
         return { success: false, error: parsed.error || 'Erro ao criar cupom.' }
       } catch (err) {
-        console.error(err)
+        log.error(err)
         return { success: false, error: 'Erro de conexão ao criar cupom.' }
       }
     },
@@ -123,7 +124,7 @@ export function useAdminCoupons() {
         }
         return { success: false, error: parsed.error || 'Erro ao atualizar cupom.' }
       } catch (err) {
-        console.error(err)
+        log.error(err)
         return { success: false, error: 'Erro de conexão ao atualizar cupom.' }
       }
     },
@@ -149,7 +150,7 @@ export function useAdminCoupons() {
         }
         return { success: false, error: parsed.error || 'Erro ao excluir cupom.' }
       } catch (err) {
-        console.error(err)
+        log.error(err)
         return { success: false, error: 'Erro de conexão ao excluir cupom.' }
       }
     },

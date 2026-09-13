@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { protectAdminRoute } from '@/lib/auth/middleware'
 import { Prisma } from '@prisma/client'
+import { logger as log } from "@/lib/utils/logger";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -81,7 +82,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         { status: 404 }
       )
     }
-    console.error('Error updating coupon:', error)
+    log.error('Error updating coupon:', error)
     return NextResponse.json(
       { success: false, error: 'Erro ao atualizar cupom.' },
       { status: 500 }
@@ -130,7 +131,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
         { status: 404 }
       )
     }
-    console.error('Error deleting coupon:', error)
+    log.error('Error deleting coupon:', error)
     return NextResponse.json(
       { success: false, error: 'Erro ao excluir cupom.' },
       { status: 500 }

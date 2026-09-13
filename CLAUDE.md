@@ -21,7 +21,7 @@ para upload/gestão. Pagamento fica para a Fase 2. Especificação completa em `
 | Email | Resend + React Email | suporte / sugestão de arte |
 | Validação | Zod v4 | |
 
-**Framer Motion** já instalado e em uso. **Vercel Analytics** ainda não configurado.
+**Framer Motion** já instalado e em uso. **Vercel Analytics** configurado (`@vercel/analytics/next` importado e montado em `src/app/layout.tsx`).
 Pagamento (Stripe/Mercado Pago), busca livre e marca d'água são Fase 2.
 
 ## Comandos
@@ -57,7 +57,7 @@ prisma/          # schema.prisma + seed.ts
 ### Divergências entre `spec.md` e o build atual
 
 - `/` **redireciona para `/loja`** — hero removida por ora; a entrada pública é direto o catálogo.
-- `/admin/conteudo` tem abas Categorias e Tags implementadas; **aba Filtros ainda pendente**.
+- `/admin/conteudo` tem abas Categorias, Tags e **Filtros** implementadas (reordenação via dnd-kit em `/api/categories/reorder`).
 - `/admin/usuarios`, `/admin/artes/[id]`, `/admin/downloads`, `/admin/metricas` — **todos implementados**.
 - Login admin: verificação via ADMIN_PASSWORD_HASH no `.env` (bcrypt/scrypt, sem fallback em texto puro).
 - Framer Motion em uso em `/admin/downloads` e `/quem-somos`.
@@ -85,7 +85,7 @@ prisma/          # schema.prisma + seed.ts
 
 Antes de codar qualquer feature ou correção não-trivial, siga este fluxo:
 
-1. **Crie uma spec detalhada** em `specs/` com nome descritivo (ex.: `specs/feat-filtros-admin.md`).
+1. **Crie uma spec detalhada** em `docs/specs/active/` com nome descritivo (ex.: `docs/specs/active/feat-filtros-admin.md`).
    A spec deve conter: objetivo, escopo (o que faz / o que não faz), mudanças de modelo de dados,
    endpoints afetados, componentes/páginas impactadas, critérios de aceitação e riscos.
 2. **Execute a implementação** conforme a spec.

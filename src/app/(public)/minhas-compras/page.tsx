@@ -3,8 +3,10 @@
 import * as React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ShoppingBag, ArrowRight, Loader2, AlertTriangle, RefreshCw, Download, Clock, XCircle } from 'lucide-react'
+import { ShoppingBag, Loader2, AlertTriangle, RefreshCw, Download, Clock, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/shared/EmptyState'
+import { LoadingGrid } from '@/components/shared/LoadingGrid'
 import { formatBRL, formatDate } from '@/lib/utils/format'
 
 interface OrderItem {
@@ -88,29 +90,6 @@ export default function MinhasComprasPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-7 w-7 animate-spin text-nks-gray-400" />
-      </div>
-    )
-  }
-
-  if (error && orders.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center text-center p-12 border border-nks-gray-200 bg-nks-gray-100 rounded max-w-lg mx-auto my-8">
-        <div className="flex h-12 w-12 items-center justify-center rounded bg-nks-red text-white mb-4">
-          <AlertTriangle className="h-6 w-6" />
-        </div>
-        <h3 className="font-semibold text-lg text-nks-black mb-1.5">Erro ao carregar compras</h3>
-        <p className="text-sm text-nks-gray-700 mb-6 max-w-xs leading-normal">{error}</p>
-        <Button onClick={fetchOrders} variant="outline" size="sm" className="gap-1.5">
-          <RefreshCw className="h-4 w-4" /> Tentar novamente
-        </Button>
-      </div>
-    )
-  }
-
   return (
     <div className="flex flex-col gap-6 py-4 animate-in fade-in duration-300">
       <div>
@@ -123,75 +102,113 @@ export default function MinhasComprasPage() {
         </p>
       </div>
 
-      {orders.length === 0 ? (
+      {loading ? (
+        <LoadingGrid count={6} />
+      ) : error && orders.length === 0 ? (
         <div className="flex flex-col items-center justify-center text-center p-12 border border-nks-gray-200 bg-nks-gray-100 rounded max-w-lg mx-auto my-8">
-          <div className="flex h-12 w-12 items-center justify-center rounded bg-nks-black text-white mb-4">
-            <ShoppingBag className="h-6 w-6" />
+          <div className="flex h-12 w-12 items-center justify-center rounded bg-nks-red text-white mb-4">
+            <AlertTriangle className="h-6 w-6" />
           </div>
-          <h3 className="font-semibold text-lg text-nks-black mb-1.5">Nenhuma compra ainda</h3>
-          <p className="text-sm text-nks-gray-700 mb-6 max-w-xs leading-normal">
-            Explore o catálogo e adquira artes para download imediato.
-          </p>
-          <Link href="/loja">
-            <Button className="gap-1 px-5 h-9">
-              Ir para a loja <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
+          <h3 className="font-semibold text-lg text-nks-black mb-1.5">Erro ao carregar compras</h3>
+          <p className="text-sm text-nks-gray-700 mb-6 max-w-xs leading-normal">{error}</p>
+          <Button onClick={fetchOrders} variant="outline" size="sm" className="gap-1.5">
+            <RefreshCw className="h-4 w-4" /> Tentar novamente
+          </Button>
         </div>
+      ) : orders.length === 0 ? (
+        <EmptyState
+          icon={ShoppingBag}
+          title="Nenhuma compra ainda"
+          description="Explore o catálogo e adquira artes para download imediato."
+          actionHref="/loja"
+          actionLabel="Ver a loja"
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {orders.map((order) => {
             const badge = statusLabel[order.status]
             const isPaid = order.status === 'PAID'
             return (
-              <div key={order.id} className="border border-nks-gray-200 rounded-lg overflow-hidden bg-white shadow-nks-sm flex flex-col">
-                <div className="relative h-36 w-full bg-nks-gray-100">
-                  <Image src={order.artwork.previewUrl || '/placeholder.jpg'} alt={order.artwork.title} fill className="object-cover" />
-                </div>
-                <div className="flex flex-col gap-2 p-4 flex-grow">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-sm font-bold text-nks-black leading-snug line-clamp-2">{order.artwork.title}</h3>
-                    <span className="text-sm font-extrabold text-nks-black whitespace-nowrap">{formatBRL(order.amountCents)}</span>
-                  </div>
-                  <span className={`inline-flex items-center gap-1 self-start text-[10px] font-bold uppercase px-2 py-0.5 rounded-sm border ${badge.className}`}>
-                    {isPaid ? null : order.status === 'PENDING' ? <Clock className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-                    {badge.text}
-                  </span>
-                  <span className="text-[11px] text-nks-gray-400 font-semibold">
-                    {isPaid && order.paidAt ? `Pago em ${formatDate(order.paidAt)}` : `Criado em ${formatDate(order.createdAt)}`}
-                  </span>
-
-                  <div className="mt-auto pt-3">
-                    {isPaid ? (
-                      <Button
-                        onClick={() => handleDownload(order)}
-                        disabled={downloadingId === order.id}
-                        size="sm"
-                        className="w-full gap-1.5"
-                      >
-                        {downloadingId === order.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                        {downloadingId === order.id ? 'Preparando...' : 'Baixar'}
-                      </Button>
-                    ) : order.status === 'PENDING' ? (
-                      <Link href={`/loja/${order.artwork.slug}`} className="block">
-                        <Button size="sm" variant="secondary" className="w-full gap-1.5">
-                          Concluir compra
-                        </Button>
-                      </Link>
-                    ) : (
-                      <Link href={`/loja/${order.artwork.slug}`} className="block">
-                        <Button size="sm" variant="outline" className="w-full gap-1.5">
-                          Ver arte
-                        </Button>
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <OrderCard
+                key={order.id}
+                order={order}
+                badge={badge}
+                isPaid={isPaid}
+                downloading={downloadingId === order.id}
+                onDownload={() => handleDownload(order)}
+              />
             )
           })}
         </div>
       )}
+    </div>
+  )
+}
+
+function OrderCard({
+  order,
+  badge,
+  isPaid,
+  downloading,
+  onDownload,
+}: {
+  order: OrderItem
+  badge: { text: string; className: string }
+  isPaid: boolean
+  downloading: boolean
+  onDownload: () => void
+}) {
+  const [imgFailed, setImgFailed] = React.useState(false)
+  return (
+    <div className="border border-nks-gray-200 rounded-lg overflow-hidden bg-white shadow-nks-sm flex flex-col">
+      <div className="relative h-36 w-full bg-nks-gray-100">
+        <Image
+          src={imgFailed ? '/placeholder.svg' : order.artwork.previewUrl || '/placeholder.svg'}
+          alt={order.artwork.title}
+          fill
+          className="object-cover"
+          onError={() => setImgFailed(true)}
+        />
+      </div>
+      <div className="flex flex-col gap-2 p-4 flex-grow">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-sm font-bold text-nks-black leading-snug line-clamp-2">{order.artwork.title}</h3>
+          <span className="text-sm font-extrabold text-nks-black whitespace-nowrap">{formatBRL(order.amountCents)}</span>
+        </div>
+        <span className={`inline-flex items-center gap-1 self-start text-[10px] font-bold uppercase px-2 py-0.5 rounded-sm border ${badge.className}`}>
+          {isPaid ? null : order.status === 'PENDING' ? <Clock className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+          {badge.text}
+        </span>
+        <span className="text-[11px] text-nks-gray-400 font-semibold">
+          {isPaid && order.paidAt ? `Pago em ${formatDate(order.paidAt)}` : `Criado em ${formatDate(order.createdAt)}`}
+        </span>
+
+        <div className="mt-auto pt-3">
+          {isPaid ? (
+            <Button
+              onClick={onDownload}
+              disabled={downloading}
+              size="sm"
+              className="w-full gap-1.5"
+            >
+              {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {downloading ? 'Preparando...' : 'Baixar'}
+            </Button>
+          ) : order.status === 'PENDING' ? (
+            <Link href={`/loja/${order.artwork.slug}`} className="block">
+              <Button size="sm" variant="secondary" className="w-full gap-1.5">
+                Concluir compra
+              </Button>
+            </Link>
+          ) : (
+            <Link href={`/loja/${order.artwork.slug}`} className="block">
+              <Button size="sm" variant="outline" className="w-full gap-1.5">
+                Ver arte
+              </Button>
+            </Link>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

@@ -4,6 +4,7 @@ import * as React from 'react'
 import { Category } from '@prisma/client'
 import { Loader2 } from 'lucide-react'
 import { ArtworkFormNks } from '@/components/admin/ArtworkFormNks'
+import { logger as log } from "@/lib/utils/logger";
 
 export default function NovaArtePage() {
   const [categories, setCategories] = React.useState<Category[]>([])
@@ -17,7 +18,7 @@ export default function NovaArtePage() {
           setCategories(res.data)
         }
       })
-      .catch((err) => console.error('Erro ao buscar categorias:', err))
+      .catch((err) => log.error('Erro ao buscar categorias:', err))
       .finally(() => setLoading(false))
   }, [])
 

@@ -6,6 +6,7 @@ import { SuggestionEmailTemplate } from '@/lib/email/templates/suggestion'
 import { uploadFileToR2 } from '@/lib/r2/upload'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
 import * as React from 'react'
+import { logger as log } from "@/lib/utils/logger";
 
 export async function POST(req: Request) {
   try {
@@ -98,16 +99,16 @@ export async function POST(req: Request) {
           }),
         })
         if (error) {
-          console.error('Error sending email via Resend API:', error)
+          log.error('Error sending email via Resend API:', error)
         }
       } catch (err) {
-        console.error('Unexpected error sending email via Resend:', err)
+        log.error('Unexpected error sending email via Resend:', err)
       }
     }
 
     return NextResponse.json({ success: true, data: { id: suggestion.id, imageUrl: suggestion.imageUrl } }, { status: 201 })
   } catch (error) {
-    console.error('Error in suggestions API:', error)
+    log.error('Error in suggestions API:', error)
     return NextResponse.json({ success: false, error: 'Erro interno no servidor' }, { status: 500 })
   }
 }

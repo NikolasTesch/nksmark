@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { protectAdminRoute } from '@/lib/auth/middleware'
 import { createCouponSchema } from '@/validations/coupon'
+import { logger as log } from "@/lib/utils/logger";
 
 export async function GET() {
   try {
@@ -16,7 +17,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: coupons })
   } catch (error) {
-    console.error('Error fetching coupons:', error)
+    log.error('Error fetching coupons:', error)
     return NextResponse.json(
       { success: false, error: 'Erro ao carregar cupons.' },
       { status: 500 }
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: coupon }, { status: 201 })
   } catch (error) {
-    console.error('Error creating coupon:', error)
+    log.error('Error creating coupon:', error)
     return NextResponse.json(
       { success: false, error: 'Erro ao criar cupom.' },
       { status: 500 }

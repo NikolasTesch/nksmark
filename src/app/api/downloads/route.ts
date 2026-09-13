@@ -6,6 +6,7 @@ import prisma from '@/lib/prisma'
 import { getSignedDownloadUrl } from '@/lib/r2/signed-url'
 import { canDownloadArtwork } from '@/lib/payments/access'
 import { rateLimit } from '@/lib/rate-limit'
+import { logger as log } from "@/lib/utils/logger";
 
 export async function POST(req: Request) {
   try {
@@ -112,7 +113,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: { downloadUrl: signedUrl } })
   } catch (error) {
-    console.error('Error in downloads API:', error)
+    log.error('Error in downloads API:', error)
     return NextResponse.json({ success: false, error: 'Erro interno no servidor' }, { status: 500 })
   }
 }
@@ -162,7 +163,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ success: true, data: history })
   } catch (error) {
-    console.error('Error fetching download history:', error)
+    log.error('Error fetching download history:', error)
     return NextResponse.json({ success: false, error: 'Erro ao buscar histórico no servidor.' }, { status: 500 })
   }
 }

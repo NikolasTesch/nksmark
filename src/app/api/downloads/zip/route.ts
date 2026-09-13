@@ -10,6 +10,7 @@ import { s3Client, R2_BUCKET_NAME } from '@/lib/r2/client'
 import { deriveFileKey } from '@/lib/r2/file-key'
 import { canDownloadArtwork } from '@/lib/payments/access'
 import { rateLimit } from '@/lib/rate-limit'
+import { logger as log } from "@/lib/utils/logger";
 
 // Streaming de arquivos + SDK AWS exigem o runtime Node (não Edge).
 export const runtime = 'nodejs'
@@ -115,7 +116,7 @@ export async function POST(req: Request) {
     const archive = archiver('zip', { zlib: { level: 9 } })
     // Sem listener de erro, uma falha no stream derrubaria o processo.
     archive.on('error', (err) => {
-      console.error('Error building zip archive:', err)
+      log.error('Error building zip archive:', err)
       archive.destroy(err)
     })
 
@@ -160,7 +161,7 @@ export async function POST(req: Request) {
       },
     })
   } catch (error) {
-    console.error('Error in zip downloads API:', error)
+    log.error('Error in zip downloads API:', error)
     return NextResponse.json({ success: false, error: 'Erro interno no servidor' }, { status: 500 })
   }
 }

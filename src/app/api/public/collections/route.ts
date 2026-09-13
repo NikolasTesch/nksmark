@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { logger as log } from "@/lib/utils/logger";
 
 export async function GET(req: Request) {
   try {
@@ -107,7 +108,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ success: true, data: { collections } })
   } catch (error) {
-    console.error('Error fetching public collections:', error)
+    log.error('Error fetching public collections:', error)
     return NextResponse.json(
       { success: false, error: 'Erro ao buscar coleções' },
       { status: 500 },

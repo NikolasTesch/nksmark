@@ -12,7 +12,7 @@ export interface DownloadHistoryItem {
 
 export function useDownloadHistory() {
   const [history, setHistory] = useState<DownloadHistoryItem[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | undefined>(undefined)
 
   const fetchHistory = useCallback(async () => {

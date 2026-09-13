@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client'
 import prisma from '@/lib/prisma'
 import { protectAdminRoute } from '@/lib/auth/middleware'
 import { generateSlug } from '@/lib/utils/slug'
+import { logger as log } from "@/lib/utils/logger";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -32,7 +33,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     return NextResponse.json({ success: true, data: updatedCategory })
   } catch (error) {
-    console.error('Error updating category:', error)
+    log.error('Error updating category:', error)
     return NextResponse.json({ success: false, error: 'Erro ao atualizar categoria' }, { status: 500 })
   }
 }
@@ -64,7 +65,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
     return NextResponse.json({ success: true, data: deletedCategory })
   } catch (error) {
-    console.error('Error deleting category:', error)
+    log.error('Error deleting category:', error)
     return NextResponse.json({ success: false, error: 'Erro ao excluir categoria' }, { status: 500 })
   }
 }

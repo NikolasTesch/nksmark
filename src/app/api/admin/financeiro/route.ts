@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { protectAdminRoute } from '@/lib/auth/middleware'
 import prisma from '@/lib/prisma'
 import { OrderStatus } from '@prisma/client'
+import { logger as log } from "@/lib/utils/logger";
 
 export async function GET(req: Request) {
   try {
@@ -37,7 +38,7 @@ export async function GET(req: Request) {
         return NextResponse.json({ success: false, error: 'Período inválido.' }, { status: 400 })
     }
   } catch (error) {
-    console.error('[Financeiro Error]', error)
+    log.error('[Financeiro Error]', error)
     return NextResponse.json({ success: false, error: 'Erro ao carregar dados.' }, { status: 500 })
   }
 }

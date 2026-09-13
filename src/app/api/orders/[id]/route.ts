@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { Role } from '@prisma/client'
 import { auth } from '@/lib/auth/auth'
 import prisma from '@/lib/prisma'
+import { logger as log } from "@/lib/utils/logger";
 
 // Status de um pedido — usado pela página de sucesso para fazer polling até
 // o webhook confirmar o pagamento.
@@ -39,7 +40,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       },
     })
   } catch (error) {
-    console.error('Error fetching order:', error)
+    log.error('Error fetching order:', error)
     return NextResponse.json({ success: false, error: 'Erro ao buscar pedido.' }, { status: 500 })
   }
 }

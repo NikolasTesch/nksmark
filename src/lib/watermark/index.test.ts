@@ -3,6 +3,8 @@ import sharp from 'sharp'
 import { applyWatermark } from './index'
 
 describe('applyWatermark', () => {
+  // ponytail: native image processing (sharp/libvips) under full-suite worker
+  // contention can exceed the default 5s timeout; allow headroom per test.
   it('should return a different buffer after applying watermark', async () => {
     // Create a simple test image (100x100 white PNG)
     const testImage = await sharp({
@@ -12,7 +14,7 @@ describe('applyWatermark', () => {
     const watermarked = await applyWatermark(testImage, 'image/png')
     expect(watermarked).not.toEqual(testImage)
     expect(watermarked.length).toBeGreaterThan(0)
-  })
+  }, 30000)
 
   it('should preserve image dimensions', async () => {
     const testImage = await sharp({
@@ -23,5 +25,5 @@ describe('applyWatermark', () => {
     const metadata = await sharp(watermarked).metadata()
     expect(metadata.width).toBe(200)
     expect(metadata.height).toBe(150)
-  })
+  }, 30000)
 })

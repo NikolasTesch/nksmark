@@ -4,6 +4,7 @@ import { protectAdminRoute } from '@/lib/auth/middleware'
 import { hashPassword } from '@/lib/auth/password'
 import { Prisma, Role } from '@prisma/client'
 import { userUpdateSchema } from '@/lib/validations/admin'
+import { logger as log } from "@/lib/utils/logger";
 
 const publicUserSelect = {
   id: true,
@@ -54,7 +55,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     return NextResponse.json({ success: true, data: updatedUser })
   } catch (error) {
-    console.error('Error updating user:', error)
+    log.error('Error updating user:', error)
     return NextResponse.json({ success: false, error: 'Erro ao atualizar usuário.' }, { status: 500 })
   }
 }
@@ -85,7 +86,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
     return NextResponse.json({ success: true, data: revokedUser })
   } catch (error) {
-    console.error('Error revoking user access:', error)
+    log.error('Error revoking user access:', error)
     return NextResponse.json({ success: false, error: 'Erro ao revogar acesso do usuário.' }, { status: 500 })
   }
 }

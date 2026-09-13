@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Archivo, DM_Sans, IBM_Plex_Mono } from 'next/font/google'
 import { SessionProvider } from 'next-auth/react'
 import { Analytics } from '@vercel/analytics/next'
+import { Toaster } from 'sonner'
 import './globals.css'
 
 // Display quadrada e geométrica — ecoa o lettering anguloso da logo
@@ -49,6 +50,18 @@ export default function RootLayout({
         <SessionProvider>
           {children}
         </SessionProvider>
+        <Toaster
+          theme="dark"
+          position="bottom-right"
+          duration={4000}
+          closeButton
+          toastOptions={{
+            classNames: {
+              toast: 'rounded-sm border font-sans',
+              error: 'border-[#B31217]',
+            },
+          }}
+        />
         <Analytics />
       </body>
     </html>

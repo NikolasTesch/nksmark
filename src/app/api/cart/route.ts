@@ -3,6 +3,7 @@ import { Role, Status } from '@prisma/client'
 import { auth } from '@/lib/auth/auth'
 import prisma from '@/lib/prisma'
 import { addToCartSchema } from '@/lib/validations/cart'
+import { logger as log } from "@/lib/utils/logger";
 
 export const runtime = 'nodejs'
 
@@ -56,7 +57,7 @@ export async function GET() {
       data: { items: cart.items, totalCents },
     })
   } catch (error) {
-    console.error('[Cart GET]', error)
+    log.error('[Cart GET]', error)
     return NextResponse.json({ success: false, error: 'Erro ao carregar carrinho.' }, { status: 500 })
   }
 }
@@ -163,7 +164,7 @@ export async function POST(req: Request) {
       { status: 201 }
     )
   } catch (error) {
-    console.error('[Cart POST]', error)
+    log.error('[Cart POST]', error)
     return NextResponse.json({ success: false, error: 'Erro ao adicionar ao carrinho.' }, { status: 500 })
   }
 }
@@ -192,7 +193,7 @@ export async function DELETE() {
 
     return NextResponse.json({ success: true, data: { items: [], totalCents: 0 } })
   } catch (error) {
-    console.error('[Cart DELETE]', error)
+    log.error('[Cart DELETE]', error)
     return NextResponse.json({ success: false, error: 'Erro ao limpar carrinho.' }, { status: 500 })
   }
 }

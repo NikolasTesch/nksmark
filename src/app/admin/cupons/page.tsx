@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { toast } from 'sonner'
 import {
   Tag,
   Plus,
@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button'
 import { formatBRL, formatDate } from '@/lib/utils/format'
 import { useAdminCoupons, Coupon } from '@/hooks/useAdminCoupons'
 import { CouponFormDialog } from './CouponFormDialog'
+import { DataTable } from '@/components/admin/DataTable'
 
 type DialogMode = null | 'create' | 'edit'
 
@@ -148,16 +149,6 @@ export default function AdminCouponsPage() {
   const [editingCoupon, setEditingCoupon] = React.useState<Coupon | null>(null)
   const [actionLoadingId, setActionLoadingId] = React.useState<string | null>(null)
   const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(null)
-  const [toast, setToast] = React.useState<
-    { kind: 'success' | 'error'; message: string } | null
-  >(null)
-
-  // Auto-dismiss toast
-  React.useEffect(() => {
-    if (!toast) return
-    const t = setTimeout(() => setToast(null), 3500)
-    return () => clearTimeout(t)
-  }, [toast])
 
   const views: CouponView[] = React.useMemo(
     () =>
@@ -202,14 +193,13 @@ export default function AdminCouponsPage() {
     const res = await toggleActive(coupon)
     setActionLoadingId(null)
     if (res.success) {
-      setToast({
-        kind: 'success',
-        message: coupon.isActive
+      toast.success(
+        coupon.isActive
           ? `Cupom ${coupon.code} desativado.`
           : `Cupom ${coupon.code} ativado.`,
-      })
+      )
     } else {
-      setToast({ kind: 'error', message: res.error || 'Erro ao alterar status.' })
+      toast.error(res.error || 'Erro ao alterar status.', { duration: 6000 })
     }
   }
 
@@ -219,16 +209,16 @@ export default function AdminCouponsPage() {
     setActionLoadingId(null)
     setPendingDeleteId(null)
     if (res.success) {
-      setToast({ kind: 'success', message: 'Cupom excluído.' })
+      toast.success('Cupom excluído.')
     } else {
-      setToast({ kind: 'error', message: res.error || 'Erro ao excluir cupom.' })
+      toast.error(res.error || 'Erro ao excluir cupom.', { duration: 6000 })
     }
   }
 
   const handleFormCreate = async (payload: Parameters<typeof createCoupon>[0]) => {
     const res = await createCoupon(payload)
     if (res.success) {
-      setToast({ kind: 'success', message: `Cupom ${res.data.code} criado.` })
+      toast.success(`Cupom ${res.data.code} criado.`)
     }
     return { success: res.success, error: 'error' in res ? res.error : undefined }
   }
@@ -239,7 +229,7 @@ export default function AdminCouponsPage() {
   ) => {
     const res = await updateCoupon(id, payload)
     if (res.success) {
-      setToast({ kind: 'success', message: `Cupom ${res.data.code} atualizado.` })
+      toast.success(`Cupom ${res.data.code} atualizado.`)
     }
     return { success: res.success, error: 'error' in res ? res.error : undefined }
   }
@@ -313,175 +303,161 @@ export default function AdminCouponsPage() {
               Carregando cupons...
             </span>
           </div>
-        ) : coupons.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-4 text-center px-6">
-            <div className="h-12 w-12 rounded-full bg-nks-gray-100 flex items-center justify-center text-nks-gray-400">
-              <Tag className="h-6 w-6 stroke-[1.5]" />
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-sm font-bold text-nks-black">Nenhum cupom cadastrado</span>
-              <span className="text-xs text-nks-gray-400 font-semibold max-w-[280px]">
-                Clique em <strong>Novo cupom</strong> para criar o primeiro cupom de desconto.
-              </span>
-            </div>
-          </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse min-w-[820px]">
-              <thead>
-                <tr className="bg-white border-b border-nks-gray-200/80 font-display font-extrabold text-[10px] uppercase tracking-[0.12em] text-nks-gray-400 select-none">
-                  <th className="py-4 px-4 sm:px-5 font-bold">Código</th>
-                  <th className="py-4 px-4 font-bold">Tipo</th>
-                  <th className="py-4 px-4 font-bold">Valor</th>
-                  <th className="py-4 px-4 font-bold text-center">Usos</th>
-                  <th className="py-4 px-4 font-bold">Expiração</th>
-                  <th className="py-4 px-4 font-bold">Status</th>
-                  <th className="py-4 px-4 font-bold text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-nks-gray-100">
-                {views.map(({ coupon, status, isExhausted }, index) => {
+          <DataTable
+            headerVariant="light"
+            rows={views}
+            getRowKey={(v) => v.coupon.id}
+            emptyTitle="Nenhum cupom cadastrado"
+            emptyDescription="Clique em Novo cupom para criar o primeiro cupom de desconto."
+            emptyIcon={Tag}
+            columns={[
+              {
+                id: 'code',
+                header: 'Código',
+                headerClassName: 'sm:px-5',
+                cellClassName: 'sm:px-5',
+                render: ({ coupon }) => (
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-mono text-xs font-black text-nks-black bg-nks-gray-100 border border-nks-gray-200 px-2 py-1 rounded-sm select-all">
+                      {coupon.code}
+                    </span>
+                    {coupon.description && (
+                      <span className="text-[10px] text-nks-gray-400 font-semibold truncate max-w-[180px] hidden md:inline">
+                        {coupon.description}
+                      </span>
+                    )}
+                  </div>
+                ),
+              },
+              {
+                id: 'type',
+                header: 'Tipo',
+                hideOnMobile: true,
+                render: ({ coupon }) => (
+                  <span
+                    className={`inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-sm border font-display tracking-wider ${
+                      coupon.discountType === 'PERCENTAGE'
+                        ? 'bg-nks-red-subtle text-nks-red border-nks-red/20'
+                        : 'bg-nks-black text-white border-nks-black'
+                    }`}
+                  >
+                    {coupon.discountType === 'PERCENTAGE' ? (
+                      <Percent className="h-2.5 w-2.5" />
+                    ) : (
+                      <Hash className="h-2.5 w-2.5" />
+                    )}
+                    {coupon.discountType === 'PERCENTAGE' ? 'Percentagem' : 'Fixo'}
+                  </span>
+                ),
+              },
+              {
+                id: 'value',
+                header: 'Valor',
+                cellClassName: 'text-xs font-extrabold text-nks-black whitespace-nowrap',
+                render: ({ coupon }) => formatValue(coupon),
+              },
+              {
+                id: 'uses',
+                header: 'Usos',
+                align: 'center',
+                hideOnMobile: true,
+                render: ({ coupon, status, isExhausted }) => (
+                  <span
+                    className={`inline-flex items-center gap-1 text-[11px] font-bold ${
+                      isExhausted && status === 'ativo' ? 'text-amber-700' : 'text-nks-black'
+                    }`}
+                  >
+                    {coupon.usedCount}
+                    <span className="text-nks-gray-400">/</span>
+                    <span className="text-nks-gray-400">{coupon.maxUses ?? '∞'}</span>
+                  </span>
+                ),
+              },
+              {
+                id: 'expires',
+                header: 'Expiração',
+                hideOnMobile: true,
+                cellClassName: 'text-xs text-nks-gray-700 font-semibold whitespace-nowrap',
+                render: ({ coupon }) =>
+                  coupon.expiresAt ? formatDate(coupon.expiresAt) : (
+                    <span className="text-nks-gray-400">—</span>
+                  ),
+              },
+              {
+                id: 'status',
+                header: 'Status',
+                render: ({ status, isExhausted }) => (
+                  <StatusBadge status={status} isExhausted={isExhausted} />
+                ),
+              },
+              {
+                id: 'actions',
+                header: 'Ações',
+                align: 'right',
+                render: ({ coupon }) => {
                   const busy = actionLoadingId === coupon.id
-                  const showDeleteConfirm = pendingDeleteId === coupon.id
-                  const exhaustedAndActive = isExhausted && status === 'ativo'
+                  if (pendingDeleteId === coupon.id) {
+                    return (
+                      <ConfirmDeleteRow
+                        coupon={coupon}
+                        busy={busy}
+                        onConfirm={(force) => handleDelete(coupon.id, force)}
+                        onCancel={() => setPendingDeleteId(null)}
+                      />
+                    )
+                  }
                   return (
-                    <motion.tr
-                      key={coupon.id}
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.22, delay: Math.min(index * 0.025, 0.4) }}
-                      className="hover:bg-nks-gray-100/30 transition-colors"
-                    >
-                      {/* Código */}
-                      <td className="py-3.5 px-4 sm:px-5">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-mono text-xs font-black text-nks-black bg-nks-gray-100 border border-nks-gray-200 px-2 py-1 rounded-sm select-all">
-                            {coupon.code}
-                          </span>
-                          {coupon.description && (
-                            <span className="text-[10px] text-nks-gray-400 font-semibold truncate max-w-[180px] hidden md:inline">
-                              {coupon.description}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Tipo */}
-                      <td className="py-3.5 px-4">
-                        <span
-                          className={`inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-sm border font-display tracking-wider ${
-                            coupon.discountType === 'PERCENTAGE'
-                              ? 'bg-nks-red-subtle text-nks-red border-nks-red/20'
-                              : 'bg-nks-black text-white border-nks-black'
-                          }`}
-                        >
-                          {coupon.discountType === 'PERCENTAGE' ? (
-                            <Percent className="h-2.5 w-2.5" />
-                          ) : (
-                            <Hash className="h-2.5 w-2.5" />
-                          )}
-                          {coupon.discountType === 'PERCENTAGE' ? 'Percentagem' : 'Fixo'}
-                        </span>
-                      </td>
-
-                      {/* Valor */}
-                      <td className="py-3.5 px-4 text-xs font-extrabold text-nks-black whitespace-nowrap">
-                        {formatValue(coupon)}
-                      </td>
-
-                      {/* Usos */}
-                      <td className="py-3.5 px-4 text-center">
-                        <span
-                          className={`inline-flex items-center gap-1 text-[11px] font-bold ${
-                            exhaustedAndActive
-                              ? 'text-amber-700'
-                              : 'text-nks-black'
-                          }`}
-                        >
-                          {coupon.usedCount}
-                          <span className="text-nks-gray-400">/</span>
-                          <span className="text-nks-gray-400">
-                            {coupon.maxUses ?? '∞'}
-                          </span>
-                        </span>
-                      </td>
-
-                      {/* Expiração */}
-                      <td className="py-3.5 px-4 text-xs text-nks-gray-700 font-semibold whitespace-nowrap">
-                        {coupon.expiresAt ? (
-                          formatDate(coupon.expiresAt)
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Button
+                        onClick={() => handleToggleActive(coupon)}
+                        disabled={busy}
+                        variant="ghost"
+                        size="icon"
+                        title={coupon.isActive ? 'Desativar cupom' : 'Ativar cupom'}
+                        aria-label={coupon.isActive ? `Desativar cupom ${coupon.code}` : `Ativar cupom ${coupon.code}`}
+                        className={`h-8 w-8 rounded-sm border ${
+                          coupon.isActive
+                            ? 'border-amber-200 text-amber-700 hover:bg-amber-50 hover:border-amber-300'
+                            : 'border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300'
+                        }`}
+                      >
+                        {busy ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : coupon.isActive ? (
+                          <PowerOff className="h-4 w-4" />
                         ) : (
-                          <span className="text-nks-gray-400">—</span>
+                          <Power className="h-4 w-4" />
                         )}
-                      </td>
-
-                      {/* Status */}
-                      <td className="py-3.5 px-4">
-                        <StatusBadge status={status} isExhausted={isExhausted} />
-                      </td>
-
-                      {/* Ações */}
-                      <td className="py-3.5 px-4">
-                        {showDeleteConfirm ? (
-                          <ConfirmDeleteRow
-                            coupon={coupon}
-                            busy={busy}
-                            onConfirm={(force) => handleDelete(coupon.id, force)}
-                            onCancel={() => setPendingDeleteId(null)}
-                          />
-                        ) : (
-                          <div className="flex items-center justify-end gap-1.5">
-                            <Button
-                              onClick={() => handleToggleActive(coupon)}
-                              disabled={busy}
-                              variant="ghost"
-                              size="icon"
-                              title={coupon.isActive ? 'Desativar cupom' : 'Ativar cupom'}
-                              className={`h-8 w-8 rounded-sm border ${
-                                coupon.isActive
-                                  ? 'border-amber-200 text-amber-700 hover:bg-amber-50 hover:border-amber-300'
-                                  : 'border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300'
-                              }`}
-                            >
-                              {busy ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : coupon.isActive ? (
-                                <PowerOff className="h-4 w-4" />
-                              ) : (
-                                <Power className="h-4 w-4" />
-                              )}
-                            </Button>
-
-                            <Button
-                              onClick={() => openEdit(coupon)}
-                              disabled={busy}
-                              variant="ghost"
-                              size="icon"
-                              title="Editar cupom"
-                              className="h-8 w-8 rounded-sm border border-nks-gray-200 text-nks-black hover:bg-nks-gray-100"
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-
-                            <Button
-                              onClick={() => setPendingDeleteId(coupon.id)}
-                              disabled={busy}
-                              variant="ghost"
-                              size="icon"
-                              title="Excluir cupom"
-                              className="h-8 w-8 rounded-sm border border-nks-red/20 text-nks-red hover:bg-nks-red-subtle hover:border-nks-red"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </td>
-                    </motion.tr>
+                      </Button>
+                      <Button
+                        onClick={() => openEdit(coupon)}
+                        disabled={busy}
+                        variant="ghost"
+                        size="icon"
+                        title="Editar cupom"
+                        aria-label={`Editar cupom ${coupon.code}`}
+                        className="h-8 w-8 rounded-sm border border-nks-gray-200 text-nks-black hover:bg-nks-gray-100"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        onClick={() => setPendingDeleteId(coupon.id)}
+                        disabled={busy}
+                        variant="ghost"
+                        size="icon"
+                        title="Excluir cupom"
+                        aria-label={`Excluir cupom ${coupon.code}`}
+                        className="h-8 w-8 rounded-sm border border-nks-red/20 text-nks-red hover:bg-nks-red-subtle hover:border-nks-red"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   )
-                })}
-              </tbody>
-            </table>
-          </div>
+                },
+              },
+            ]}
+          />
         )}
       </div>
 
@@ -496,57 +472,6 @@ export default function AdminCouponsPage() {
         onSubmitCreate={handleFormCreate}
         onSubmitEdit={handleFormEdit}
       />
-
-      {/* Toast */}
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: 16, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.98 }}
-            transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="fixed bottom-6 right-6 z-[60] max-w-[360px]"
-            role="status"
-          >
-            <div
-              className={`flex items-center gap-3 p-3.5 pr-4 rounded-sm border shadow-nks-lg bg-white ${
-                toast.kind === 'success'
-                  ? 'border-green-200'
-                  : 'border-nks-red/30'
-              }`}
-            >
-              <div
-                className={`h-8 w-8 shrink-0 rounded-sm flex items-center justify-center ${
-                  toast.kind === 'success'
-                    ? 'bg-green-50 text-green-700'
-                    : 'bg-nks-red-subtle text-nks-red'
-                }`}
-              >
-                {toast.kind === 'success' ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <AlertCircle className="h-4 w-4" />
-                )}
-              </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-nks-gray-400">
-                  {toast.kind === 'success' ? 'Sucesso' : 'Erro'}
-                </span>
-                <span className="text-xs font-bold text-nks-black leading-snug">
-                  {toast.message}
-                </span>
-              </div>
-              <button
-                onClick={() => setToast(null)}
-                className="text-nks-gray-400 hover:text-nks-black transition-colors p-1 ml-1"
-                aria-label="Fechar"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }

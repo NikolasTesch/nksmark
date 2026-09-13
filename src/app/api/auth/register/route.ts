@@ -4,6 +4,7 @@ import { registerSchema } from '@/lib/validations/auth'
 import { hashPassword } from '@/lib/auth/password'
 import prisma from '@/lib/prisma'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
+import { logger as log } from "@/lib/utils/logger";
 
 // Auto-cadastro público de clientes pagantes (role CLIENT). Equipe FASE/ADMIN
 // continua sendo criada manualmente pelo admin — não passa por aqui.
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: { id: user.id } }, { status: 201 })
   } catch (error) {
-    console.error('Error in register API:', error)
+    log.error('Error in register API:', error)
     return NextResponse.json({ success: false, error: 'Erro interno no servidor' }, { status: 500 })
   }
 }

@@ -4,7 +4,7 @@ import * as React from 'react'
 import { History, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
 import { useAdminDownloads } from '@/hooks/useAdminDownloads'
 import { formatRelativeTime } from '@/lib/utils/format'
-import { motion } from 'framer-motion'
+import { DataTable } from '@/components/admin/DataTable'
 
 export default function AdminDownloadLogsPage() {
   const { downloads, loading, error, refresh } = useAdminDownloads()
@@ -57,71 +57,62 @@ export default function AdminDownloadLogsPage() {
               Carregando logs de downloads...
             </span>
           </div>
-        ) : downloads.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-4 text-center px-6">
-            <div className="h-12 w-12 rounded-full bg-nks-gray-100 flex items-center justify-center text-nks-gray-400">
-              <History className="h-6 w-6 stroke-[1.5]" />
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-sm font-bold text-nks-black">Nenhum download registrado</span>
-              <span className="text-xs text-nks-gray-400 font-semibold max-w-[280px]">
-                Quando os membros da equipe fizerem downloads de artes, os logs aparecerão aqui em tempo real.
-              </span>
-            </div>
-          </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse min-w-[480px]">
-              <thead>
-                <tr className="bg-white border-b border-nks-gray-200/80 font-display font-extrabold text-[10px] uppercase tracking-[0.12em] text-nks-gray-400 select-none">
-                  <th className="py-4.5 px-4 sm:px-6 font-bold">Usuário</th>
-                  <th className="py-4.5 px-4 sm:px-6 font-bold">Arte</th>
-                  <th className="py-4.5 px-4 sm:px-6 font-bold text-center w-20 sm:w-24">Formato</th>
-                  <th className="py-4.5 px-4 sm:px-6 font-bold w-28 sm:w-36 hidden sm:table-cell">Quando</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-nks-gray-100">
-                {downloads.map((log, index) => (
-                  <motion.tr 
-                    key={log.id} 
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.25, delay: Math.min(index * 0.03, 0.5) }}
-                    className="hover:bg-nks-gray-100/20 transition-colors"
-                  >
-                    {/* User */}
-                    <td className="py-4 px-4 sm:px-6">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-nks-black text-xs sm:text-sm leading-tight">
-                          {log.userName}
-                        </span>
-                        <span className="text-[10px] text-nks-gray-400 font-medium leading-none mt-1 font-sans hidden sm:block">
-                          {log.userEmail}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Artwork */}
-                    <td className="py-4 px-4 sm:px-6 text-xs font-semibold text-nks-black max-w-[120px] sm:max-w-none">
-                      <span className="line-clamp-2 leading-snug">{log.artworkTitle}</span>
-                    </td>
-
-                    {/* Format */}
-                    <td className="py-4 px-4 sm:px-6 text-center">
-                      <span className="inline-block font-mono text-[9px] px-2 py-0.5 border border-nks-gray-200/80 bg-white text-nks-gray-700 font-black rounded-sm shadow-sm select-none tracking-wider">
-                        {log.format}
-                      </span>
-                    </td>
-
-                    {/* Timestamp */}
-                    <td className="py-4 px-4 sm:px-6 text-xs text-nks-gray-400 font-semibold whitespace-nowrap hidden sm:table-cell">
-                      {formatRelativeTime(log.createdAt)}
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            headerVariant="light"
+            rows={downloads}
+            getRowKey={(log) => log.id}
+            emptyTitle="Nenhum download registrado"
+            emptyDescription="Quando os membros da equipe fizerem downloads de artes, os logs aparecerão aqui em tempo real."
+            emptyIcon={History}
+            columns={[
+              {
+                id: 'user',
+                header: 'Usuário',
+                headerClassName: 'sm:px-6',
+                cellClassName: 'sm:px-6',
+                render: (log) => (
+                  <div className="flex flex-col">
+                    <span className="font-bold text-nks-black text-xs sm:text-sm leading-tight">
+                      {log.userName}
+                    </span>
+                    <span className="text-[10px] text-nks-gray-400 font-medium leading-none mt-1 font-sans hidden sm:block">
+                      {log.userEmail}
+                    </span>
+                  </div>
+                ),
+              },
+              {
+                id: 'artwork',
+                header: 'Arte',
+                headerClassName: 'sm:px-6',
+                cellClassName: 'sm:px-6 text-xs font-semibold text-nks-black max-w-[120px] sm:max-w-none',
+                render: (log) => (
+                  <span className="line-clamp-2 leading-snug">{log.artworkTitle}</span>
+                ),
+              },
+              {
+                id: 'format',
+                header: 'Formato',
+                align: 'center',
+                headerClassName: 'sm:px-6 w-20 sm:w-24',
+                cellClassName: 'sm:px-6',
+                render: (log) => (
+                  <span className="inline-block font-mono text-[9px] px-2 py-0.5 border border-nks-gray-200/80 bg-white text-nks-gray-700 font-black rounded-sm shadow-sm select-none tracking-wider">
+                    {log.format}
+                  </span>
+                ),
+              },
+              {
+                id: 'when',
+                header: 'Quando',
+                hideOnMobile: true,
+                headerClassName: 'sm:px-6 w-28 sm:w-36',
+                cellClassName: 'sm:px-6 text-xs text-nks-gray-400 font-semibold whitespace-nowrap',
+                render: (log) => formatRelativeTime(log.createdAt),
+              },
+            ]}
+          />
         )}
       </div>
 

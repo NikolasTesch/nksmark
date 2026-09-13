@@ -18,6 +18,7 @@ import { File as PrismaFile } from '@prisma/client'
 import { Download, Lock, ChevronRight, Calendar, FileType, Sparkles, Loader2, ShoppingCart, CheckCircle2, FileCheck, ShieldCheck, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import { formatDate, formatBRL } from '@/lib/utils/format'
+import { logger as log } from "@/lib/utils/logger";
 
 export default function ArtworkDetailsPage() {
   const { slug } = useParams()
@@ -85,12 +86,12 @@ export default function ArtworkDetailsPage() {
   React.useEffect(() => {
     if (!artwork) return
     let active = true
-    fetch(`/api/artworks?categoryId=${artwork.categoryId}`)
+    fetch(`/api/artworks?categoryId=${artwork.categoryId}&pageSize=5`)
       .then((r) => r.json())
       .then((res) => {
-        if (!active || !res.success) return
+        if (!active || !res.items) return
         setRelated(
-          (res.data as ArtworkWithRelations[]).filter((a) => a.slug !== artwork.slug).slice(0, 5)
+          (res.items as ArtworkWithRelations[]).filter((a) => a.slug !== artwork.slug).slice(0, 5)
         )
       })
       .catch(() => {})
@@ -205,10 +206,10 @@ export default function ArtworkDetailsPage() {
         return result.data.downloadUrl
       }
       // Falha real (autorização, status da arte, etc.) — não fabricar URL.
-      console.warn('Backend download call failed:', result.error)
+      log.warn('Backend download call failed:', result.error)
       return null
     } catch (e) {
-      console.error('Error recording download:', e)
+      log.error('Error recording download:', e)
       return null
     }
   }
@@ -224,7 +225,7 @@ export default function ArtworkDetailsPage() {
 
       if (!res.ok) {
         const result = await res.json().catch(() => null)
-        console.warn('Backend zip download call failed:', result?.error)
+        log.warn('Backend zip download call failed:', result?.error)
         return false
       }
 
@@ -241,7 +242,7 @@ export default function ArtworkDetailsPage() {
       URL.revokeObjectURL(objectUrl)
       return true
     } catch (e) {
-      console.error('Error downloading zip:', e)
+      log.error('Error downloading zip:', e)
       return false
     }
   }

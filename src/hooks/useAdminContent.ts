@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Category, Tag } from '@prisma/client'
+import { logger as log } from "@/lib/utils/logger";
 
 export function useAdminContent() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -22,7 +23,7 @@ export function useAdminContent() {
       if (cats.success) setCategories(cats.data)
       if (tgs.success) setTags(tgs.data)
     } catch (err) {
-      console.error('Error fetching content:', err)
+      log.error('Error fetching content:', err)
       setError('Erro ao carregar categorias e tags.')
     } finally {
       setLoading(false)
@@ -51,7 +52,7 @@ export function useAdminContent() {
         return { success: false, error: result.error }
       }
     } catch (err) {
-      console.error(err)
+      log.error(err)
       setError('Erro ao processar criação de categoria.')
       return { success: false, error: 'Erro de conexão' }
     }
@@ -74,7 +75,7 @@ export function useAdminContent() {
         return { success: false, error: result.error }
       }
     } catch (err) {
-      console.error(err)
+      log.error(err)
       setError('Erro ao processar atualização de categoria.')
       return { success: false, error: 'Erro de conexão' }
     }
@@ -95,7 +96,7 @@ export function useAdminContent() {
         return { success: false, error: result.error }
       }
     } catch (err) {
-      console.error(err)
+      log.error(err)
       setError('Erro de conexão ao excluir categoria.')
       return { success: false, error: 'Erro de conexão' }
     }
@@ -122,7 +123,7 @@ export function useAdminContent() {
         return { success: false, error: result.error }
       }
     } catch (err) {
-      console.error(err)
+      log.error(err)
       setError('Erro ao processar criação de tag.')
       return { success: false, error: 'Erro de conexão' }
     }
@@ -154,7 +155,7 @@ export function useAdminContent() {
         return { success: false, error: result.error }
       }
     } catch (err) {
-      console.error(err)
+      log.error(err)
       setError('Erro de conexão ao reordenar categorias.')
       return { success: false, error: 'Erro de conexão' }
     }
@@ -175,7 +176,7 @@ export function useAdminContent() {
         return { success: false, error: result.error }
       }
     } catch (err) {
-      console.error(err)
+      log.error(err)
       setError('Erro de conexão ao excluir tag.')
       return { success: false, error: 'Erro de conexão' }
     }

@@ -4,6 +4,7 @@ import { Prisma, Status } from '@prisma/client'
 import { protectAdminRoute } from '@/lib/auth/middleware'
 import { artworkSchema } from '@/lib/validations/artwork'
 import { generateSlug } from '@/lib/utils/slug'
+import { logger as log } from "@/lib/utils/logger";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -113,7 +114,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     return NextResponse.json({ success: true, data: updatedArtwork })
   } catch (error) {
-    console.error('Error updating artwork:', error)
+    log.error('Error updating artwork:', error)
     return NextResponse.json({ success: false, error: 'Erro interno no servidor' }, { status: 500 })
   }
 }
@@ -135,7 +136,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
     return NextResponse.json({ success: true, data: archivedArtwork })
   } catch (error) {
-    console.error('Error archiving artwork:', error)
+    log.error('Error archiving artwork:', error)
     return NextResponse.json({ success: false, error: 'Erro interno no servidor' }, { status: 500 })
   }
 }

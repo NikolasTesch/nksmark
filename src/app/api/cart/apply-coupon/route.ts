@@ -3,6 +3,7 @@ import { DiscountType, Role } from '@prisma/client'
 import { auth } from '@/lib/auth/auth'
 import prisma from '@/lib/prisma'
 import { applyCouponSchema } from '@/validations/coupon'
+import { logger as log } from "@/lib/utils/logger";
 
 export const runtime = 'nodejs'
 
@@ -114,7 +115,7 @@ export async function POST(req: Request) {
       },
     })
   } catch (error) {
-    console.error('[Apply Coupon POST]', error)
+    log.error('[Apply Coupon POST]', error)
     return NextResponse.json(
       { success: false, error: 'Erro ao aplicar cupom.' },
       { status: 500 }
@@ -165,7 +166,7 @@ export async function DELETE() {
       },
     })
   } catch (error) {
-    console.error('[Apply Coupon DELETE]', error)
+    log.error('[Apply Coupon DELETE]', error)
     return NextResponse.json(
       { success: false, error: 'Erro ao remover cupom.' },
       { status: 500 }

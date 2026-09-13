@@ -1,40 +1,17 @@
 'use client'
 
 import * as React from 'react'
-import { useDownloadHistory } from '@/hooks/useDownloadHistory'
+import { useDownloadHistory, type DownloadHistoryItem } from '@/hooks/useDownloadHistory'
 import { FormatBadge } from '@/components/artwork/FormatBadge'
 import { Button } from '@/components/ui/button'
-import { History, ArrowRight, ExternalLink, Loader2, AlertTriangle, RefreshCw } from 'lucide-react'
+import { EmptyState } from '@/components/shared/EmptyState'
+import { History, ExternalLink, AlertTriangle, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { formatDate } from '@/lib/utils/format'
 
 export default function MeusDownloadsPage() {
   const { history, loading, error, refresh } = useDownloadHistory()
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-7 w-7 animate-spin text-nks-gray-400" />
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center text-center p-12 border border-nks-gray-200 bg-nks-gray-100 rounded max-w-lg mx-auto my-8">
-        <div className="flex h-12 w-12 items-center justify-center rounded bg-nks-red text-white mb-4">
-          <AlertTriangle className="h-6 w-6" />
-        </div>
-        <h3 className="font-semibold text-lg text-nks-black mb-1.5">Erro ao carregar histórico</h3>
-        <p className="text-sm text-nks-gray-700 mb-6 max-w-xs leading-normal">{error}</p>
-        <Button onClick={refresh} variant="outline" size="sm" className="gap-1.5">
-          <RefreshCw className="h-4 w-4" />
-          Tentar novamente
-        </Button>
-      </div>
-    )
-  }
 
   return (
     <div className="flex flex-col gap-6 py-4 animate-in fade-in duration-300">
@@ -50,21 +27,28 @@ export default function MeusDownloadsPage() {
         </div>
       </div>
 
-      {history.length === 0 ? (
+      {loading ? (
+        <DownloadsSkeleton />
+      ) : error ? (
         <div className="flex flex-col items-center justify-center text-center p-12 border border-nks-gray-200 bg-nks-gray-100 rounded max-w-lg mx-auto my-8">
-          <div className="flex h-12 w-12 items-center justify-center rounded bg-nks-black text-white mb-4">
-            <History className="h-6 w-6" />
+          <div className="flex h-12 w-12 items-center justify-center rounded bg-nks-red text-white mb-4">
+            <AlertTriangle className="h-6 w-6" />
           </div>
-          <h3 className="font-semibold text-lg text-nks-black mb-1.5">Sem downloads recentes</h3>
-          <p className="text-sm text-nks-gray-700 mb-6 max-w-xs leading-normal">
-            Você ainda não realizou downloads de arquivos editáveis na plataforma. Explore nosso acervo!
-          </p>
-          <Link href="/loja">
-            <Button className="gap-1 px-5 h-9">
-              Ir para a loja <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
+          <h3 className="font-semibold text-lg text-nks-black mb-1.5">Erro ao carregar histórico</h3>
+          <p className="text-sm text-nks-gray-700 mb-6 max-w-xs leading-normal">{error}</p>
+          <Button onClick={refresh} variant="outline" size="sm" className="gap-1.5">
+            <RefreshCw className="h-4 w-4" />
+            Tentar novamente
+          </Button>
         </div>
+      ) : history.length === 0 ? (
+        <EmptyState
+          icon={History}
+          title="Sem downloads recentes"
+          description="Você ainda não realizou downloads de arquivos editáveis na plataforma. Explore o acervo."
+          actionHref="/loja"
+          actionLabel="Explore o acervo"
+        />
       ) : (
         <div className="border border-nks-gray-200 rounded overflow-hidden bg-white shadow-nks-sm">
           <div className="overflow-x-auto">
@@ -80,41 +64,64 @@ export default function MeusDownloadsPage() {
               </thead>
               <tbody className="divide-y divide-nks-gray-200">
                 {history.map((item, idx) => (
-                  <tr key={`${item.id}-${idx}`} className="hover:bg-nks-gray-100 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="relative h-10 w-14 rounded overflow-hidden border border-nks-gray-200 bg-nks-gray-100 shrink-0">
-                        <Image
-                          src={item.previewUrl || '/placeholder.jpg'}
-                          alt={item.artworkTitle}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 font-semibold text-nks-black max-w-[160px] sm:max-w-none">
-                      <span className="line-clamp-2 leading-snug">{item.artworkTitle}</span>
-                    </td>
-                    <td className="py-3.5 px-4 hidden sm:table-cell">
-                      <FormatBadge format={item.format} />
-                    </td>
-                    <td className="py-3.5 px-4 text-xs text-nks-gray-400 hidden md:table-cell whitespace-nowrap">
-                      {formatDate(item.downloadedAt)}
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <Link
-                        href={`/loja/${item.artworkSlug ?? item.artworkId}`}
-                        className="inline-flex items-center gap-1 text-xs font-bold text-nks-red hover:underline hover:text-nks-red-dark whitespace-nowrap"
-                      >
-                        Ver arte <ExternalLink className="h-3 w-3" />
-                      </Link>
-                    </td>
-                  </tr>
+                  <DownloadRow key={`${item.id}-${idx}`} item={item} />
                 ))}
               </tbody>
             </table>
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function DownloadRow({ item }: { item: DownloadHistoryItem }) {
+  const [imgFailed, setImgFailed] = React.useState(false)
+  return (
+    <tr className="hover:bg-nks-gray-100 transition-colors">
+      <td className="py-3.5 px-4">
+        <div className="relative h-10 w-14 rounded overflow-hidden border border-nks-gray-200 bg-nks-gray-100 shrink-0">
+          <Image
+            src={imgFailed ? '/placeholder.svg' : item.previewUrl || '/placeholder.svg'}
+            alt={item.artworkTitle}
+            fill
+            className="object-cover"
+            onError={() => setImgFailed(true)}
+          />
+        </div>
+      </td>
+      <td className="py-3.5 px-4 font-semibold text-nks-black max-w-[160px] sm:max-w-none">
+        <span className="line-clamp-2 leading-snug">{item.artworkTitle}</span>
+      </td>
+      <td className="py-3.5 px-4 hidden sm:table-cell">
+        <FormatBadge format={item.format} />
+      </td>
+      <td className="py-3.5 px-4 text-xs text-nks-gray-400 hidden md:table-cell whitespace-nowrap">
+        {formatDate(item.downloadedAt)}
+      </td>
+      <td className="py-3.5 px-4 text-right">
+        <Link
+          href={`/loja/${item.artworkSlug ?? item.artworkId}`}
+          className="inline-flex items-center gap-1 text-xs font-bold text-nks-red hover:underline hover:text-nks-red-dark whitespace-nowrap"
+        >
+          Ver arte <ExternalLink className="h-3 w-3" />
+        </Link>
+      </td>
+    </tr>
+  )
+}
+
+function DownloadsSkeleton() {
+  return (
+    <div className="border border-nks-gray-200 rounded overflow-hidden bg-white">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-4 p-4 border-b border-nks-gray-200 last:border-b-0">
+          <div className="h-10 w-14 shrink-0 animate-pulse rounded bg-nks-gray-100" />
+          <div className="h-3 flex-1 max-w-[200px] animate-pulse rounded bg-nks-gray-100" />
+          <div className="hidden sm:block h-3 w-12 animate-pulse rounded bg-nks-gray-100" />
+          <div className="hidden md:block h-3 w-24 animate-pulse rounded bg-nks-gray-100" />
+        </div>
+      ))}
     </div>
   )
 }

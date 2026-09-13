@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { protectAdminRoute } from '@/lib/auth/middleware'
 import { uploadFileToR2 } from '@/lib/r2/upload'
 import { applyWatermark } from '@/lib/watermark'
+import { logger as log } from "@/lib/utils/logger";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50 MB — coerente com o limite exibido na UI
 const ALLOWED_EXTENSIONS = ['cdr', 'ai', 'pdf', 'otf', 'png', 'jpg', 'jpeg']
@@ -55,10 +56,9 @@ export async function POST(req: Request) {
     if (shouldWatermark) {
       try {
         processedBuffer = (await applyWatermark(buffer, file.type || 'image/png')) as unknown as typeof buffer
-        console.log(`[Watermark] Applied to ${file.name} in ${folder}`)
       } catch (wmError) {
         // Graceful degradation: se sharp falhar, usar buffer original
-        console.error(`[Watermark] Failed for ${file.name}, using original:`, wmError)
+        log.error(`[Watermark] Failed for ${file.name}, using original:`, wmError)
       }
     }
 
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: uploadResult })
   } catch (error) {
-    console.error('Error in upload API:', error)
+    log.error('Error in upload API:', error)
     return NextResponse.json({ success: false, error: 'Erro interno no servidor de uploads' }, { status: 500 })
   }
 }

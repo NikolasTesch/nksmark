@@ -13,12 +13,25 @@ import {
   Trophy,
   Layers,
   LineChart as LineChartIcon,
+  Undo2,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { toast } from 'sonner'
 import { formatBRL, formatDate } from '@/lib/utils/format'
 import { RevenueLineChart } from '@/components/admin/charts/RevenueLineChart'
 import { PaymentDistributionChart } from '@/components/admin/charts/PaymentDistributionChart'
 import { PeakHoursHeatmap } from '@/components/admin/charts/PeakHoursHeatmap'
+import { DataTable } from '@/components/admin/DataTable'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 interface SalesData {
   selectedFilters: { month: number; year: number }
@@ -32,8 +45,19 @@ interface SalesData {
   topArtworks: { id: string; title: string; categoryName: string; count: number; revenueCents: number }[]
   categoryDistribution: { id: string; name: string; color: string | null; count: number; revenueCents: number; percentage: number }[]
   topClients: { id: string; name: string | null; email: string; count: number; revenueCents: number }[]
-  recentOrders: { id: string; artworkTitle: string; categoryName: string; clientName: string; amountCents: number; paidAt: string | null }[]
+  recentOrders: {
+    id: string
+    artworkTitle: string
+    categoryName: string
+    clientName: string
+    amountCents: number
+    paidAt: string | null
+  }[]
 }
+
+type OrderRefundOverride = { status: 'PAID' | 'REFUNDED'; refundPending: boolean }
+
+type RecentOrderRow = SalesData['recentOrders'][number] & OrderRefundOverride
 
 interface TimelinePoint {
   date: string
@@ -87,6 +111,10 @@ export default function AdminSalesPage() {
   const [chartData, setChartData] = React.useState<ChartData | null>(null)
   const [chartsLoading, setChartsLoading] = React.useState(true)
   const [chartsError, setChartsError] = React.useState('')
+  const [refundState, setRefundState] = React.useState<Record<string, OrderRefundOverride>>({})
+  const [refundTarget, setRefundTarget] = React.useState<RecentOrderRow | null>(null)
+  const [refundBusy, setRefundBusy] = React.useState(false)
+  const [refundError, setRefundError] = React.useState('')
 
   React.useEffect(() => {
     let active = true
@@ -140,6 +168,57 @@ export default function AdminSalesPage() {
 
   const stats = data?.stats
   const maxCategory = Math.max(...(data?.categoryDistribution.map((c) => c.count) || [1]), 1)
+  const recentOrders: RecentOrderRow[] = React.useMemo(
+    () =>
+      (data?.recentOrders || []).map((o) => {
+        const override = refundState[o.id]
+        return {
+          ...o,
+          status: override?.status ?? 'PAID',
+          refundPending: override?.refundPending ?? false,
+        }
+      }),
+    [data?.recentOrders, refundState],
+  )
+
+  const openRefund = (order: RecentOrderRow) => {
+    setRefundError('')
+    setRefundTarget(order)
+  }
+
+  const submitRefund = async () => {
+    if (!refundTarget) return
+    setRefundBusy(true)
+    setRefundError('')
+    try {
+      const res = await fetch(`/api/admin/orders/${refundTarget.id}/refund`, { method: 'POST' })
+      const json = await res.json()
+      if (json.ok && (json.status === 'refunded' || json.status === 'refund_pending')) {
+        setRefundState((prev) => ({
+          ...prev,
+          [refundTarget.id]: {
+            status: json.status === 'refunded' ? 'REFUNDED' : 'PAID',
+            refundPending: json.status === 'refund_pending',
+          },
+        }))
+        toast.success(
+          json.message ||
+            (json.status === 'refunded' ? 'Estorno concluído.' : 'Estorno em processamento.'),
+        )
+        setRefundTarget(null)
+      } else {
+        const msg = json.message || json.error || 'Não foi possível estornar.'
+        setRefundError(msg)
+        toast.error(msg, { duration: 6000 })
+      }
+    } catch {
+      const msg = 'Falha na comunicação com o servidor.'
+      setRefundError(msg)
+      toast.error(msg, { duration: 6000 })
+    } finally {
+      setRefundBusy(false)
+    }
+  }
   const chartsEmpty =
     !chartsLoading &&
     (chartData?.timeline.length ?? 0) === 0 &&
@@ -392,41 +471,162 @@ export default function AdminSalesPage() {
                 <Receipt className="h-4.5 w-4.5 text-nks-red" /> Pedidos pagos recentes
               </span>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm min-w-[560px]">
-                <thead>
-                  <tr className="bg-nks-gray-100 text-nks-gray-700 border-b border-nks-gray-200 font-bold text-[10px] uppercase tracking-wider">
-                    <th className="py-3 px-4">Arte</th>
-                    <th className="py-3 px-4">Nicho</th>
-                    <th className="py-3 px-4">Cliente</th>
-                    <th className="py-3 px-4">Valor</th>
-                    <th className="py-3 px-4 whitespace-nowrap">Data</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-nks-gray-200">
-                  {(data?.recentOrders || []).map((o) => (
-                    <tr key={o.id} className="hover:bg-nks-gray-100/60 transition-colors">
-                      <td className="py-3 px-4 font-semibold text-nks-black">{o.artworkTitle}</td>
-                      <td className="py-3 px-4 text-xs text-nks-gray-700">{o.categoryName}</td>
-                      <td className="py-3 px-4 text-xs text-nks-gray-700">{o.clientName}</td>
-                      <td className="py-3 px-4 font-bold text-nks-black">{formatBRL(o.amountCents)}</td>
-                      <td className="py-3 px-4 text-xs text-nks-gray-400 whitespace-nowrap">{o.paidAt ? formatDate(o.paidAt) : '—'}</td>
-                    </tr>
-                  ))}
-                  {(data?.recentOrders.length ?? 0) === 0 && (
-                    <tr>
-                      <td colSpan={5} className="py-12 text-center text-xs text-nks-gray-400">
-                        Nenhum pedido pago neste período.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              headerVariant="muted"
+              rows={recentOrders}
+              getRowKey={(o) => o.id}
+              emptyTitle="Nenhum pedido pago neste período."
+              emptyIcon={Receipt}
+              columns={[
+                {
+                  id: 'art',
+                  header: 'Arte',
+                  cellClassName: 'font-semibold text-nks-black',
+                  render: (o) => o.artworkTitle,
+                },
+                {
+                  id: 'niche',
+                  header: 'Nicho',
+                  hideOnMobile: true,
+                  cellClassName: 'text-xs text-nks-gray-700',
+                  render: (o) => o.categoryName,
+                },
+                {
+                  id: 'client',
+                  header: 'Cliente',
+                  cellClassName: 'text-xs text-nks-gray-700',
+                  render: (o) => o.clientName,
+                },
+                {
+                  id: 'amount',
+                  header: 'Valor',
+                  cellClassName: 'font-bold text-nks-black',
+                  render: (o) => formatBRL(o.amountCents),
+                },
+                {
+                  id: 'status',
+                  header: 'Status',
+                  render: (o) => <OrderStatusBadge order={o} />,
+                },
+                {
+                  id: 'date',
+                  header: 'Data',
+                  hideOnMobile: true,
+                  cellClassName: 'text-xs text-nks-gray-400 whitespace-nowrap',
+                  render: (o) => (o.paidAt ? formatDate(o.paidAt) : '—'),
+                },
+                {
+                  id: 'actions',
+                  header: 'Ação',
+                  align: 'right',
+                  render: (o) =>
+                    o.status === 'PAID' && !o.refundPending ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openRefund(o)}
+                        aria-label={`Estornar pedido de ${o.artworkTitle}`}
+                        className="h-8 px-2.5 gap-1 text-[10px] font-bold border border-nks-red/20 text-nks-red hover:bg-nks-red-subtle"
+                      >
+                        <Undo2 className="h-3.5 w-3.5" />
+                        Estornar
+                      </Button>
+                    ) : null,
+                },
+              ]}
+            />
           </div>
         </div>
       )}
+
+      <Dialog
+        open={!!refundTarget}
+        onOpenChange={(open) => {
+          if (!open && !refundBusy) {
+            setRefundTarget(null)
+            setRefundError('')
+          }
+        }}
+      >
+        <DialogClose
+          onClick={() => {
+            if (!refundBusy) {
+              setRefundTarget(null)
+              setRefundError('')
+            }
+          }}
+        />
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar estorno</DialogTitle>
+            <DialogDescription>
+              O cliente perde o download imediatamente. Pix pode demorar e ficar como estorno em processamento.
+            </DialogDescription>
+          </DialogHeader>
+          {refundTarget && (
+            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-xs border border-nks-gray-200 bg-nks-gray-100/40 rounded-sm p-4">
+              <dt className="font-bold uppercase tracking-wider text-nks-gray-400">Arte</dt>
+              <dd className="font-semibold text-nks-black text-right">{refundTarget.artworkTitle}</dd>
+              <dt className="font-bold uppercase tracking-wider text-nks-gray-400">Cliente</dt>
+              <dd className="font-semibold text-nks-black text-right">{refundTarget.clientName}</dd>
+              <dt className="font-bold uppercase tracking-wider text-nks-gray-400">Pagamento</dt>
+              <dd className="font-extrabold text-nks-black text-right">{formatBRL(refundTarget.amountCents)}</dd>
+            </dl>
+          )}
+          {refundError && (
+            <p className="text-xs font-semibold text-nks-red bg-nks-red-subtle/50 border border-nks-red/20 rounded-sm px-3 py-2">
+              {refundError}
+            </p>
+          )}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={refundBusy}
+              onClick={() => {
+                setRefundTarget(null)
+                setRefundError('')
+              }}
+              className="h-10"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              disabled={refundBusy}
+              onClick={submitRefund}
+              aria-label="Confirmar estorno do pedido"
+              className="h-10 gap-1.5"
+            >
+              {refundBusy && <Loader2 className="h-4 w-4 animate-spin" />}
+              Estornar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+  )
+}
+
+function OrderStatusBadge({ order }: { order: RecentOrderRow }) {
+  if (order.status === 'REFUNDED') {
+    return (
+      <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-sm border border-nks-gray-200 bg-nks-gray-100 text-nks-gray-700 font-display tracking-wider">
+        Estornado
+      </span>
+    )
+  }
+  if (order.refundPending) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-sm border border-amber-200 bg-amber-50 text-amber-700 font-display tracking-wider">
+        Estorno em processamento
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-sm border border-green-200 bg-green-50 text-green-700 font-display tracking-wider">
+      Pago
+    </span>
   )
 }
 

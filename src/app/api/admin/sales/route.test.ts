@@ -20,20 +20,28 @@ function getReq(params: Record<string, string> = {}) {
 }
 
 function makeOrder(overrides: object = {}) {
-  return {
-    id: 'order-1',
-    amountCents: 1500,
-    paidAt: new Date('2026-06-10T12:00:00Z'),
-    status: OrderStatus.PAID,
-    userId: 'user-1',
-    user: { id: 'user-1', name: 'João', email: 'joao@x.com' },
-    artwork: {
+  const o = overrides as Record<string, unknown>
+  const amountCents = (o.amountCents as number) ?? 1500
+  const artwork =
+    (o.artwork as object) ?? {
       id: 'art-1',
       title: 'Arte A',
       category: { id: 'cat-1', name: 'Categoria X', color: '#ff0000' },
-    },
-    ...overrides,
+    }
+  const user =
+    (o.user as object) ?? { id: 'user-1', name: 'João', email: 'joao@x.com' }
+  const base = {
+    id: 'order-1',
+    amountCents,
+    paidAt: new Date('2026-06-10T12:00:00Z'),
+    status: OrderStatus.PAID,
+    userId: (o.userId as string) ?? (user as { id: string }).id,
+    user,
+    artwork,
+    // The route aggregates via OrderItems (Prisma `include: { items: ... }`).
+    items: [{ amountCents, artwork }],
   }
+  return { ...base, ...overrides }
 }
 
 beforeEach(() => {
@@ -127,7 +135,7 @@ describe('GET /api/admin/sales', () => {
 
   it('calcula percentChangeFromPrevMonth corretamente', async () => {
     const currentOrders = [makeOrder({ amountCents: 3000 })]
-    const prevOrders = [{ amountCents: 1500 }]
+    const prevOrders = [makeOrder({ amountCents: 1500 })]
 
     prismaMock.order.findMany
       .mockResolvedValueOnce(currentOrders)
@@ -178,7 +186,32 @@ describe('GET /api/admin/sales', () => {
 
     expect(json.data.topArtworks[0].id).toBe('art-1')
     expect(json.data.topArtworks[0].count).toBe(2)
+    expect(json.data.topArtworks[0].revenueCents).toBe(3000)
+    expect(json.data.topArtworks[0].categoryName).toBe('Cat')
     expect(json.data.topArtworks[1].id).toBe('art-2')
+  })
+
+  it('retorna success true e selectedFilters reflete year/month da query', async () => {
+    prismaMock.order.findMany.mockResolvedValue([])
+    const res = await GET(getReq({ year: '2025', month: '3' }))
+    const json = await res.json()
+
+    expect(json.success).toBe(true)
+    expect(json.data.selectedFilters).toEqual({ month: 3, year: 2025 })
+  })
+
+  it('calcula percentChangeFromPrevMonth negativo quando a receita cai', async () => {
+    const currentOrders = [makeOrder({ amountCents: 1000 })]
+    const prevOrders = [makeOrder({ amountCents: 2000 })]
+
+    prismaMock.order.findMany
+      .mockResolvedValueOnce(currentOrders)
+      .mockResolvedValueOnce(prevOrders)
+
+    const res = await GET(getReq())
+    const json = await res.json()
+
+    expect(json.data.stats.percentChangeFromPrevMonth).toBe(-50)
   })
 
   it('recentOrders limita a 12 registros', async () => {
