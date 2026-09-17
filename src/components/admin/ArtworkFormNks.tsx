@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 import { logger as log } from "@/lib/utils/logger";
 import { generateSlug } from '@/lib/utils/slug'
+import { optimizeImageForUpload } from '@/lib/utils/image-client'
 
 type ExistingFile = { id?: string; format: string; size: number; url?: string }
 
@@ -111,16 +112,77 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData, initi
   const galleryInputRef = React.useRef<HTMLInputElement>(null)
   const coverInputRef = React.useRef<HTMLInputElement>(null)
 
-  // Pré-visualização local da capa selecionada
-  const coverPreviewUrl = React.useMemo(
-    () => (coverFile ? URL.createObjectURL(coverFile) : null),
-    [coverFile]
-  )
+  // Pré-visualização local da capa selecionada (gerada como thumbnail leve para não sobrecarregar a Main Thread / INP)
+  const [coverPreviewUrl, setCoverPreviewUrl] = React.useState<string | null>(null)
+
   React.useEffect(() => {
-    return () => {
-      if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl)
+    if (!coverFile) {
+      setCoverPreviewUrl(null)
+      return
     }
-  }, [coverPreviewUrl])
+
+    let isCancelled = false
+    let objectUrlToRevoke: string | null = null
+
+    const generatePreview = async () => {
+      try {
+        if (typeof window !== 'undefined' && 'createImageBitmap' in window) {
+          const bitmap = await createImageBitmap(coverFile)
+          if (isCancelled) return
+
+          const maxDim = 800
+          let width = bitmap.width
+          let height = bitmap.height
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width)
+              width = maxDim
+            } else {
+              width = Math.round((width * maxDim) / height)
+              height = maxDim
+            }
+          }
+
+          const canvas = document.createElement('canvas')
+          canvas.width = width
+          canvas.height = height
+          const ctx = canvas.getContext('2d')
+          if (ctx) {
+            ctx.drawImage(bitmap, 0, 0, width, height)
+            canvas.toBlob((blob) => {
+              if (isCancelled || !blob) return
+              const url = URL.createObjectURL(blob)
+              objectUrlToRevoke = url
+              setCoverPreviewUrl(url)
+            }, 'image/webp', 0.85)
+            return
+          }
+        }
+      } catch {
+        // Fallback silencioso se createImageBitmap falhar
+      }
+
+      if (!isCancelled) {
+        try {
+          const url = URL.createObjectURL(coverFile)
+          objectUrlToRevoke = url
+          setCoverPreviewUrl(url)
+        } catch {
+          // No-op
+        }
+      }
+    }
+
+    generatePreview()
+
+    return () => {
+      isCancelled = true
+      if (objectUrlToRevoke) {
+        URL.revokeObjectURL(objectUrlToRevoke)
+      }
+    }
+  }, [coverFile])
 
   const effectiveCoverUrl = coverPreviewUrl || (isEdit ? initialData?.previewUrl : null)
 
@@ -280,11 +342,29 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData, initi
       }
     }
 
-    // Para imagem de capa (preview), envia para /api/admin/upload para aplicação de marca d'água via Sharp
+    // Para imagem de capa (preview), envia para /api/admin/upload para aplicação de marca d'água via Sharp.
+    // Otimiza imagens grandes (> 3.5 MB ou resolução alta) no cliente antes do envio
+    // para não ultrapassar o limite de 4.5 MB do corpo de requisições da Vercel (HTTP 413).
+    let fileToUpload = file
+    if (folder === 'previews' && file.type?.startsWith('image/')) {
+      try {
+        fileToUpload = await optimizeImageForUpload(file)
+      } catch {
+        fileToUpload = file
+      }
+    }
+
+    // Se mesmo após a tentativa de otimização o arquivo ainda ultrapassar 4.5 MB, impede o envio antes de estourar 413
+    if (fileToUpload.size > 4.5 * 1024 * 1024) {
+      throw new Error(
+        `A imagem de capa ${fileToUpload.name} tem ${(fileToUpload.size / (1024 * 1024)).toFixed(1)} MB e excede o limite máximo permitido pelo servidor (4.5 MB). Envie uma imagem menor.`
+      )
+    }
+
     return new Promise<{ url: string; key: string; size: number }>((resolve, reject) => {
       const xhr = new XMLHttpRequest()
       const data = new FormData()
-      data.append('file', file)
+      data.append('file', fileToUpload)
       data.append('folder', folder)
 
       if (onProgress) {
@@ -296,20 +376,35 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData, initi
       }
 
       xhr.addEventListener('load', () => {
+        if (xhr.status === 413) {
+          reject(
+            new Error(
+              `O arquivo ${fileToUpload.name} excede o limite de tamanho do servidor (413 - Payload Too Large). Reduza a resolução ou tamanho da imagem.`
+            )
+          )
+          return
+        }
+
         try {
           const result = JSON.parse(xhr.responseText)
           if (xhr.status >= 200 && xhr.status < 300 && result.success) {
             resolve(result.data as { url: string; key: string; size: number })
           } else {
-            reject(new Error(result.error || `Erro no upload de ${file.name} (${xhr.status}).`))
+            reject(new Error(result.error || `Erro no upload de ${fileToUpload.name} (${xhr.status}).`))
           }
         } catch {
-          reject(new Error(`Resposta inválida do servidor ao enviar ${file.name}.`))
+          reject(
+            new Error(
+              xhr.status >= 400
+                ? `Erro no servidor (${xhr.status}) ao enviar ${fileToUpload.name}.`
+                : `Resposta inválida do servidor ao enviar ${fileToUpload.name}.`
+            )
+          )
         }
       })
 
-      xhr.addEventListener('error', () => reject(new Error(`Falha de conexão ao enviar ${file.name}.`)))
-      xhr.addEventListener('abort', () => reject(new Error(`Upload cancelado: ${file.name}.`)))
+      xhr.addEventListener('error', () => reject(new Error(`Falha de conexão ao enviar ${fileToUpload.name}.`)))
+      xhr.addEventListener('abort', () => reject(new Error(`Upload cancelado: ${fileToUpload.name}.`)))
 
       xhr.open('POST', '/api/admin/upload')
       xhr.send(data)
@@ -666,13 +761,13 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData, initi
               className="hidden"
             />
             {effectiveCoverUrl ? (
-              <div className="relative h-44 w-full rounded-xl overflow-hidden border border-nks-gray-200 bg-nks-gray-100 shadow-nks-sm group">
+              <div className="relative h-44 w-full rounded-xl overflow-hidden border border-nks-gray-200 bg-nks-gray-100 shadow-nks-sm group [contain:paint] [transform:translateZ(0)]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={effectiveCoverUrl}
                   alt="Imagem de capa"
                   decoding="async"
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover pointer-events-none"
                 />
                 <div className="absolute top-2 right-2 flex items-center gap-1.5">
                   <button
@@ -703,7 +798,7 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData, initi
               <button
                 type="button"
                 onClick={() => coverInputRef.current?.click()}
-                className="border-2 border-dashed border-nks-gray-200 bg-nks-gray-100/50 hover:bg-nks-gray-100 hover:border-nks-gray-400 rounded-xl py-8 px-4 flex flex-col items-center justify-center text-center transition-all duration-200 cursor-pointer"
+                className="border-2 border-dashed border-nks-gray-200 bg-nks-gray-100/50 hover:bg-nks-gray-100 hover:border-nks-gray-400 rounded-xl py-8 px-4 flex flex-col items-center justify-center text-center transition-colors duration-150 cursor-pointer"
               >
                 <div className="p-2.5 bg-white rounded-full border border-nks-gray-200/60 shadow-nks-sm mb-2">
                   <ImageIcon className="h-5 w-5 text-nks-gray-400" />
@@ -739,7 +834,7 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData, initi
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`border-2 border-dashed rounded-xl py-9 px-4 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 ${
+              className={`border-2 border-dashed rounded-xl py-9 px-4 flex flex-col items-center justify-center text-center cursor-pointer transition-colors duration-150 ${
                 dragActive
                   ? 'border-nks-red bg-nks-red-subtle/15'
                   : 'border-nks-gray-200 bg-nks-gray-100/50 hover:bg-nks-gray-100 hover:border-nks-gray-400'
@@ -763,12 +858,11 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData, initi
               <span className="text-[10px] font-bold text-nks-gray-400 uppercase tracking-wider mb-4 block">
                 CDR - AI - PDF - OTF - até 50 MB cada
               </span>
-              <button
-                type="button"
-                className="bg-white hover:bg-nks-gray-100 border border-nks-gray-250 text-nks-gray-700 text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer shadow-nks-sm"
+              <span
+                className="bg-white hover:bg-nks-gray-100 border border-nks-gray-250 text-nks-gray-700 text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer shadow-nks-sm inline-block select-none"
               >
                 Selecionar arquivos
-              </button>
+              </span>
             </div>
 
             {/* Arquivos originais já existentes (em edição) */}
@@ -1012,7 +1106,7 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData, initi
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className="w-full bg-[#f3f4f6] text-nks-black placeholder:text-nks-gray-400 text-xs font-bold px-4 py-3 rounded-lg border border-transparent focus:border-nks-gray-200 focus:bg-white focus:outline-none transition-all duration-200"
+              className="w-full bg-[#f3f4f6] text-nks-black placeholder:text-nks-gray-400 text-xs font-bold px-4 py-3 rounded-lg border border-transparent focus:border-nks-gray-200 focus:bg-white focus:outline-none transition-colors duration-150"
             />
           </div>
 
@@ -1026,7 +1120,7 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData, initi
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
                 required
-                className="w-full bg-[#f3f4f6] text-nks-black text-xs font-bold px-4 py-3 rounded-lg border border-transparent focus:border-nks-gray-200 focus:bg-white focus:outline-none appearance-none cursor-pointer transition-all duration-200"
+                className="w-full bg-[#f3f4f6] text-nks-black text-xs font-bold px-4 py-3 rounded-lg border border-transparent focus:border-nks-gray-200 focus:bg-white focus:outline-none appearance-none cursor-pointer transition-colors duration-150"
               >
                 <option value="" className="font-semibold">
                   Selecione uma categoria
@@ -1211,7 +1305,7 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData, initi
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full bg-[#f3f4f6] text-nks-black placeholder:text-nks-gray-400 text-xs font-bold px-4 py-3 rounded-lg border border-transparent focus:border-nks-gray-200 focus:bg-white focus:outline-none transition-all duration-200 resize-y min-h-[60px]"
+              className="w-full bg-[#f3f4f6] text-nks-black placeholder:text-nks-gray-400 text-xs font-bold px-4 py-3 rounded-lg border border-transparent focus:border-nks-gray-200 focus:bg-white focus:outline-none transition-colors duration-150 resize-y min-h-[60px]"
             />
           </div>
 
@@ -1248,7 +1342,7 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData, initi
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   placeholder="15,00"
-                  className="w-full bg-[#f3f4f6] text-nks-black text-xs font-bold pl-9 pr-4 py-3 rounded-lg border border-transparent focus:border-nks-gray-200 focus:bg-white focus:outline-none transition-all duration-200"
+                  className="w-full bg-[#f3f4f6] text-nks-black text-xs font-bold pl-9 pr-4 py-3 rounded-lg border border-transparent focus:border-nks-gray-200 focus:bg-white focus:outline-none transition-colors duration-150"
                 />
               </div>
               <span className="text-[10px] font-semibold text-nks-gray-400">
