@@ -1,5 +1,9 @@
 # PRD — phase2-closeout
 
+> **Status:** 🟡 **CÓDIGO CONCLUÍDO / OPS EM PRODUÇÃO PENDENTE**  
+> **Data:** 2026-09-17  
+> **Evidências:** Código e testes da Fase 2 estão 100% finalizados (315 testes verdes). Restam validações operacionais de produção (webhook real e script SQL de FTS no Neon).
+
 ## Problema
 A Fase 2 (marketplace) está com o código concluído, mas itens operacionais de fechamento
 não foram feitos e a documentação diverge do código real:

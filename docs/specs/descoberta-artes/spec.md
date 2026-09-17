@@ -1,5 +1,9 @@
 # Spec — descoberta-artes
 
+> **Status:** 🔴 **NÃO IMPLEMENTADO (Backlog)**  
+> **Data:** 2026-09-17  
+> **Dependências:** Criação da tabela `Review` no Prisma e implementação de função de relevância ponderada por tags.
+
 ## Objetivo técnico
 Melhorar "relacionadas" com score de sobreposição de tags + categoria (SQL no helper de
 artworks), e introduzir reviews 1–5 estrelas **verificadas por compra** (model `Review`,

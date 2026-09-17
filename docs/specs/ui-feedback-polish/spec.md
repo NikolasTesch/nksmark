@@ -1,5 +1,9 @@
 # Spec — ui-feedback-polish
 
+> **Status:** 🟢 **CONCLUÍDO / IMPLEMENTADO**  
+> **Data:** 2026-09-17  
+> **Evidências:** RF-1 a RF-4 implementados e validados por suíte de testes Vitest.
+
 ## Objetivo técnico
 Dar à aplicação um canal único de feedback (toast) e de estados vazios, consertar o placeholder
 inexistente e adicionar gestos de toque na galeria, sem alterar layout/identidade existentes.

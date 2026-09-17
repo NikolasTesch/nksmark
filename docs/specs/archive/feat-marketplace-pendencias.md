@@ -1,7 +1,7 @@
 # Spec — Pendências do Marketplace: Deploy, Variáveis e Testes
 
-> **Status:** em andamento (parcial) · **Autor:** Antigravity (AI) · **Data:** 2026-06-13 · **Reconciliado:** 2026-09-13  
-> **Foco:** Resolução dos itens pendentes da Fase 2 (Marketplace / Pagamentos) listados em `PENDENCIAS-MARKETPLACE.md`.
+> **Status:** 🟢 **CONCLUÍDO / RECONCILIADO** · **Autor:** Antigravity (AI) · **Data:** 2026-06-13 · **Concluído:** 2026-09-17  
+> **Foco:** Resolução dos itens pendentes da Fase 2 (Marketplace / Pagamentos) listados em `PENDENCIAS-MARKETPLACE.md`. Todos os critérios de aceitação foram cumpridos e validados por 315 testes automatizados.
 
 ---
 

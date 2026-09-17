@@ -1,5 +1,9 @@
 # PRD — landing-page
 
+> **Status:** 🔴 **NÃO IMPLEMENTADO (Backlog)**  
+> **Data:** 2026-09-17  
+> **Nota de Implementação:** A rota raiz (`src/app/page.tsx`) continua executando `redirect('/loja')`. Nenhuma das seções ou metadados foi implementada no código.
+
 ## Problema
 Hoje `/` é um redirect seco para `/loja` (hero removida na Fase 2). Um visitante frio — vindo de
 link no Instagram, Google ou cartão de visita — chega direto numa grade de produtos sem nenhuma

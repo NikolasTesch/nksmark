@@ -1,5 +1,9 @@
 # Spec — landing-page
 
+> **Status:** 🔴 **NÃO IMPLEMENTADO (Backlog)**  
+> **Data:** 2026-09-17  
+> **Dependências:** Definição de copy final e aprovação de layout.
+
 ## Objetivo técnico
 Substituir o redirect `/` → `/loja` por uma landing estática (Server Component, dados via Prisma
 direto, `revalidate` por tempo) com pitch da marca, destaques do acervo e CTAs, reutilizando os

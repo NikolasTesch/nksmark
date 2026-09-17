@@ -1,5 +1,9 @@
 # PRD — descoberta-artes
 
+> **Status:** 🔴 **NÃO IMPLEMENTADO (Backlog)**  
+> **Data:** 2026-09-17  
+> **Nota de Implementação:** Nem a agregação avançada de relacionadas por sobreposição de tags nem o modelo `Review` (avaliações/estrelas) foram criados no schema ou implementados no código. A página `/loja/[slug]` permanece exibindo artes da mesma categoria via `categoryId`.
+
 ## Problema
 A página de detalhe (`/loja/[slug]`) mostra "relacionadas" só por mesma categoria (máx. 5,
 `/api/artworks?categoryId=`), ignorando tags — o sinal mais rico do catálogo (M2M `Artwork.tags`)

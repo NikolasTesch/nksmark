@@ -1,5 +1,10 @@
 # PRD — billing-fase3
 
+> **Status:** 🟡 **PARCIAL / HÍBRIDO**  
+> **Data:** 2026-09-17  
+> **Frente A (Documento Fiscal):** 🔴 **Não Implementado** — Bloqueado por decisão contábil e definição de fornecedor (ADR-1 pendente).  
+> **Frente B (Assinatura do Acervo):** 🟢 **Parcialmente Implementado** — Fundação pronta no código (schema `Subscription`, rotas de checkout/me/cancel, webhook de preapproval e liberação em `canDownloadArtwork`). Resta homologação em produção e dashboard admin.
+
 ## Problema
 O `PRD.md` lista estes remainders da Fase 2 que travam a operação comercial fora do MVP:
 

@@ -1,5 +1,9 @@
 # PRD — loja-server-side
 
+> **Status:** 🟢 **CONCLUÍDO / IMPLEMENTADO**  
+> **Data:** 2026-09-17  
+> **Evidências:** `src/lib/artworks/query.ts`, `src/lib/validations/artwork-query.ts`, `src/app/loja/LojaView.tsx` e testes unitários/integração verdes.
+
 ## Problema
 A `/loja` hoje baixa **todo o acervo** (`GET /api/artworks` sem paginação, `useArtworks.ts`)
 e filtra/ordena/pagina em memória (`loja/page.tsx:106–158`). A busca FTS server-side existe

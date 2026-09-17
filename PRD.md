@@ -103,10 +103,10 @@ NKS Art é um catálogo digital de artes para sublimação. O produto resolve o 
 | Item no spec.md | Estado real |
 |---|---|
 | Next.js 14 | Roda **Next.js 16.2.6** |
-| `/admin/conteudo` com aba Filtros | Aba Filtros ainda não implementada |
+| `/admin/conteudo` com aba Filtros | **Implementada** (reordenação dnd-kit via `/api/categories/reorder`) |
 | Framer Motion (animações) | Instalado e em uso no admin/downloads e quem-somos |
-| Vercel Analytics | Ainda não configurado |
-| `/gratis` | Rota existe mas não diferencia free/pago (Fase 2) |
+| Vercel Analytics | **Configurado e ativo** (`@vercel/analytics/next` em `layout.tsx`) |
+| `/gratis` | Implementado com filtro de artes gratuitas |
 
 ---
 
@@ -253,25 +253,23 @@ Browser
 
 ---
 
-## 9. Fase 2 — Roadmap
+## 9. Fase 2 e Expansão — Roadmap
 
-### P0 — Alta prioridade (próximo sprint)
-- [ ] **Aba Filtros** em `/admin/conteudo` — controle de ordem e visibilidade no filtro da loja
-- [ ] **Vercel Analytics** — configurar `@vercel/analytics` para rastrear pageviews e eventos de download
+### ✅ Concluído / Implementado
+- [x] **Aba Filtros** em `/admin/conteudo` — controle de ordem e visibilidade no filtro da loja via dnd-kit
+- [x] **Vercel Analytics** — configurado via `@vercel/analytics/next` em `src/app/layout.tsx`
+- [x] **Preview com marca d'água** — geração automática via Sharp no upload em `POST /api/admin/upload`
+- [x] **Busca por texto livre** — full-text search PostgreSQL nativo com relevância em português
+- [x] **Coleções / séries** — agrupar artes em coleções (`Collection` / `CollectionArtwork`) com bloco público
+- [x] **Sistema de pagamento (Mercado Pago)** — marketplace: role CLIENT, compra avulsa (Pix/cartão), webhook idempotente
+- [x] **Artes premium vs gratuitas** — controle de preço e liberação condicional de download
+- [x] **Análise de vendas e estornos** (`/admin/vendas`) — receita, métricas, top vendas e estornos diretos via MP
+- [x] **Carrinho multi-artes com cupons** — persistência no banco (`Cart`, `CartItem`, `Coupon`) e checkout consolidado
 
-### P1 — Média prioridade
-- [ ] **Preview com marca d'água** — geração automática via Sharp no upload
-- [ ] **Busca por texto livre** — full-text search no Neon ou Algolia
-- [ ] **Coleções / séries** — agrupar artes relacionadas em uma série
-
-### P2 — Pós-validação de uso
-- [x] **Sistema de pagamento (Mercado Pago)** — marketplace: role CLIENT, compra por arte (Pix/cartão),
-  webhook idempotente com validação de assinatura, e-mail de confirmação
-- [x] **Artes premium vs gratuitas** — `Artwork.priceCents` (default R$ 15,00); download pago liberado
-  apenas após `Order` PAGO; arte grátis baixável por cliente logado
-- [x] **Análise de vendas no admin** (`/admin/vendas`) — receita, artes mais vendidas, nichos
-  (categorias) mais vendidos e clientes que mais compraram, com filtro por período
-- [ ] **Carrinho** com múltiplas artes / cupons de desconto
+### 📋 Backlog / Em Especificação (ver `docs/specs/`)
+- [ ] **Landing Page institucional** (`/`) — hero, novidades e apresentação da marca (ver `docs/specs/landing-page/`)
+- [ ] **Avaliações e Relacionadas ricas** — reviews com estrelas e cálculo de relevância por tags (ver `docs/specs/descoberta-artes/`)
+- [ ] **Assinatura recorrente e NF-e** — emissão de documento fiscal e consolidação de planos (ver `docs/specs/billing-fase3/`)
 - [ ] **Newsletter** — notificação de novas artes para assinantes
 
 ---

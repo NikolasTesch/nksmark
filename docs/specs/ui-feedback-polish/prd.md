@@ -1,5 +1,9 @@
 # PRD — ui-feedback-polish
 
+> **Status:** 🟢 **CONCLUÍDO / IMPLEMENTADO**  
+> **Data:** 2026-09-17  
+> **Evidências:** `sonner` global no layout, `placeholder.svg` adicionado, `EmptyState` unificado e gestos na galeria (`ArtworkPreview.tsx`).
+
 ## Problema
 A loja e o admin funcionam, mas a superfície de feedback visual tem 4 furos concretos no código de hoje:
 

@@ -1,5 +1,9 @@
 # Spec — melhorias-admin
 
+> **Status:** 🟢 **CONCLUÍDO / IMPLEMENTADO**  
+> **Data:** 2026-09-17  
+> **Evidências:** RF-1 a RF-4 implementados e validados por suíte de testes Vitest.
+
 ## Objetivo técnico
 Adicionar refund total via API REST do Mercado Pago + endpoint admin com UI de confirmação, e
 padronizar as listagens do admin com um wrapper de tabela responsivo, sem mudar o design desktop.

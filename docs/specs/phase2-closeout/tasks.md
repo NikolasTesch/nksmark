@@ -17,7 +17,7 @@
 
 ## Docs
 - [x] T-10 `CLAUDE.md`: corrigir notas obsoletas (aba Filtros implementada; Analytics importado em `src/app/layout.tsx`; zip implementado)
-- [ ] T-11 Converter `docs/specs/active/feat-marketplace-pendencias.md` em checklist verificado e mover para `docs/specs/archive/`
+- [x] T-11 Converter `docs/specs/active/feat-marketplace-pendencias.md` em checklist verificado e mover para `docs/specs/archive/`
 - [x] T-12 Atualizar status de `feat-download-zip-multi-arquivo`/`feat-marketplace-pagamento` conforme estado real
 
 ## Encerramento

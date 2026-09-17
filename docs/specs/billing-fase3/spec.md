@@ -1,5 +1,10 @@
 # Spec — billing-fase3
 
+> **Status:** 🟡 **PARCIAL / HÍBRIDO**  
+> **Data:** 2026-09-17  
+> **Frente A (Documento Fiscal):** 🔴 **Não Implementado** — Nenhuma linha de código ou modelo fiscal criado.  
+> **Frente B (Assinatura do Acervo):** 🟢 **Implementado no Código (Pendências de Produção/Admin)** — `Subscription`, rotas de checkout, webhook e liberação de downloads cobertos por testes unitários.
+
 ## Objetivo técnico
 Duas frentes independentes, uma spec de direção cada, **gateadas por decisão externa** antes do Apply:
 (1) documento fiscal por pedido via provedor de emissão (decisão do contador + ADR de fornecedor);

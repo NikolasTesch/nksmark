@@ -1,5 +1,9 @@
 # Spec — phase2-closeout
 
+> **Status:** 🟡 **CÓDIGO CONCLUÍDO / OPS EM PRODUÇÃO PENDENTE**  
+> **Data:** 2026-09-17  
+> **Evidências:** Cobertura de testes concluída (T-8 e T-9 verdes). Itens pendentes são operacionais em painéis externos (T-1 a T-7).
+
 ## Objetivo técnico
 Fechar os 4 itens operacionais da Fase 2 (schema no Neon, webhook MP, testes restantes,
 Analytics verificado) e reconciliar `CLAUDE.md`/`docs/specs/` com o código, para que a Fase 2

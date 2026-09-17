@@ -1,5 +1,9 @@
 # Spec — loja-server-side
 
+> **Status:** 🟢 **CONCLUÍDO / IMPLEMENTADO**  
+> **Data:** 2026-09-17  
+> **Evidências:** Helpers `buildWhere` e `fetchPage`, route handler `/api/artworks` e componente de página atualizados.
+
 ## Objetivo técnico
 Tornar a `/loja` orientada por URL: filtros, busca, ordenação e paginação resolvidos no servidor
 (Prisma + FTS com paginação) com `searchParams` como fonte única de verdade, e o cliente apenas

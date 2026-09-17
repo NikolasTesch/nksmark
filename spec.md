@@ -5,7 +5,7 @@
 
 ## Visão geral
 
-Catálogo digital de artes para sublimação e afins. Área pública para navegação. Downloads liberados apenas para usuários autenticados com role **fase** (equipe interna). Administração protegida para upload, edição e gestão completa. Pagamento planejado para Fase 2.
+Catálogo digital de artes para sublimação e afins. Área pública para navegação e compra avulsa (role CLIENT). Downloads liberados para equipe interna (role FASE) ou compradores. Administração protegida para upload, edição e gestão completa. Marketplace e pagamentos via Mercado Pago implementados.
 
 ---
 

@@ -1,5 +1,9 @@
 # PRD — melhorias-admin
 
+> **Status:** 🟢 **CONCLUÍDO / IMPLEMENTADO**  
+> **Data:** 2026-09-17  
+> **Evidências:** `createRefund` em `src/lib/payments/mercadopago.ts`, rota `POST /api/admin/orders/[id]/refund`, `DataTable.tsx` e migração das tabelas no admin.
+
 ## Problema
 Dois furos operacionais no admin hoje:
 
