@@ -3,17 +3,23 @@ import { Status } from '@prisma/client'
 
 // vi.mock é içado para o topo do arquivo; as variáveis que ele referencia
 // precisam vir de vi.hoisted() para já existirem nesse momento.
-const { prismaMock, protectArtworkManagementRoute } = vi.hoisted(() => ({
+const { prismaMock, protectArtworkManagementRoute, moveArtworkFilesToDeletedMock } = vi.hoisted(() => ({
   prismaMock: {
     artwork: { update: vi.fn(), delete: vi.fn(), findUnique: vi.fn() },
-    file: { deleteMany: vi.fn(), createMany: vi.fn() },
+    file: { deleteMany: vi.fn(), createMany: vi.fn(), update: vi.fn() },
+    cartItem: { deleteMany: vi.fn() },
+    $transaction: vi.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
   },
   protectArtworkManagementRoute: vi.fn(),
+  moveArtworkFilesToDeletedMock: vi.fn(),
 }))
 
 vi.mock('@/lib/prisma', () => ({ default: prismaMock }))
 vi.mock('@/lib/auth/middleware', () => ({
   protectArtworkManagementRoute: () => protectArtworkManagementRoute(),
+}))
+vi.mock('@/lib/r2/delete', () => ({
+  moveArtworkFilesToDeleted: (...args: unknown[]) => moveArtworkFilesToDeletedMock(...args),
 }))
 
 import { DELETE, GET, PATCH } from './route'
@@ -31,24 +37,47 @@ const params = Promise.resolve({ id: 'art-1' })
 beforeEach(() => {
   vi.clearAllMocks()
   protectArtworkManagementRoute.mockResolvedValue({ authorized: true, user: { id: 'admin' } })
+  moveArtworkFilesToDeletedMock.mockResolvedValue({
+    newPreviewUrl: 'https://pub.example.com/deleted/previews/1-capa.jpg',
+    updatedFiles: [{ id: 'f-1', newUrl: 'deleted/files/1-arte.cdr' }],
+  })
 })
 
 describe('DELETE /api/artworks/[id]', () => {
-  it('faz soft delete (status ARCHIVED) e NÃO deleta fisicamente', async () => {
+  it('retorna 404 quando a arte não existe', async () => {
+    prismaMock.artwork.findUnique.mockResolvedValue(null)
+    const res = await DELETE(new Request('http://localhost/api/artworks/art-1', { method: 'DELETE' }), { params })
+    const json = await res.json()
+    expect(res.status).toBe(404)
+    expect(json.error).toBe('Arte não localizada')
+  })
+
+  it('faz soft delete (status ARCHIVED), move arquivos para deleted/ e limpa carrinhos', async () => {
+    const mockArtwork = {
+      id: 'art-1',
+      title: 'Arte Teste',
+      previewUrl: 'https://pub.example.com/previews/1-capa.jpg',
+      files: [{ id: 'f-1', url: 'files/1-arte.cdr' }],
+    }
+    prismaMock.artwork.findUnique.mockResolvedValue(mockArtwork)
     prismaMock.artwork.update.mockResolvedValue({ id: 'art-1', status: Status.ARCHIVED })
+    prismaMock.file.update.mockResolvedValue({})
+    prismaMock.cartItem.deleteMany.mockResolvedValue({ count: 1 })
+    prismaMock.$transaction.mockResolvedValue([{ id: 'art-1', status: Status.ARCHIVED }])
 
     const res = await DELETE(new Request('http://localhost/api/artworks/art-1', { method: 'DELETE' }), { params })
     const json = await res.json()
 
     expect(res.status).toBe(200)
     expect(json.data.status).toBe(Status.ARCHIVED)
-    expect(prismaMock.artwork.update).toHaveBeenCalledWith({
+    expect(moveArtworkFilesToDeletedMock).toHaveBeenCalledWith(mockArtwork)
+    expect(prismaMock.artwork.findUnique).toHaveBeenCalledWith({
       where: { id: 'art-1' },
-      data: { status: Status.ARCHIVED },
+      include: { files: true },
     })
-    // Regra inviolável: nunca apagar fisicamente arte nem seus arquivos.
+    expect(prismaMock.$transaction).toHaveBeenCalled()
+    // Nunca apaga fisicamente a arte nem os arquivos
     expect(prismaMock.artwork.delete).not.toHaveBeenCalled()
-    expect(prismaMock.file.deleteMany).not.toHaveBeenCalled()
   })
 
   it('bloqueia quando não autorizado', async () => {
@@ -58,7 +87,7 @@ describe('DELETE /api/artworks/[id]', () => {
     })
     const res = await DELETE(new Request('http://localhost/api/artworks/art-1', { method: 'DELETE' }), { params })
     expect(res.status).toBe(403)
-    expect(prismaMock.artwork.update).not.toHaveBeenCalled()
+    expect(prismaMock.artwork.findUnique).not.toHaveBeenCalled()
   })
 })
 
@@ -109,7 +138,7 @@ describe('GET /api/artworks/[id]', () => {
 
 describe('DELETE /api/artworks/[id] — erro', () => {
   it('retorna 500 quando o arquivamento falha', async () => {
-    prismaMock.artwork.update.mockRejectedValue(new Error('db'))
+    prismaMock.artwork.findUnique.mockRejectedValue(new Error('db'))
     const res = await DELETE(new Request('http://localhost/api/artworks/art-1', { method: 'DELETE' }), { params })
     const json = await res.json()
     expect(res.status).toBe(500)

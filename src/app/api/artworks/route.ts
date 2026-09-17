@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma'
 import { protectArtworkManagementRoute } from '@/lib/auth/middleware'
 import { artworkSchema } from '@/lib/validations/artwork'
 import { generateSlug } from '@/lib/utils/slug'
-import { Format } from '@prisma/client'
+import { Format, Status } from '@prisma/client'
 import { logger as log } from '@/lib/utils/logger'
 import { parseArtworkQuery } from '@/lib/validations/artwork-query'
 import { fetchArtworkPage } from '@/lib/artworks/query'
@@ -41,12 +41,15 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: true, data: artworks })
     }
 
-    // Visão admin/equipe interna: todos os status, arquivos completos — contrato legado {success,data}.
+    // Visão admin/equipe interna: filtra artes deletadas/arquivadas por padrão — contrato legado {success,data}.
     if (isAdminView) {
       const authStatus = await protectArtworkManagementRoute()
       if (!authStatus.authorized) return authStatus.response
 
+      const includeArchived = searchParams.get('includeArchived') === 'true'
+
       const artworks = await prisma.artwork.findMany({
+        where: includeArchived ? undefined : { status: { not: Status.ARCHIVED } },
         include: {
           category: true,
           tags: true,

@@ -5,6 +5,7 @@ import { protectArtworkManagementRoute } from '@/lib/auth/middleware'
 import { artworkSchema } from '@/lib/validations/artwork'
 import { generateSlug } from '@/lib/utils/slug'
 import { logger as log } from "@/lib/utils/logger";
+import { moveArtworkFilesToDeleted } from '@/lib/r2/delete'
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -139,11 +140,37 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
     const { id } = await params
 
-    // Regra inviolável: nunca deletar artes fisicamente — arquivar via status.
-    const archivedArtwork = await prisma.artwork.update({
+    const artwork = await prisma.artwork.findUnique({
       where: { id },
-      data: { status: Status.ARCHIVED },
+      include: { files: true },
     })
+
+    if (!artwork) {
+      return NextResponse.json({ success: false, error: 'Arte não localizada' }, { status: 404 })
+    }
+
+    // Move os arquivos do R2 (originais e capas) para a pasta 'deleted/'
+    const { newPreviewUrl, updatedFiles } = await moveArtworkFilesToDeleted(artwork)
+
+    // Soft delete: mantém o registro da arte como ARCHIVED, atualiza chaves em 'deleted/' e limpa carrinhos
+    const [archivedArtwork] = await prisma.$transaction([
+      prisma.artwork.update({
+        where: { id },
+        data: {
+          status: Status.ARCHIVED,
+          previewUrl: newPreviewUrl || artwork.previewUrl,
+        },
+      }),
+      ...updatedFiles.map((file) =>
+        prisma.file.update({
+          where: { id: file.id },
+          data: { url: file.newUrl },
+        })
+      ),
+      prisma.cartItem.deleteMany({
+        where: { artworkId: id },
+      }),
+    ])
 
     return NextResponse.json({ success: true, data: archivedArtwork })
   } catch (error) {

@@ -91,4 +91,28 @@ describe('GET /api/artworks?admin=true', () => {
     expect(res.status).toBe(401)
     expect(prismaMock.artwork.findMany).not.toHaveBeenCalled()
   })
+
+  it('filtra artes arquivadas (ARCHIVED) por padrão na visão admin', async () => {
+    protectArtworkManagementRoute.mockResolvedValue({ authorized: true, user: { id: 'admin', role: 'ADMIN' } })
+
+    await GET(new Request('http://localhost/api/artworks?admin=true'))
+
+    expect(prismaMock.artwork.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { status: { not: 'ARCHIVED' } },
+      })
+    )
+  })
+
+  it('permite trazer artes arquivadas quando includeArchived=true', async () => {
+    protectArtworkManagementRoute.mockResolvedValue({ authorized: true, user: { id: 'admin', role: 'ADMIN' } })
+
+    await GET(new Request('http://localhost/api/artworks?admin=true&includeArchived=true'))
+
+    expect(prismaMock.artwork.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: undefined,
+      })
+    )
+  })
 })
