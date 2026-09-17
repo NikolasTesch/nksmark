@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { Prisma, Status } from '@prisma/client'
-import { protectAdminRoute } from '@/lib/auth/middleware'
+import { protectArtworkManagementRoute } from '@/lib/auth/middleware'
 import { artworkSchema } from '@/lib/validations/artwork'
 import { generateSlug } from '@/lib/utils/slug'
 import { logger as log } from "@/lib/utils/logger";
@@ -9,9 +9,9 @@ import { logger as log } from "@/lib/utils/logger";
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Esta rota retorna `files` com a `url`/chave do R2 (campo sensível) e artes
-    // em qualquer status (DRAFT/ARCHIVED). É consumida apenas pelo painel admin,
-    // portanto exige ADMIN. O catálogo público usa GET /api/artworks (sem `url`).
-    const authStatus = await protectAdminRoute()
+    // em qualquer status (DRAFT/ARCHIVED). É consumida pelo painel admin/equipe interna,
+    // portanto exige ADMIN ou FASE. O catálogo público usa GET /api/artworks (sem `url`).
+    const authStatus = await protectArtworkManagementRoute()
     if (!authStatus.authorized) {
       return authStatus.response
     }
@@ -38,7 +38,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const authStatus = await protectAdminRoute()
+    const authStatus = await protectArtworkManagementRoute()
     if (!authStatus.authorized) {
       return authStatus.response
     }
@@ -54,7 +54,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       )
     }
 
-    const { title, description, status, isFree, priceCents, previewUrl, categoryId, tagNames, addGalleryImages, removeFileIds } = result.data
+    const { title, description, status, isFree, priceCents, previewUrl, categoryId, tagNames, addFiles, addGalleryImages, removeFileIds } = result.data
     const dataToUpdate: Prisma.ArtworkUpdateInput = {}
 
     if (title !== undefined) {
@@ -96,6 +96,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       })
     }
 
+    if (addFiles && addFiles.length > 0) {
+      await prisma.file.createMany({
+        data: addFiles.map((file) => ({
+          format: file.format,
+          url: file.url,
+          size: file.size,
+          artworkId: id,
+        })),
+      })
+    }
+
     if (addGalleryImages && addGalleryImages.length > 0) {
       await prisma.file.createMany({
         data: addGalleryImages.map((img) => ({
@@ -121,7 +132,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const authStatus = await protectAdminRoute()
+    const authStatus = await protectArtworkManagementRoute()
     if (!authStatus.authorized) {
       return authStatus.response
     }

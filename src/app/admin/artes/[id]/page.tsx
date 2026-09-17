@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArtworkFormNks } from '@/components/admin/ArtworkFormNks'
-import { Category } from '@prisma/client'
+import type { Category } from '@prisma/client'
 import { ArtworkWithRelations } from '@/types/artwork'
 import { AlertCircle, Loader2 } from 'lucide-react'
 import Link from 'next/link'

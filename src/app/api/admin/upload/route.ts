@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { protectAdminRoute } from '@/lib/auth/middleware'
+import { protectArtworkManagementRoute } from '@/lib/auth/middleware'
 import { uploadFileToR2 } from '@/lib/r2/upload'
 import { applyWatermark } from '@/lib/watermark'
 import { logger as log } from "@/lib/utils/logger";
@@ -10,7 +10,7 @@ const ALLOWED_FOLDERS = ['previews', 'files'] as const
 
 export async function POST(req: Request) {
   try {
-    const authStatus = await protectAdminRoute()
+    const authStatus = await protectArtworkManagementRoute()
     if (!authStatus.authorized) {
       return authStatus.response
     }

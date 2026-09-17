@@ -52,4 +52,37 @@ describe('canDownloadArtwork', () => {
     prismaMock.orderItem.findFirst.mockResolvedValue(null)
     expect(await canDownloadArtwork({ userId: 'u', role: Role.CLIENT, artworkId: 'a', isFree: false })).toBe(false)
   })
+
+  it('assinatura authorized com ciclo vigente libera qualquer arte (mesmo sem compra)', async () => {
+    prismaMock.subscription.findUnique.mockResolvedValue({
+      status: 'authorized',
+      currentPeriodEnd: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    })
+    expect(await canDownloadArtwork({ userId: 'u', role: Role.CLIENT, artworkId: 'a', isFree: false })).toBe(true)
+    // Não precisa consultar pedidos quando a assinatura cobre o acesso.
+    expect(prismaMock.orderItem.findFirst).not.toHaveBeenCalled()
+  })
+
+  it('assinatura authorized com ciclo EXPIRADO bloqueia (cai na regra de compra)', async () => {
+    prismaMock.subscription.findUnique.mockResolvedValue({
+      status: 'authorized',
+      currentPeriodEnd: new Date(Date.now() - 24 * 60 * 60 * 1000),
+    })
+    expect(await canDownloadArtwork({ userId: 'u', role: Role.CLIENT, artworkId: 'a', isFree: false })).toBe(false)
+  })
+
+  it('assinatura não-authorized (pending/cancelled) não libera', async () => {
+    prismaMock.subscription.findUnique.mockResolvedValue({ status: 'cancelled', currentPeriodEnd: null })
+    expect(await canDownloadArtwork({ userId: 'u', role: Role.CLIENT, artworkId: 'a', isFree: false })).toBe(false)
+  })
+
+  it('assinatura ativa é consultada antes da regra de compra (economiza 1 query quando libera)', async () => {
+    prismaMock.subscription.findUnique.mockResolvedValue({
+      status: 'authorized',
+      currentPeriodEnd: new Date(Date.now() + 60 * 1000),
+    })
+    await canDownloadArtwork({ userId: 'u', role: Role.CLIENT, artworkId: 'a', isFree: false })
+    expect(prismaMock.subscription.findUnique).toHaveBeenCalledTimes(1)
+    expect(prismaMock.orderItem.findFirst).not.toHaveBeenCalled()
+  })
 })

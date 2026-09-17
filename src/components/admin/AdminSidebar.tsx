@@ -19,7 +19,15 @@ const navItems = [
   { name: 'Chamados', path: '/admin/chamados', icon: <LifeBuoy className="h-4 w-4" /> },
 ]
 
-function NavLinks({ pathname, onLinkClick }: { pathname: string; onLinkClick?: () => void }) {
+function NavLinks({
+  pathname,
+  role,
+  onLinkClick,
+}: {
+  pathname: string
+  role?: string
+  onLinkClick?: () => void
+}) {
   const isLinkActive = (path: string) => {
     if (path === '/admin') return pathname === '/admin'
     if (path === '/admin/artes') {
@@ -28,9 +36,13 @@ function NavLinks({ pathname, onLinkClick }: { pathname: string; onLinkClick?: (
     return pathname.startsWith(path)
   }
 
+  const visibleItems = role === 'FASE'
+    ? navItems.filter((item) => item.path === '/admin/artes' || item.path === '/admin/artes/nova')
+    : navItems
+
   return (
     <nav className="flex flex-col gap-1.5">
-      {navItems.map((item) => {
+      {visibleItems.map((item) => {
         const active = isLinkActive(item.path)
         return (
           <Link
@@ -52,9 +64,9 @@ function NavLinks({ pathname, onLinkClick }: { pathname: string; onLinkClick?: (
   )
 }
 
-function UserFooter() {
+function UserFooter({ role }: { role?: string }) {
   const { data: session } = useSession()
-  const name = session?.user?.name || 'Admin NKS'
+  const name = session?.user?.name || (role === 'FASE' ? 'Equipe NKS' : 'Admin NKS')
   const email = session?.user?.email || ''
   const initial = name.charAt(0).toUpperCase()
 
@@ -85,6 +97,9 @@ function UserFooter() {
 export function AdminSidebar() {
   const pathname = usePathname()
   const [isMobileOpen, setIsMobileOpen] = React.useState(false)
+  const { data: session } = useSession()
+  const role = (session?.user as { role?: string })?.role
+  const roleBadge = role === 'FASE' ? 'Equipe' : 'Admin'
 
   const close = () => setIsMobileOpen(false)
 
@@ -95,7 +110,7 @@ export function AdminSidebar() {
         <div className="flex items-center gap-2">
           <span className="font-display font-black text-[16px] text-white uppercase tracking-tight">NKS</span>
           <span className="text-white/20 font-light text-[16px]">|</span>
-          <span className="font-display font-medium text-[10px] text-white/50 uppercase tracking-widest">Admin</span>
+          <span className="font-display font-medium text-[10px] text-white/50 uppercase tracking-widest">{roleBadge}</span>
         </div>
         <button
           onClick={() => setIsMobileOpen(true)}
@@ -123,7 +138,7 @@ export function AdminSidebar() {
               <div className="flex items-center gap-2">
                 <span className="font-display font-black text-[18px] text-white uppercase tracking-tight">NKS</span>
                 <span className="text-white/20 font-light text-[18px]">|</span>
-                <span className="font-display font-medium text-[11px] text-white/50 uppercase tracking-widest mt-0.5">Admin</span>
+                <span className="font-display font-medium text-[11px] text-white/50 uppercase tracking-widest mt-0.5">{roleBadge}</span>
               </div>
               <button
                 onClick={close}
@@ -133,9 +148,9 @@ export function AdminSidebar() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <NavLinks pathname={pathname} onLinkClick={close} />
+            <NavLinks pathname={pathname} role={role} onLinkClick={close} />
           </div>
-          <UserFooter />
+          <UserFooter role={role} />
         </aside>
       )}
 
@@ -145,11 +160,11 @@ export function AdminSidebar() {
           <div className="flex items-center gap-2 py-2">
             <span className="font-display font-black text-[18px] text-white uppercase tracking-tight">NKS</span>
             <span className="text-white/20 font-light text-[18px]">|</span>
-            <span className="font-display font-medium text-[11px] text-white/50 uppercase tracking-widest mt-0.5">Admin</span>
+            <span className="font-display font-medium text-[11px] text-white/50 uppercase tracking-widest mt-0.5">{roleBadge}</span>
           </div>
-          <NavLinks pathname={pathname} />
+          <NavLinks pathname={pathname} role={role} />
         </div>
-        <UserFooter />
+        <UserFooter role={role} />
       </aside>
     </>
   )

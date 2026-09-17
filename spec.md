@@ -50,7 +50,8 @@ Catálogo digital de artes para sublimação e afins. Área pública para navega
 - Todas as permissões do visitante
 - **Pode visualizar e baixar todos os arquivos livremente** (CDR, AI, PDF, OTF)
 - Acessa "Meus Downloads" com histórico pessoal
-- **Não tem acesso ao painel admin**
+- **Gestão de artes**: cria, edita e arquiva artes no catálogo via `/admin/artes` e `/admin/artes/nova` (com upload de arquivos originais para o R2 e capa/mockups com marca d'água)
+- Não tem acesso às áreas restritas exclusivas de administração (`/admin/usuarios`, vendas, finanças, métricas, cupons)
 - Conta criada manualmente pelo admin
 
 ### Admin (único — acesso total)

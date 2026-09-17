@@ -32,8 +32,9 @@ NKS Art é um catálogo digital de artes para sublimação. O produto resolve o 
 - **Meta:** recompra e crescimento de receita
 
 ### Fase (equipe interna)
-- Funcionário ou parceiro da empresa com acesso autorizado
-- Baixa artes em qualquer formato para uso em produção
+- Designer, produtor ou parceiro homologado da empresa com acesso autorizado
+- Baixa artes em qualquer formato (CDR, AI, PDF, OTF) sem fricção para uso em produção
+- Cria e edita artes diretamente no catálogo (`/admin/artes`), incluindo envio de vetores ao R2 e mockups
 - Acompanha seu histórico de downloads
 - Conta criada manualmente pelo admin (sem auto-cadastro)
 

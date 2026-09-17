@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-const { protectAdminRoute, uploadFileToR2 } = vi.hoisted(() => ({
-  protectAdminRoute: vi.fn(),
+const { protectArtworkManagementRoute, uploadFileToR2 } = vi.hoisted(() => ({
+  protectArtworkManagementRoute: vi.fn(),
   uploadFileToR2: vi.fn(),
 }))
 
-vi.mock('@/lib/auth/middleware', () => ({ protectAdminRoute: () => protectAdminRoute() }))
+vi.mock('@/lib/auth/middleware', () => ({
+  protectArtworkManagementRoute: () => protectArtworkManagementRoute(),
+}))
 vi.mock('@/lib/r2/upload', () => ({ uploadFileToR2: uploadFileToR2 }))
 
 import { POST } from './route'
@@ -19,19 +21,29 @@ function buildRequest(file: File | null, folder = 'files') {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  protectAdminRoute.mockResolvedValue({ authorized: true, user: { id: 'admin' } })
+  protectArtworkManagementRoute.mockResolvedValue({ authorized: true, user: { id: 'admin' } })
   uploadFileToR2.mockResolvedValue({ url: 'files/k', key: 'files/k', size: 3 })
 })
 
 describe('POST /api/admin/upload', () => {
-  it('bloqueia quando não é admin', async () => {
-    protectAdminRoute.mockResolvedValue({
+  it('bloqueia quando não autorizado', async () => {
+    protectArtworkManagementRoute.mockResolvedValue({
       authorized: false,
       response: new Response(JSON.stringify({ success: false }), { status: 403 }),
     })
     const res = await POST(buildRequest(new File(['x'], 'a.png', { type: 'image/png' })))
     expect(res.status).toBe(403)
     expect(uploadFileToR2).not.toHaveBeenCalled()
+  })
+
+  it('permite upload para usuário FASE', async () => {
+    protectArtworkManagementRoute.mockResolvedValue({
+      authorized: true,
+      user: { id: 'fase-1', role: 'FASE' },
+    })
+    const res = await POST(buildRequest(new File(['x'], 'a.png', { type: 'image/png' })))
+    expect(res.status).toBe(200)
+    expect(uploadFileToR2).toHaveBeenCalled()
   })
 
   it('rejeita extensão não permitida (ex: .exe)', async () => {

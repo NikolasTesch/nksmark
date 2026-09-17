@@ -132,7 +132,7 @@ export default function UsuariosPage() {
                 onChange={(e) => setRole(e.target.value)}
                 className="w-full rounded-sm border border-nks-gray-200 bg-white px-3.5 py-2.5 text-xs text-nks-black focus:outline-none focus:ring-1 focus:ring-nks-red focus:border-nks-red cursor-pointer font-semibold"
               >
-                <option value="FASE">Equipe Interna (FASE) — Apenas Downloads</option>
+                <option value="FASE">Equipe Interna (FASE) — Downloads, Criação e Edição de Artes</option>
                 <option value="ADMIN">Administrador (ADMIN) — Acesso Total</option>
               </select>
             </div>

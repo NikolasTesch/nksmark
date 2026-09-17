@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { protectAdminRoute } from '@/lib/auth/middleware'
+import { protectArtworkManagementRoute } from '@/lib/auth/middleware'
 import { artworkSchema } from '@/lib/validations/artwork'
 import { generateSlug } from '@/lib/utils/slug'
 import { Format } from '@prisma/client'
@@ -41,9 +41,9 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: true, data: artworks })
     }
 
-    // Visão admin: todos os status, arquivos completos — contrato legado {success,data}.
+    // Visão admin/equipe interna: todos os status, arquivos completos — contrato legado {success,data}.
     if (isAdminView) {
-      const authStatus = await protectAdminRoute()
+      const authStatus = await protectArtworkManagementRoute()
       if (!authStatus.authorized) return authStatus.response
 
       const artworks = await prisma.artwork.findMany({
@@ -77,7 +77,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const authStatus = await protectAdminRoute()
+    const authStatus = await protectArtworkManagementRoute()
     if (!authStatus.authorized) {
       return authStatus.response
     }

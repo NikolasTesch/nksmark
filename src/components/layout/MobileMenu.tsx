@@ -4,7 +4,7 @@ import * as React from 'react'
 import Link from 'next/link'
 import { signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { LogIn, LogOut, User as UserIcon, ShieldAlert, ShoppingCart, X } from 'lucide-react'
+import { LogIn, LogOut, User as UserIcon, ShieldAlert, ShoppingCart, X, LayoutGrid } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface MobileMenuProps {
@@ -107,6 +107,14 @@ export function MobileMenu({ open, onClose, menuItems, session, userRole, cartCo
                     <Link href="/admin" onClick={onClose} className="w-full">
                       <Button variant="outline" className="w-full gap-2 font-semibold text-xs border-white/20 text-white hover:bg-white/10 bg-transparent rounded-sm">
                         <ShieldAlert className="h-4 w-4 text-nks-red-light" /> Painel Admin
+                      </Button>
+                    </Link>
+                  )}
+
+                  {userRole === 'FASE' && (
+                    <Link href="/admin/artes" onClick={onClose} className="w-full">
+                      <Button className="w-full gap-2 font-semibold text-xs bg-nks-red hover:bg-nks-red-dark text-white rounded-sm">
+                        <LayoutGrid className="h-4 w-4" /> Painel de Artes
                       </Button>
                     </Link>
                   )}

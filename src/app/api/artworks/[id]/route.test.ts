@@ -3,16 +3,18 @@ import { Status } from '@prisma/client'
 
 // vi.mock é içado para o topo do arquivo; as variáveis que ele referencia
 // precisam vir de vi.hoisted() para já existirem nesse momento.
-const { prismaMock, protectAdminRoute } = vi.hoisted(() => ({
+const { prismaMock, protectArtworkManagementRoute } = vi.hoisted(() => ({
   prismaMock: {
     artwork: { update: vi.fn(), delete: vi.fn(), findUnique: vi.fn() },
     file: { deleteMany: vi.fn(), createMany: vi.fn() },
   },
-  protectAdminRoute: vi.fn(),
+  protectArtworkManagementRoute: vi.fn(),
 }))
 
 vi.mock('@/lib/prisma', () => ({ default: prismaMock }))
-vi.mock('@/lib/auth/middleware', () => ({ protectAdminRoute: () => protectAdminRoute() }))
+vi.mock('@/lib/auth/middleware', () => ({
+  protectArtworkManagementRoute: () => protectArtworkManagementRoute(),
+}))
 
 import { DELETE, GET, PATCH } from './route'
 
@@ -28,7 +30,7 @@ const params = Promise.resolve({ id: 'art-1' })
 
 beforeEach(() => {
   vi.clearAllMocks()
-  protectAdminRoute.mockResolvedValue({ authorized: true, user: { id: 'admin' } })
+  protectArtworkManagementRoute.mockResolvedValue({ authorized: true, user: { id: 'admin' } })
 })
 
 describe('DELETE /api/artworks/[id]', () => {
@@ -49,8 +51,8 @@ describe('DELETE /api/artworks/[id]', () => {
     expect(prismaMock.file.deleteMany).not.toHaveBeenCalled()
   })
 
-  it('bloqueia quando não é admin', async () => {
-    protectAdminRoute.mockResolvedValue({
+  it('bloqueia quando não autorizado', async () => {
+    protectArtworkManagementRoute.mockResolvedValue({
       authorized: false,
       response: new Response(JSON.stringify({ success: false }), { status: 403 }),
     })
@@ -61,8 +63,8 @@ describe('DELETE /api/artworks/[id]', () => {
 })
 
 describe('GET /api/artworks/[id]', () => {
-  it('exige admin — não expõe a url do R2 para visitantes', async () => {
-    protectAdminRoute.mockResolvedValue({
+  it('exige autenticação de gestão — não expõe a url do R2 para visitantes', async () => {
+    protectArtworkManagementRoute.mockResolvedValue({
       authorized: false,
       response: new Response(JSON.stringify({ success: false }), { status: 401 }),
     })
@@ -81,7 +83,8 @@ describe('GET /api/artworks/[id]', () => {
     expect(json.error).toBe('Arte não localizada')
   })
 
-  it('retorna 200 com a arte e seus relacionamentos', async () => {
+  it('retorna 200 com a arte e seus relacionamentos para usuário FASE', async () => {
+    protectArtworkManagementRoute.mockResolvedValue({ authorized: true, user: { id: 'fase-1', role: 'FASE' } })
     const sample = { id: 'art-1', title: 'T', category: { id: 'c1' }, tags: [], files: [] }
     prismaMock.artwork.findUnique.mockResolvedValue(sample)
     const res = await GET(new Request('http://localhost/api/artworks/art-1'), { params })
@@ -115,8 +118,8 @@ describe('DELETE /api/artworks/[id] — erro', () => {
 })
 
 describe('PATCH /api/artworks/[id]', () => {
-  it('bloqueia não-admin', async () => {
-    protectAdminRoute.mockResolvedValue({
+  it('bloqueia não autorizado', async () => {
+    protectArtworkManagementRoute.mockResolvedValue({
       authorized: false,
       response: new Response(JSON.stringify({ success: false }), { status: 403 }),
     })
@@ -164,6 +167,27 @@ describe('PATCH /api/artworks/[id]', () => {
     })
     expect(prismaMock.file.createMany).toHaveBeenCalledWith({
       data: [{ format: 'PNG', url: 'https://x/p.png', size: 10, artworkId: 'art-1' }],
+    })
+  })
+
+  it('adiciona novos arquivos originais (addFiles) no PATCH', async () => {
+    prismaMock.artwork.update.mockResolvedValue({})
+    prismaMock.artwork.findUnique.mockResolvedValue({ id: 'art-1' })
+    const res = await PATCH(
+      patchReq({
+        addFiles: [
+          { url: 'files/123-vetor.cdr', format: 'CDR', size: 2048 },
+          { url: 'files/123-vetor.ai', format: 'AI', size: 4096 },
+        ],
+      }),
+      { params }
+    )
+    expect(res.status).toBe(200)
+    expect(prismaMock.file.createMany).toHaveBeenCalledWith({
+      data: [
+        { format: 'CDR', url: 'files/123-vetor.cdr', size: 2048, artworkId: 'art-1' },
+        { format: 'AI', url: 'files/123-vetor.ai', size: 4096, artworkId: 'art-1' },
+      ],
     })
   })
 

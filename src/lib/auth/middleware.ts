@@ -107,3 +107,9 @@ export async function protectFaseRoute(): Promise<
     user: session.user,
   }
 }
+
+/**
+ * Autoriza operações de gerenciamento de artes (criação, edição, visualização completa e upload):
+ * FASE (equipe interna) e ADMIN.
+ */
+export const protectArtworkManagementRoute = protectFaseRoute

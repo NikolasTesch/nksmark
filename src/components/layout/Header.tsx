@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { Menu, X, LogIn, LogOut, User as UserIcon, ShieldAlert, ShoppingCart } from 'lucide-react'
+import { Menu, X, LogIn, LogOut, User as UserIcon, ShieldAlert, ShoppingCart, LayoutGrid } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useCart } from '@/hooks/useCart'
 import { MobileMenu } from './MobileMenu'
@@ -105,13 +105,19 @@ export function Header() {
             <div className="flex items-center gap-2.5">
               {userRole === 'ADMIN' ? (
                 <Link href="/admin">
-                  <span className="inline-flex items-center gap-1 bg-nks-black text-white border border-white/25 px-2 py-1 rounded-sm text-[11px] font-medium uppercase tracking-[0.08em]">
+                  <span className="inline-flex items-center gap-1 bg-nks-black text-white border border-white/25 px-2 py-1 rounded-sm text-[11px] font-medium uppercase tracking-[0.08em] hover:border-white/50 transition-colors">
                     <ShieldAlert className="h-3.5 w-3.5" /> Admin
+                  </span>
+                </Link>
+              ) : userRole === 'FASE' ? (
+                <Link href="/admin/artes">
+                  <span className="inline-flex items-center gap-1 bg-nks-red text-white hover:bg-nks-red-dark px-2 py-1 rounded-sm text-[11px] font-semibold uppercase tracking-[0.05em] transition-colors cursor-pointer shadow-nks-sm">
+                    <LayoutGrid className="h-3.5 w-3.5" /> Painel Artes
                   </span>
                 </Link>
               ) : (
                 <span className="bg-nks-red-subtle text-nks-red-dark border border-nks-red px-2 py-1 rounded-sm text-[11px] font-medium uppercase tracking-[0.05em]">
-                  {userRole === 'CLIENT' ? 'Cliente' : 'Fase'}
+                  Cliente
                 </span>
               )}
               <span className="text-[13px] font-medium text-white flex items-center gap-1.5">

@@ -20,6 +20,7 @@ export const artworkSchema = z.object({
   categoryId: z.string().min(1, 'Selecione uma categoria'),
   tagNames: z.array(z.string()).optional(),
   files: z.array(fileSchema).min(1, 'Adicione pelo menos um arquivo original'),
+  addFiles: z.array(fileSchema).optional(),
   addGalleryImages: z
     .array(
       z.object({

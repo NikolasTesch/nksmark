@@ -1,15 +1,17 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { Format } from '@prisma/client'
 
-const { prismaMock, protectAdminRoute } = vi.hoisted(() => ({
+const { prismaMock, protectArtworkManagementRoute } = vi.hoisted(() => ({
   prismaMock: {
     artwork: { findMany: vi.fn() },
   },
-  protectAdminRoute: vi.fn(),
+  protectArtworkManagementRoute: vi.fn(),
 }))
 
 vi.mock('@/lib/prisma', () => ({ default: prismaMock }))
-vi.mock('@/lib/auth/middleware', () => ({ protectAdminRoute: () => protectAdminRoute() }))
+vi.mock('@/lib/auth/middleware', () => ({
+  protectArtworkManagementRoute: () => protectArtworkManagementRoute(),
+}))
 
 import { GET } from './route'
 
@@ -49,14 +51,14 @@ describe('GET /api/artworks (público)', () => {
     expect(png.url).toBe('https://cdn/mockup.png')
     // Vetor original NUNCA expõe a url/chave R2 para visitantes.
     expect(cdr.url).toBeUndefined()
-    // protectAdminRoute não é chamado em request público.
-    expect(protectAdminRoute).not.toHaveBeenCalled()
+    // protectArtworkManagementRoute não é chamado em request público.
+    expect(protectArtworkManagementRoute).not.toHaveBeenCalled()
   })
 })
 
 describe('GET /api/artworks?admin=true', () => {
   it('mantém a url de todos os arquivos para o admin autenticado', async () => {
-    protectAdminRoute.mockResolvedValue({ authorized: true, user: { id: 'admin' } })
+    protectArtworkManagementRoute.mockResolvedValue({ authorized: true, user: { id: 'admin', role: 'ADMIN' } })
 
     const res = await GET(new Request('http://localhost/api/artworks?admin=true'))
     const json = await res.json()
@@ -67,8 +69,20 @@ describe('GET /api/artworks?admin=true', () => {
     expect(files.find((f: { id: string }) => f.id === 'f-cdr').url).toBe('https://r2/secret.cdr')
   })
 
-  it('bloqueia admin não autenticado', async () => {
-    protectAdminRoute.mockResolvedValue({
+  it('mantém a url de todos os arquivos para usuário FASE autenticado', async () => {
+    protectArtworkManagementRoute.mockResolvedValue({ authorized: true, user: { id: 'fase-1', role: 'FASE' } })
+
+    const res = await GET(new Request('http://localhost/api/artworks?admin=true'))
+    const json = await res.json()
+
+    expect(res.status).toBe(200)
+    const files = json.data[0].files
+    expect(files.find((f: { id: string }) => f.id === 'f-png').url).toBe('https://cdn/mockup.png')
+    expect(files.find((f: { id: string }) => f.id === 'f-cdr').url).toBe('https://r2/secret.cdr')
+  })
+
+  it('bloqueia usuário não autenticado', async () => {
+    protectArtworkManagementRoute.mockResolvedValue({
       authorized: false,
       response: new Response(JSON.stringify({ success: false }), { status: 401 }),
     })

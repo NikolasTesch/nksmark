@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Category } from '@prisma/client'
+import type { Category } from '@prisma/client'
 import { Loader2 } from 'lucide-react'
 import { ArtworkFormNks } from '@/components/admin/ArtworkFormNks'
 import { logger as log } from "@/lib/utils/logger";
