@@ -2,8 +2,6 @@
 
 import * as React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
 import { ArtworkCard } from '@/components/artwork/ArtworkCard'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { ArtworkWithRelations } from '@/types/artwork'
@@ -247,8 +245,6 @@ export function LojaView({ items, total, page, pageSize, categories, tags, categ
 
   return (
     <>
-      <Header />
-
       <motion.section
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -535,8 +531,6 @@ export function LojaView({ items, total, page, pageSize, categories, tags, categ
           </motion.button>
         )}
       </AnimatePresence>
-
-      <Footer />
     </>
   )
 }

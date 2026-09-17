@@ -1175,7 +1175,7 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData, initi
             <label className="text-[10px] font-black uppercase tracking-wider text-nks-gray-400">
               Status
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setStatus('PUBLISHED')}
@@ -1197,17 +1197,6 @@ export function ArtworkFormNks({ mode, categories, artworkId, initialData, initi
                 }`}
               >
                 Rascunho
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatus('ARCHIVED')}
-                className={`py-2.5 px-4 rounded-lg text-xs font-bold text-center border transition-all cursor-pointer ${
-                  status === 'ARCHIVED'
-                    ? 'bg-nks-gray-100 border-nks-gray-300 text-nks-black shadow-nks-sm'
-                    : 'bg-white border-nks-gray-200 text-nks-gray-700 hover:bg-nks-gray-50'
-                }`}
-              >
-                Inativo
               </button>
             </div>
           </div>
