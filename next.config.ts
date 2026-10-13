@@ -19,8 +19,11 @@ const cspHeader = [
 ].join('; ')
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['sharp'],
   outputFileTracingIncludes: {
-    '**/*': ['./node_modules/sharp/**/*'],
+    '**/*': ['./node_modules/sharp/**/*', './node_modules/@img/**/*'],
+    '/**': ['./node_modules/sharp/**/*', './node_modules/@img/**/*'],
+    '/api/**/*': ['./node_modules/sharp/**/*', './node_modules/@img/**/*'],
   },
   images: {
     remotePatterns: [

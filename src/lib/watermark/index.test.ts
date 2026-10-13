@@ -26,4 +26,10 @@ describe('applyWatermark', () => {
     expect(metadata.width).toBe(200)
     expect(metadata.height).toBe(150)
   }, 30000)
+
+  it('should return original buffer if image processing fails (graceful degradation)', async () => {
+    const invalidBuffer = Buffer.from('invalid-non-image-data')
+    const result = await applyWatermark(invalidBuffer, 'image/png')
+    expect(result).toEqual(invalidBuffer)
+  })
 })
