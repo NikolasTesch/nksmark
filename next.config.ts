@@ -3,13 +3,34 @@ import type { NextConfig } from "next";
 // CSP: Next.js com Tailwind requer 'unsafe-inline' para estilos.
 // Para scripts, 'unsafe-inline' é inevitável sem nonces (gerados por middleware).
 // As proteções efetivas aqui são: object-src, base-uri, form-action e img-src restrito.
+const r2AccountId = process.env.R2_ACCOUNT_ID?.trim() || ''
+
+const connectSrc = [
+  "'self'",
+  "https://*.r2.cloudflarestorage.com",
+  "https://*.cloudflarestorage.com",
+  ...(r2AccountId
+    ? [
+        `https://${r2AccountId}.r2.cloudflarestorage.com`,
+        `https://*.${r2AccountId}.r2.cloudflarestorage.com`,
+      ]
+    : []),
+  "https://*.cloudflarepub.com",
+  "https://pub-*.r2.dev",
+  "https://*.r2.dev",
+  "https://nksmark.com.br",
+  "https://*.vercel-analytics.com",
+  "https://*.vercel-insights.com",
+  "https://va.vercel-scripts.com",
+].join(' ')
+
 const cspHeader = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://*.cloudflarepub.com https://pub-*.r2.dev https://nksmark.com.br",
+  "img-src 'self' data: blob: https://*.cloudflarepub.com https://pub-*.r2.dev https://*.r2.dev https://nksmark.com.br",
   "font-src 'self'",
-  "connect-src 'self'",
+  `connect-src ${connectSrc}`,
   "media-src 'none'",
   "object-src 'none'",
   "base-uri 'self'",
